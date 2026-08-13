@@ -1,0 +1,106 @@
+@use "./variables.scss" as *;
+
+// put your custom CSS here!
+
+// Use the document title as the page heading, not as a repeated TOC entry.
+.toc {
+  // Let the TOC occupy the remaining sidebar height without clipping its list.
+  flex: 1 1 0 !important;
+  min-height: 0;
+}
+
+.toc-content.overflow {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: scroll !important;
+  scrollbar-color: var(--gray) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  // The built-in fade can cover the last entries when the list is very long.
+  mask-image: none !important;
+  padding-right: 0.4rem !important;
+  padding-bottom: 2rem !important;
+}
+
+.toc-content.overflow::-webkit-scrollbar {
+  width: 7px;
+}
+
+.toc-content.overflow::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toc-content.overflow::-webkit-scrollbar-thumb {
+  background: var(--gray);
+  border-radius: 999px;
+}
+
+.toc-content.overflow > li.depth-0 {
+  display: none;
+}
+
+// Make heading levels visually obvious in the right-hand table of contents.
+.toc-content.overflow > li.depth-1 {
+  padding-left: 0 !important;
+  margin-top: 0.35rem;
+
+  > a {
+    font-weight: 650;
+    opacity: 0.72;
+  }
+}
+
+.toc-content.overflow > li.depth-2 {
+  padding-left: 1.25rem !important;
+
+  > a {
+    font-size: 0.94rem;
+  }
+}
+
+.toc-content.overflow > li.depth-3 {
+  padding-left: 2.5rem !important;
+
+  > a {
+    font-size: 0.88rem;
+  }
+}
+
+.toc-content.overflow > li.depth-2,
+.toc-content.overflow > li.depth-3 {
+  position: relative;
+}
+
+.toc-content.overflow > li.depth-2::before,
+.toc-content.overflow > li.depth-3::before {
+  position: absolute;
+  color: var(--gray);
+}
+
+.toc-content.overflow > li.depth-2::before {
+  left: 0.25rem;
+}
+
+.toc-content.overflow > li.depth-3::before {
+  left: 1.5rem;
+}
+
+// Keep folder and tag listing dates on a single line.
+.page-listing li.section-li > .section {
+  align-items: baseline;
+  grid-template-columns: 9.5rem minmax(0, 1fr) auto;
+}
+
+.page-listing li.section-li > .section .meta,
+.page-listing li.section-li > .section .meta time {
+  min-width: max-content;
+  white-space: nowrap !important;
+}
+
+.page-listing li.section-li > .section .meta,
+.page-listing li.section-li > .section .desc h3 {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  line-height: 1.4;
+}
