@@ -1,7 +1,7 @@
 ---
 title: Home
+publish: true
 ---
-
 <div class="home-landing">
 
   <div class="home-glow home-glow-1"></div>
