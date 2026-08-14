@@ -104,3 +104,264 @@
   margin-bottom: 0 !important;
   line-height: 1.4;
 }
+
+
+/* ========================================
+   Home Page
+   ======================================== */
+
+.home-landing {
+  position: relative;
+  min-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4rem 0 2rem;
+}
+
+/* 背景光晕 */
+
+.home-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home-glow-1 {
+  width: 420px;
+  height: 420px;
+  background: var(--secondary);
+  top: 2%;
+  right: -180px;
+}
+
+.home-glow-2 {
+  width: 320px;
+  height: 320px;
+  background: var(--tertiary);
+  left: -150px;
+  bottom: 5%;
+  opacity: 0.1;
+}
+
+/* Hero */
+
+.home-hero {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+
+/* 顶部 DIGITAL GARDEN */
+
+.home-badge {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  margin-bottom: 1.8rem;
+  padding: 0.42rem 0.8rem;
+
+  border: 1px solid var(--lightgray);
+  border-radius: 999px;
+
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+
+  color: var(--gray);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.home-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--secondary);
+
+  box-shadow: 0 0 0 4px color-mix(
+                  in srgb,
+                  var(--secondary) 15%,
+                  transparent
+  );
+}
+
+/* 主标题 */
+
+.home-title {
+  margin: 0 !important;
+
+  font-size: clamp(3rem, 8vw, 6rem);
+  line-height: 0.98;
+  letter-spacing: -0.06em;
+  font-weight: 750;
+
+  color: var(--dark);
+}
+
+.home-title span {
+  background: linear-gradient(
+                  120deg,
+                  var(--secondary),
+                  var(--tertiary)
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 中文描述 */
+
+.home-subtitle {
+  margin: 2rem 0 0 !important;
+
+  max-width: 650px;
+
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  line-height: 1.8;
+
+  color: var(--darkgray);
+}
+
+/* 英文描述 */
+
+.home-description {
+  margin-top: 1rem !important;
+
+  font-size: 0.95rem;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+
+  color: var(--gray);
+}
+
+/* 状态 */
+
+.home-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+
+  margin-top: 2rem;
+}
+
+.home-status span {
+  padding: 0.5rem 0.85rem;
+
+  border-radius: 8px;
+  border: 1px solid var(--lightgray);
+
+  font-size: 0.78rem;
+  font-family: var(--codeFont);
+
+  color: var(--darkgray);
+
+  background: color-mix(
+                  in srgb,
+                  var(--light) 90%,
+                  var(--secondary)
+  );
+
+  transition:
+          transform 0.2s ease,
+          border-color 0.2s ease,
+          background 0.2s ease;
+}
+
+.home-status span:hover {
+  transform: translateY(-2px);
+  border-color: var(--secondary);
+
+  background: color-mix(
+                  in srgb,
+                  var(--light) 94%,
+                  var(--secondary)
+  );
+}
+
+/* 分割线 */
+
+.home-divider {
+  position: relative;
+  z-index: 1;
+
+  width: 100%;
+  height: 1px;
+
+  margin: 4rem 0 1.5rem;
+
+  background: linear-gradient(
+                  to right,
+                  var(--lightgray),
+                  transparent
+  );
+}
+
+/* 底部文字 */
+
+.home-footer-text {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-family: var(--codeFont);
+  font-size: 0.73rem;
+  letter-spacing: 0.04em;
+
+  color: var(--gray);
+}
+
+.home-arrow {
+  font-size: 1.1rem;
+
+  animation: homeArrow 2s ease-in-out infinite;
+}
+
+@keyframes homeArrow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+/* 手机 */
+
+@media all and (max-width: 800px) {
+  .home-landing {
+    min-height: 68vh;
+    padding-top: 2.5rem;
+  }
+
+  .home-title {
+    font-size: clamp(3rem, 15vw, 4.8rem);
+  }
+
+  .home-subtitle {
+    font-size: 1.05rem;
+  }
+
+  .home-description {
+    font-size: 0.85rem;
+  }
+
+  .home-status {
+    gap: 0.5rem;
+  }
+
+  .home-divider {
+    margin-top: 3rem;
+  }
+}
