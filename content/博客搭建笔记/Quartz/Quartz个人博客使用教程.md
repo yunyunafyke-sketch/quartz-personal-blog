@@ -857,9 +857,15 @@ rsync -av public/ 用户名@服务器地址:/var/www/quartz/
 
 第一次上传前，需要在服务器上创建目录并设置正确权限。
 
-### 第十一步：使用 Caddy 提供网站访问
+### 第十一步：使用 Caddy 或 Nginx 提供网站访问
 
-服务器安装 Caddy 后，配置：
+Quartz 构建出的 `public` 是静态网站目录，需要由 Web 服务器提供访问，但不强制使用 Caddy。服务器上安装 Caddy 或 Nginx 均可，选择其中一种即可。
+
+#### 方案一：使用 Caddy
+
+如果服务器尚未安装 Web 服务，Caddy 配置较简单，并且绑定域名后可以自动申请和续期 HTTPS 证书。
+
+安装 Caddy 后配置：
 
 ```caddy
 blog.example.com {
@@ -883,13 +889,46 @@ blog.example.com {
 sudo systemctl reload caddy
 ```
 
-还需要完成：
+#### 方案二：使用 Nginx
+
+如果服务器已经安装 Nginx，无须再安装 Caddy。可以添加以下站点配置：
+
+```nginx
+server {
+    listen 80;
+    server_name blog.example.com;
+
+    root /var/www/quartz;
+    index index.html;
+
+    location / {
+        try_files $uri $uri.html $uri/ =404;
+    }
+
+    error_page 404 /404.html;
+}
+```
+
+检查配置并重新加载 Nginx：
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+这份 Nginx 示例先提供 HTTP 访问。如果需要 HTTPS，还要为域名申请证书并配置 `listen 443 ssl`；也可以使用 Certbot 自动完成证书配置和续期。
+
+#### 公共检查项
+
+无论使用 Caddy 还是 Nginx，都需要完成：
 
 1. 把域名解析到服务器公网 IP。
 2. 开放服务器的 80 和 443 端口。
-3. 确认 Caddy 可以读取 `/var/www/quartz`。
+3. 确认所选 Web 服务器可以读取 `/var/www/quartz`。
 
-Quartz 生成的文章链接通常不带 `.html`，所以 Caddy 中的 `try_files` 不能省略。
+Quartz 生成的文章链接通常不带 `.html`，因此 `try_files` 不能省略：Caddy 使用 `{path}.html`，Nginx 使用 `$uri.html` 查找实际页面文件。
+
+只安装并启用其中一种 Web 服务器，避免 Caddy 和 Nginx 同时占用 80、443 端口。
 
 参考：[Quartz 自托管配置](https://quartz.jzhao.xyz/hosting)
 
@@ -953,4 +992,4 @@ Quartz 的核心只有三步：
 
 一句话记忆：
 
-> Obsidian 负责写笔记，Quartz 负责变成网页，Caddy 负责让别人访问。
+> Obsidian 负责写笔记，Quartz 负责变成网页，Caddy 或 Nginx 负责让别人访问。

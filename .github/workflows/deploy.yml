@@ -1,0 +1,73 @@
+name: 自动部署 Quartz 博客
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: afyke-blog-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 拉取项目源码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装项目依赖
+        run: npm ci
+
+      - name: 安装 Quartz 插件
+        run: npx quartz plugin install
+
+      - name: 安装 Mermaid 构建所需浏览器
+        run: npx playwright install --with-deps chromium
+
+      - name: 构建 Quartz
+        run: npx quartz build
+
+      - name: 检查构建结果
+        run: test -f public/index.html
+
+      - name: 稳定 Explorer 页面编号
+        run: |
+          find public -type f -name '*.html' \
+            -exec perl -pi -e 's/explorer-\d+/explorer/g' {} +
+
+      - name: 配置服务器 SSH 密钥
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: 发布到宝塔服务器
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PATH: ${{ secrets.SERVER_PATH }}
+        run: |
+          rsync -azc --no-times --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${SERVER_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            public/ \
+            "${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/"

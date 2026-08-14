@@ -1,0 +1,892 @@
+---
+publish: true
+title: 使用 GitHub Actions 自动部署 Quartz 博客
+---
+
+# 使用 GitHub Actions 自动部署 Quartz 博客
+
+## 一、一句话理解
+
+把 Quartz 项目推送到 GitHub 后，由 GitHub Actions 临时启动一台云端 Linux 机器，自动安装依赖、构建 `public`，最后通过 SSH 和 rsync 把网站同步到宝塔服务器。
+
+配置完成后，日常发布只需执行：
+
+```bash
+git add .
+git commit -m "博客搭建笔记-更新文章内容"
+git push origin master
+```
+
+不再需要每次手工运行构建和上传命令。
+
+## 二、理论：自动部署是什么
+
+### 2.1 Git 负责保存源码
+
+Git 仓库保存的是 Markdown、Quartz 配置、主题代码和依赖声明，不保存临时生成的 `public`。
+
+本项目当前使用：
+
+- GitHub 仓库：`yunyunafyke-sketch/quartz-personal-blog`
+- 自动部署分支：`master`
+- Quartz 版本：Quartz 5
+- Node.js：使用 Node.js 22 构建
+- 构建命令：`npx quartz build`
+
+### 2.2 GitHub Actions 启动临时 Linux 机器
+
+GitHub Actions 可以理解成 GitHub 提供的“临时云电脑”。每次工作流运行时，GitHub 会启动一台干净的 Linux 机器，供这一次部署使用。
+
+这台机器会：
+
+1. 从 GitHub 下载当前 `master` 分支的源码。
+2. 安装 Node.js、Quartz 和其他依赖。
+3. 执行构建，生成 `public`。
+4. 连接宝塔服务器并上传构建结果。
+
+工作流结束后，临时机器和其中的文件会被回收。它不是你的宝塔服务器，也不会长期运行 Quartz；真正长期保存网站文件的仍是：
+
+```text
+/www/AfykeBlog/afyke-blog
+```
+
+这样做的好处是：服务器只负责提供网页，不需要常驻 Node.js、npm 和 Quartz 构建环境。以后更换电脑也不影响发布，只要把笔记推送到 GitHub 即可。
+
+每次 `master` 分支收到新的提交后，它会按照 `.github/workflows/deploy.yml` 中写好的步骤执行：
+
+1. 拉取项目代码。
+2. 安装 Node.js。
+3. 安装 npm 依赖和 Quartz 插件。
+4. 构建 Quartz。
+5. 处理可能造成无意义差异的 Explorer 编号。
+6. 使用 SSH 密钥连接服务器。
+7. 使用 rsync 增量同步 `public`。
+
+Quartz 官方的 GitHub Actions 示例同样采用“拉取完整 Git 历史、安装 Node.js 和依赖、构建 `public`”的流程。参考：[Quartz Hosting](https://quartz.jzhao.xyz/hosting)。
+
+### 2.3 npm ci 安装锁定的依赖
+
+Quartz 不是 Mac 或 GitHub 自带的命令，它依赖很多 Node.js 软件包，例如 Quartz 本身、Markdown 解析器、代码高亮工具、Mermaid 渲染工具和 Playwright 浏览器组件。
+
+`npm ci` 的作用是：按照项目的 `package-lock.json`，把这些软件包的固定版本安装到临时 Linux 机器中。
+
+可以把两个文件理解为：
+
+| 文件 | 作用 |
+| --- | --- |
+| `package.json` | 声明项目需要哪些类型的软件包，以及允许的版本范围 |
+| `package-lock.json` | 记录这次项目实际使用的每一个具体版本 |
+
+例如，`package.json` 可以表达“需要某个工具的 5.x 版本”，而 `package-lock.json` 会进一步固定为“这次使用 5.0.0，以及它依赖的其他具体版本”。
+
+因此自动部署使用 `npm ci`，而不是普通的 `npm install`：
+
+- `npm ci` 严格按锁文件安装，`package.json` 与锁文件不一致时会直接失败。
+- `npm ci` 不会擅自更新锁文件。
+- 每次云端构建使用相同依赖版本，结果更稳定，也更容易排查问题。
+
+它安装的是“构建网站所需工具”，不是安装你的 Markdown 内容。Markdown 仍然来自 GitHub 拉取的项目源码。
+
+### 2.4 SSH 和 rsync 负责发布
+
+两者的分工是：
+
+- SSH：验证 GitHub Actions 是否有权限登录服务器，并提供加密连接。
+- rsync：比较云端构建结果和服务器已有文件，只同步内容真正变化的文件。
+
+自动化程序无法像人在终端中一样输入服务器密码，因此需要使用专门的 SSH 密钥。
+
+## 三、理论：完整流程是怎么工作的
+
+```text
+本地 Markdown 和 Quartz 配置
+              ↓
+        git push origin master
+              ↓
+       GitHub 保存最新源码
+              ↓
+  GitHub Actions 启动临时 Linux 机器
+              ↓
+       npm ci 安装锁定的依赖
+              ↓
+       npx quartz build
+              ↓
+        生成 public 静态网站
+              ↓
+       SSH 密钥连接宝塔服务器
+              ↓
+       rsync 增量同步并删除旧文件
+              ↓
+      /www/AfykeBlog/afyke-blog
+```
+
+GitHub Actions 每次运行结束后，临时机器会被回收。服务器只保存最终网站文件，GitHub 保存可以重新构建网站的源码。
+
+## 四、准备专用 SSH 部署密钥
+
+### 4.1 为什么要单独生成密钥
+
+不要把自己日常使用的 SSH 私钥交给自动化程序。建议为博客部署单独生成一对密钥：
+
+- 公钥放到服务器，负责声明“允许谁登录”。
+- 私钥保存到 GitHub Secrets，负责证明 GitHub Actions 的身份。
+
+如果以后不再使用自动部署，只需从服务器删除这把公钥并删除 GitHub Secret，不会影响其他 SSH 登录方式。
+
+### 4.2 在 Mac 上生成密钥
+
+在 Mac 本地终端执行：
+
+```bash
+ssh-keygen \
+  -t ed25519 \
+  -C "github-actions-quartz" \
+  -f ~/.ssh/afyke_quartz_actions
+```
+
+这四行合起来是一条命令。行尾的 `\` 表示“命令还没结束，下一行接着写”，只是为了让内容更容易阅读。
+
+| 部分 | 含义 |
+| --- | --- |
+| `ssh-keygen` | Mac 自带的 SSH 密钥生成工具 |
+| `-t ed25519` | 选择 `ed25519` 这种现代的密钥类型 |
+| `-C "github-actions-quartz"` | 写入备注，方便日后识别这把密钥用于 GitHub Actions；不影响登录能力 |
+| `-f ~/.ssh/afyke_quartz_actions` | 指定密钥名称和保存位置；`~` 代表当前 Mac 用户目录 `/Users/chenweili` |
+
+这条命令只会在 Mac 本地生成文件，不会连接服务器，也不会上传任何内容。
+
+生成两个文件：
+
+```text
+~/.ssh/afyke_quartz_actions       私钥，必须保密
+~/.ssh/afyke_quartz_actions.pub   公钥，可以放到服务器
+```
+
+没有 `.pub` 后缀的是私钥，之后放入 GitHub 的 `SSH_PRIVATE_KEY` Secret；有 `.pub` 后缀的是公钥，之后放入服务器的 `authorized_keys`。
+
+如果终端提示目标文件已存在，不要直接确认覆盖。说明之前可能已经生成过同名密钥，应先确认它是否就是这把部署密钥。
+
+自动部署专用密钥通常不设置交互式口令，否则 GitHub Actions 无法在无人值守状态下使用。
+
+命令运行过程中会询问是否设置 `passphrase`。当前工作流没有配置口令解锁步骤，因此==本教程的专用部署密钥应直接按两次回车留空==。这样做只适用于这把单独创建、只交给 GitHub Secrets 的部署密钥；不要因此去掉日常 SSH 私钥的口令。
+
+### 4.3 公钥和私钥是如何匹配的
+
+可以把这对密钥理解成一把锁和一把唯一的钥匙：
+
+```text
+Mac 生成同一对密钥
+├── 公钥 → 放入服务器 authorized_keys
+└── 私钥 → 放入 GitHub Secrets
+
+GitHub Actions 使用私钥证明身份
+服务器使用公钥验证身份
+验证成功 → 允许登录
+```
+
+服务器不是把公钥和私钥的文字直接进行比较。实际验证过程是：
+
+1. GitHub Actions 连接服务器，并声明要使用这把公钥对应的身份。
+2. 服务器检查 `/root/.ssh/authorized_keys`，确认其中存在该公钥。
+3. GitHub Actions 使用私钥，对本次连接生成一次数学签名。
+4. 服务器使用保存的公钥验证签名。
+5. 验证成功后，服务器允许 SSH 登录；验证失败则显示 `Permission denied (publickey)`。
+
+私钥不会通过网络发送给服务器。公钥可以验证签名，但无法反推出私钥，因此服务器只保存公钥也足够完成验证。
+
+#### 4.3.1 “数学签名”到底在做什么
+
+这里的“签名”不是把名字写在文件上，而是一段只能由私钥算出来的验证结果。可以把一次 SSH 登录想成下面这段对话：
+
+```text
+服务器：这是我刚刚随机生成的一道临时题目 X，请证明你有对应私钥。
+GitHub Actions：我用私钥对 X 算出签名 S，发给你。
+服务器：我用已保存的公钥检查 S 是否确实对应 X。
+```
+
+检查通过，服务器只能得出一个结论：这次连接的一方确实持有与该公钥配对的私钥；它看不到、也拿不到私钥本身。
+
+题目 `X` 每次连接都会重新生成，因此即使有人截获一次旧签名，也不能拿它通过下一次登录验证。
+
+#### 4.3.2 为什么公钥不能反推出私钥
+
+本教程生成的是 `ed25519` 密钥。它利用一种具有“单向性”的数学关系：
+
+- 用私钥可以很容易计算出公钥；
+- 已知公钥，却几乎不可能在可接受的时间内倒推出私钥；
+- 私钥能为临时题目生成签名；公钥只能验证签名是否正确，不能自己伪造签名。
+
+这不是因为服务器故意不去看私钥，而是数学上做不到高效反推。就像知道一道非常大的乘法结果，想反推出原来的两个大质数会极其困难；`ed25519` 使用的具体数学不同，但安全思路相同：正向容易，反向极难。
+
+GitHub Actions 运行时，工作流会把 `SSH_PRIVATE_KEY` Secret 临时写成：
+
+```text
+~/.ssh/deploy_key
+```
+
+随后 rsync 通过这把临时私钥连接服务器。工作流结束后，GitHub 的临时 Linux 机器会被回收。
+
+### 4.4 把公钥加入服务器
+
+先查看公钥：
+
+```bash
+cat ~/.ssh/afyke_quartz_actions.pub
+```
+
+复制输出的整行内容，然后登录服务器：
+
+```bash
+ssh -p 22 root@47.99.178.186
+```
+
+在服务器中执行：
+
+```bash
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+
+编辑：
+
+```text
+/root/.ssh/authorized_keys
+```
+
+把刚才复制的公钥单独放在一行，保存后执行：
+
+```bash
+chmod 600 ~/.ssh/authorized_keys
+```
+
+#### 4.4.1 这两个 chmod 权限是什么意思
+
+SSH 会检查密钥目录和公钥白名单是否足够私密；若其他账号可以随意读取或修改，SSH 可能拒绝使用它们。因此需要执行：
+
+```bash
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+```
+
+数字按“文件主人、同组用户、其他用户”的顺序写：`4` 是读取、`2` 是写入、`1` 是进入目录或执行，数字可以相加。
+
+| 命令 | 权限含义 | 在本教程中的实际效果 |
+| --- | --- | --- |
+| `chmod 700 ~/.ssh` | 主人有读、写、进入目录权限；其他人没有权限 | 只有当前登录的 `root` 用户能进入 `/root/.ssh` |
+| `chmod 600 ~/.ssh/authorized_keys` | 主人可读、可写；其他人没有权限 | 只有 `root` 能读取或修改允许登录的公钥清单 |
+
+这里以 `root` 登录服务器，所以 `~` 指向 `/root`。这两条命令不会修改公钥内容，只是收紧访问权限。
+
+### 4.5 测试密钥登录
+
+退出服务器，回到 Mac 后执行：
+
+```bash
+ssh \
+  -i ~/.ssh/afyke_quartz_actions \
+  -p 22 \
+  root@47.99.178.186
+```
+
+这条命令的意思是：使用指定的私钥，以 `root` 身份登录这台服务器。
+
+| 部分 | 含义 |
+| --- | --- |
+| `ssh` | 远程登录服务器。 |
+| `\` | 只是把一条长命令分成多行写，实际仍是一条命令。 |
+| `-i ~/.ssh/afyke_quartz_actions` | 指定使用刚生成的部署私钥。 |
+| `-p 22` | 连接服务器的 22 端口。 |
+| `root@47.99.178.186` | 用 `root` 用户登录 IP 为 `47.99.178.186` 的服务器。 |
+
+```bash
+> ssh \
+  -i ~/.ssh/afyke_quartz_actions \
+  -p 22 \
+  root@47.99.178.186
+
+Welcome to Alibaba Cloud Elastic Compute Service !
+
+Activate the web console with: systemctl enable --now cockpit.socket
+
+Last login: Fri Aug 14 16:10:16 2026 from 185.220.236.142
+```
+如果不再要求输入服务器密码，就说明密钥配置成功。
+
+## 五、准备服务器身份信息
+
+### 5.1 获取 known_hosts
+
+`known_hosts` 用来验证 GitHub Actions 连接的确实是自己的服务器，避免被伪造服务器截获部署内容。
+
+这里会用到两套用途不同的密钥，不要混淆：
+
+| 密钥 | 谁持有私钥 | 用途 |
+| --- | --- | --- |
+| 部署密钥 | GitHub Actions | GitHub Actions 证明“我是被允许登录的人”。 |
+| 服务器身份密钥 | 服务器 | 服务器证明“我确实是这台服务器”。 |
+
+服务器安装 SSH 服务时，会自动生成自己的身份密钥对：私钥留在服务器内部，公钥可以告诉所有来访者。`ssh-keyscan` 取得的正是这套密钥中的服务器公钥；它不是前面生成的部署公钥。
+
+GitHub Actions 将服务器公钥保存到 `known_hosts` 后，之后部署时会核对服务器返回的身份是否一致：一致才连接；不一致便拒绝连接，防止误把博客文件传给冒充的服务器。
+
+#### 5.1.1 SSH 的双向身份验证
+
+SSH 连接中，两边都要验明身份：
+
+```text
+① GitHub Actions 验证服务器
+   GitHub：你真是我配置的那台服务器吗？
+   服务器：用自己的身份私钥证明。
+   GitHub：用 known_hosts 中保存的服务器公钥核对。
+
+② 服务器验证 GitHub Actions
+   服务器：你真是被允许登录的 GitHub Actions 吗？
+   GitHub：用部署私钥证明。
+   服务器：用 authorized_keys 中保存的部署公钥核对。
+```
+
+两边都验证成功，才会建立加密连接并开始使用 `rsync` 上传博客文件。因此，`known_hosts` 是 GitHub Actions 保存的“服务器身份证”，`authorized_keys` 是服务器保存的“允许 GitHub 使用的钥匙”。
+
+在 Mac 上执行：
+
+```bash
+ssh-keyscan -p 22 47.99.178.186 > /tmp/afyke-quartz-known-hosts
+```
+
+这条命令不会登录服务器，也不会修改服务器；它只是取得服务器的 SSH 身份公钥，并保存到 Mac 的临时文件中：
+
+| 部分 | 含义 |
+| --- | --- |
+| `ssh-keyscan` | 向服务器询问“你的 SSH 身份公钥是什么？” |
+| `-p 22` | 询问 22 端口。 |
+| `47.99.178.186` | 询问这台服务器。 |
+| `>` | 把查询结果写入文件。 |
+| `/tmp/afyke-quartz-known-hosts` | Mac 上临时存放结果的位置。 |
+
+查看准备保存到 GitHub 的内容：
+
+```bash
+cat /tmp/afyke-quartz-known-hosts
+```
+
+条件允许时，应通过宝塔终端或云服务器控制台核对 SSH 主机密钥指纹，再把内容保存到 GitHub。
+
+### 5.2 查看部署私钥
+
+在 Mac 上执行：
+
+```bash
+cat ~/.ssh/afyke_quartz_actions
+```
+
+复制包括下面两行标记在内的完整内容：
+
+```text
+-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----
+```
+
+私钥只能放入 GitHub Secrets，不要发送给他人，不要写入 Markdown、工作流文件或 Git 仓库。
+
+## 六、配置 GitHub Actions Secrets
+
+### 6.1 打开配置页面
+
+进入 GitHub 仓库：
+
+```text
+yunyunafyke-sketch/quartz-personal-blog
+```
+
+依次点击：
+
+```text
+Settings
+→ Secrets and variables
+→ Actions
+→ Secrets
+→ New repository secret
+```
+
+GitHub 官方说明见：[Using secrets in GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets)。
+
+### 6.2 添加部署配置
+
+添加以下 Repository secrets：
+
+| Secret 名称 | 填写内容 |
+| --- | --- |
+| `SSH_PRIVATE_KEY` | `~/.ssh/afyke_quartz_actions` 的完整私钥 |
+| `SSH_KNOWN_HOSTS` | `/tmp/afyke-quartz-known-hosts` 的完整内容 |
+| `SERVER_HOST` | `47.99.178.186` |
+| `SERVER_PORT` | `22` |
+| `SERVER_USER` | `root` |
+| `SERVER_PATH` | `/www/AfykeBlog/afyke-blog` |
+
+GitHub Secrets 保存后不能再次查看明文，只能覆盖更新，这是正常的安全设计。
+
+## 七、创建自动部署工作流
+
+### 7.1 创建文件
+
+在 Quartz 项目根目录创建：
+
+```text
+.github/workflows/deploy.yml
+```
+
+这里的项目根目录是：
+
+```text
+/Users/chenweili/Documents/quartz
+```
+
+不要把工作流放进 `content` 或 `public`。
+
+### 7.2 完整工作流
+
+写入：
+
+```yaml
+name: 自动部署 Quartz 博客
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: afyke-blog-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 拉取项目源码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装项目依赖
+        run: npm ci
+
+      - name: 安装 Quartz 插件
+        run: npx quartz plugin install
+
+      - name: 安装 Mermaid 构建所需浏览器
+        run: npx playwright install --with-deps chromium
+
+      - name: 构建 Quartz
+        run: npx quartz build
+
+      - name: 检查构建结果
+        run: test -f public/index.html
+
+      - name: 稳定 Explorer 页面编号
+        run: |
+          find public -type f -name '*.html' \
+            -exec perl -pi -e 's/explorer-\d+/explorer/g' {} +
+
+      - name: 配置服务器 SSH 密钥
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: 发布到宝塔服务器
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PATH: ${{ secrets.SERVER_PATH }}
+        run: |
+          rsync -azc --no-times --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${SERVER_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            public/ \
+            "${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/"
+```
+
+### 7.3 关键配置说明
+
+| 配置 | 作用 |
+| --- | --- |
+| `branches: master` | 只有推送到当前正式分支时才部署 |
+| `workflow_dispatch` | 允许在 GitHub 页面手动执行部署 |
+| `contents: read` | 将 GitHub Token 权限限制为只读 |
+| `concurrency` | 避免两次部署同时覆盖服务器文件 |
+| `fetch-depth: 0` | 拉取完整 Git 历史，让文章修改时间计算准确 |
+| `node-version: 22` | 与当前本地环境保持一致，并满足 Quartz 5 的 Node.js 版本要求 |
+| `npm ci` | 严格按照 `package-lock.json` 安装依赖 |
+| `playwright install` | 为当前项目的静态 Mermaid 渲染准备 Chromium |
+| `test -f` | 没有生成首页时立即停止部署 |
+| `-c` | 按内容校验和判断文件是否变化 |
+| `--no-times` | 不因构建时间不同而同步文件 |
+| `--delete` | 删除服务器上、本地 `public` 已不存在的旧文件 |
+
+GitHub 官方推荐明确限制工作流权限，并通过 Secrets 向步骤传递敏感信息。参考：[Secure use reference](https://docs.github.com/en/actions/reference/security/secure-use)。
+
+## 八、处理 Explorer 编号造成的无意义差异
+
+### 8.1 问题原因
+
+当前 Explorer 插件使用全局递增编号：
+
+```javascript
+const id = `explorer-${numExplorers++}`
+```
+
+新增一篇文章后，旧页面可能从：
+
+```html
+id="explorer-34"
+```
+
+变成：
+
+```html
+id="explorer-35"
+```
+
+正文虽然没变，但 rsync 会正确识别到 HTML 字节发生了变化。
+
+### 8.2 自动规范化
+
+工作流在构建后执行：
+
+```bash
+find public -type f -name '*.html' \
+  -exec perl -pi -e 's/explorer-\d+/explorer/g' {} +
+```
+
+当前每个页面只有一个 Explorer，因此不同 HTML 页面都使用固定的 `explorer` ID 不会冲突。
+
+第一次启用规范化时，服务器旧页面仍然包含数字编号，可能会集中同步一次。完成这次部署后，新增文章不会再仅因 Explorer 编号变化而重复上传无关页面。
+
+### 8.3 仍然应该变化的文件
+
+新增文章后，下列文件发生变化是正常的：
+
+- 新文章 HTML。
+- 所在文件夹的目录页面。
+- 首页或栏目入口。
+- `index.xml`。
+- `sitemap.xml`。
+- `static/contentIndex.json`。
+- 新文章的 OG 图片。
+
+这些文件包含全站目录、搜索、RSS 或站点地图数据，不属于无意义变化。
+
+## 九、第一次启动自动部署
+
+### 9.1 提交工作流
+
+在 Mac 的 Quartz 项目根目录执行：
+
+```bash
+git add .github/workflows/deploy.yml
+
+git commit -m "部署配置-新增 Quartz 自动发布流程"
+
+git push origin master
+```
+
+提交说明使用中文，明确说明本次增加了什么。
+
+### 9.2 查看运行过程
+
+打开 GitHub 仓库的：
+
+```text
+Actions
+→ 自动部署 Quartz 博客
+→ 最新一次运行
+```
+
+可以看到每个步骤的状态：
+
+- 绿色对勾：执行成功。
+- 黄色圆点：正在执行。
+- 红色叉号：执行失败，点击步骤查看错误日志。
+
+### 9.3 手动触发
+
+工作流配置了：
+
+```yaml
+workflow_dispatch:
+```
+
+因此可以进入 Actions 页面，选择工作流后点击 `Run workflow` 手动执行。
+
+GitHub 支持使用 `push`、手动触发和并发控制组织部署流程。参考：[Deploying with GitHub Actions](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments)。
+
+## 十、以后如何发布文章
+
+### 10.1 日常发布流程
+
+以后修改或新增笔记后，只需：
+
+```bash
+cd /Users/chenweili/Documents/quartz
+
+git add content
+
+git commit -m "博客搭建笔记-更新自动部署说明"
+
+git push origin master
+```
+
+只要推送成功，GitHub Actions 就会自动开始构建和部署。
+
+### 10.2 不需要再手工执行的命令
+
+自动化生效后，日常发布不再需要在 Mac 上手工执行：
+
+```bash
+npx quartz build
+```
+
+也不再需要手工执行：
+
+```bash
+rsync ...
+```
+
+本地仍然可以执行 `npx quartz build --serve` 预览文章，但是否预览与服务器自动部署互不影响。
+
+## 十一、常见问题
+
+### 11.1 Permission denied (publickey)
+
+表示服务器不接受 GitHub Actions 使用的私钥。依次检查：
+
+1. `SSH_PRIVATE_KEY` 是否包含完整私钥。
+2. 服务器 `authorized_keys` 中是否存在对应公钥。
+3. `SERVER_USER` 是否正确。
+4. `.ssh` 是否为 `700` 权限。
+5. `authorized_keys` 是否为 `600` 权限。
+
+### 11.2 Host key verification failed
+
+表示 `SSH_KNOWN_HOSTS` 缺失、内容错误，或者服务器重装后主机密钥发生变化。
+
+重新获取并核对：
+
+```bash
+ssh-keyscan -p 22 47.99.178.186
+```
+
+确认安全后，覆盖更新 GitHub 中的 `SSH_KNOWN_HOSTS`。
+
+不要为了跳过错误而设置：
+
+```text
+StrictHostKeyChecking=no
+```
+
+这会失去服务器身份验证能力。
+
+### 11.3 npm ci 失败
+
+常见原因包括：
+
+- `package.json` 和 `package-lock.json` 不一致。
+- 依赖没有完整提交。
+- npm 官方源暂时不可访问。
+- Quartz 插件版本或锁文件不完整。
+
+先在本地项目根目录执行相同的：
+
+```bash
+npm ci
+npx quartz plugin install
+npx quartz build
+```
+
+如果本地也失败，应先修复依赖问题，再重新推送。
+
+### 11.4 Playwright 或 Chromium 失败
+
+当前项目会在构建时使用浏览器把 Mermaid 转换为静态 SVG，因此工作流增加了：
+
+```bash
+npx playwright install --with-deps chromium
+```
+
+如果仍然失败，重点查看 `安装 Mermaid 构建所需浏览器` 和 `构建 Quartz` 两个步骤的日志。
+
+### 11.5 rsync code 23
+
+通常表示部分文件无法写入。检查：
+
+- `SERVER_PATH` 是否正确。
+- 部署用户是否有目标目录写入权限。
+- 磁盘空间是否充足。
+- 服务器目录中是否存在权限异常的旧文件。
+
+### 11.6 部署成功但页面没有更新
+
+依次检查：
+
+1. GitHub Actions 是否真的运行了最新提交。
+2. `SERVER_PATH` 是否为网站实际根目录。
+3. Nginx 或 Caddy 是否指向同一个目录。
+4. 浏览器或 CDN 是否缓存了旧页面。
+5. Quartz 的 `baseUrl` 是否正确。
+
+### 11.7 Actions 页面没有 Run workflow
+
+确认工作流已经进入默认分支，并包含：
+
+```yaml
+workflow_dispatch:
+```
+
+新工作流第一次必须先提交并推送，GitHub 页面才会识别。
+
+## 十二、安全边界与常见误区
+
+### 12.1 不要提交私钥
+
+以下内容不能出现在 Git 仓库：
+
+- SSH 私钥。
+- 服务器密码。
+- 宝塔账号密码。
+- 数据库密码。
+- GitHub Token。
+
+一旦误提交，即使后来删除文件，也应立即撤销并更换对应密钥，因为敏感信息可能仍然存在于 Git 历史中。
+
+### 12.2 尽量不要长期使用 root
+
+本教程为了沿用当前部署方式，暂时使用：
+
+```text
+root@47.99.178.186
+```
+
+更安全的正式方案是创建专门的部署用户，只授予：
+
+```text
+/www/AfykeBlog/afyke-blog
+```
+
+目录的读写权限。即使部署私钥泄漏，攻击范围也会更小。
+
+### 12.3 不要把 -n 放进正式工作流
+
+`-n` 表示只预演：
+
+```bash
+rsync -n ...
+```
+
+如果自动部署命令包含 `-n`，Actions 会显示执行成功，但服务器不会收到任何文件。
+
+### 12.4 谨慎使用 --delete
+
+`--delete` 会删除服务器目标目录中、本地 `public` 不存在的内容。
+
+只有确认：
+
+```text
+/www/AfykeBlog/afyke-blog
+```
+
+专门用于存放 Quartz 构建结果时，才应使用该参数。不要在该目录中同时保存手工文件、备份或其他网站内容。
+
+### 12.5 不要提交 public
+
+`public` 是可重复生成的产物，已经被 `.gitignore` 忽略。正确方式是提交源码，让 GitHub Actions 重新构建，而不是把成百上千个 HTML 提交到 Git。
+
+### 12.6 不要在不受信任的代码上开放部署密钥
+
+自动部署只监听正式的 `master` 分支，不要直接让外部 Pull Request 获得服务器 Secrets。
+
+GitHub 官方建议工作流遵守最小权限原则，并谨慎处理能够读取 Secrets 的代码修改权限。参考：[GitHub Actions 安全使用说明](https://docs.github.com/en/actions/reference/security/secure-use)。
+
+## 十三、如何回滚
+
+### 13.1 回滚原理
+
+服务器只保存当前构建结果，真正的版本历史保存在 Git 中。
+
+如果新文章或配置部署后有问题，可以撤销对应 Git 提交，再次推送。GitHub Actions 会重新构建旧版本内容，并通过 rsync 恢复服务器。
+
+### 13.2 使用 revert 回滚
+
+先查看提交记录：
+
+```bash
+git log --oneline
+```
+
+找到需要撤销的提交后执行：
+
+```bash
+git revert 提交编号
+git push origin master
+```
+
+`git revert` 会新增一条“撤销”提交，不会破坏已有 Git 历史，适合已经推送到远程的内容。
+
+## 十四、GitHub 和 Gitee 怎么选
+
+### 14.1 当前项目优先使用 GitHub
+
+当前 Quartz 项目已经配置 GitHub 远程仓库，直接增加 GitHub Actions 所需改动最少：
+
+```text
+origin = https://github.com/yunyunafyke-sketch/quartz-personal-blog.git
+```
+
+因此本教程默认使用 GitHub。
+
+### 14.2 Gitee 的原理相同
+
+如果以后改用 Gitee，整体流程不变：
+
+```text
+推送源码
+→ CI 平台安装 Node.js
+→ 构建 Quartz
+→ 使用 SSH 密钥连接服务器
+→ rsync 同步 public
+```
+
+区别主要在流水线配置文件、Secret 配置入口、可用构建环境和平台权限。没有迁移需求时，不必同时维护 GitHub 和 Gitee 两套自动部署。
+
+## 十五、总结
+
+自动部署的核心不是让服务器自己长期运行 Quartz，而是让 GitHub Actions 在每次推送后临时完成构建，再把静态网站同步到服务器。
+
+最终日常流程可以压缩成：
+
+```text
+写笔记
+→ 中文 Git 提交
+→ git push origin master
+→ GitHub Actions 自动构建
+→ rsync 自动发布
+```
+
+一句话记忆：**Git 保存源码，GitHub Actions 负责构建，SSH 负责连接，rsync 负责发布。**
