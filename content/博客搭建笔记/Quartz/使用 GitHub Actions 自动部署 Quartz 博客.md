@@ -1,6 +1,5 @@
 ---
 publish: true
-title: 使用 GitHub Actions 自动部署 Quartz 博客
 ---
 
 # 使用 GitHub Actions 自动部署 Quartz 博客

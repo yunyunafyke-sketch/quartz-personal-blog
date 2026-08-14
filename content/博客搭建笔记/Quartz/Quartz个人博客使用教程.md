@@ -1,5 +1,4 @@
 ---
-title: Quartz个人博客使用教程
 publish: true
 ---
 

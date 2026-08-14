@@ -1,6 +1,5 @@
 ---
 publish: true
-title: 使用 rsync 增量部署 Quartz 博客
 ---
 # 使用 rsync 增量部署 Quartz 博客
 
