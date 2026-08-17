@@ -5,59 +5,115 @@ publish: true
 
 # Codex 第三方插件安装与使用指南
 
-## 1. 什么是 Codex 插件
+## 一、一句话理解
 
-Codex 插件是一个可安装、可分发的能力包，可以包含以下一种或多种内容：
+Codex 插件是一个可安装的能力包：它可以给 Codex 增加一套工作流程、外部服务连接或 MCP 工具。使用第三方插件时，关键不是把代码仓库下载下来，而是找到插件所属的 Marketplace，检查权限，安装后在新的 Codex 会话中使用。
 
-- **Skill**：可复用的工作流程、操作规范和参考资料
-- **MCP Server**：为 Codex 提供外部工具或数据
-- **Connector**：连接 Gmail、Slack、GitHub、Google Drive 等服务
-- **Hook**：在工具调用、命令执行或文件修改等生命周期节点运行检查
-- **Browser Extension**：插件工作流需要的浏览器能力
-- **Scheduled Task Template**：可复用的定时任务模板
-- **可选 UI**：在支持的界面中展示交互内容
+## 二、理论：插件到底是什么
 
-插件是完整安装包，Skill 则通常是插件内部的一项具体能力。
+### 2.1 插件是能力包
 
----
+可以把 Codex 想成一个会写代码、查资料和执行任务的通用助手，把插件想成给它安装的“工具包”。插件可以包含以下一种或多种能力：
 
-## 2. 支持插件的 Codex 环境
+- **Skill**：某类任务的工作方法和操作说明。
+- **Connector**：连接 GitHub、Gmail、Slack、Google Drive 等外部服务。
+- **MCP Server**：向 Codex 提供外部工具和结构化数据。
+- **Hook**：在命令执行、文件修改等生命周期节点自动运行检查或命令。
+- **Browser Extension**：为插件工作流提供浏览器能力。
+- **Scheduled Task Template**：为定时任务提供可复用模板。
 
-目前可以通过以下环境浏览和安装插件：
+一个插件可以只包含 Skill，也可以同时包含 Skill、Connector 和 MCP Server。
 
-- Codex 桌面版
-- Codex CLI
+### 2.2 四个容易混淆的词
 
-Codex IDE 扩展目前不提供插件浏览和安装功能。安装插件后，通常需要重新启动 Codex，或者新建任务，才能使用插件新加入的 Skill 和工具。
+| 名称 | 白话理解 | 是否等同于插件 |
+| --- | --- | --- |
+| Plugin | 可以安装和分发的完整能力包 | 是 |
+| Skill | 一套具体的工作方法和操作说明 | 不是，通常是插件的一部分 |
+| MCP Server | 让 Codex 获得外部工具或数据的服务 | 不是，可能被插件打包 |
+| Connector | 已经定义好登录和权限的外部服务连接 | 不是，通常由 MCP 等能力支撑 |
+| Marketplace | 用来发现、安装和分发插件的来源或目录 | 不是插件 |
 
----
+最简单的判断方法是：想复用“怎么做”，关注 Skill；想连接“外部系统”，关注 Connector 或 MCP；想安装一整套能力，关注 Plugin。
 
-## 3. 在 Codex 桌面版安装插件
+### 2.3 什么叫第三方插件
 
-这是最简单的安装方式：
+第三方插件不是 OpenAI 官方维护的插件，可能来自个人、团队、公司或开源社区。它通常通过某个 Marketplace 发布，Marketplace 可以是公共目录、团队目录、个人目录，也可以是用于本地测试的本地 Marketplace。
 
-1. 打开 Codex。
-2. 进入 **Plugins** 页面。
-3. 搜索或浏览需要的插件。
-4. 打开插件详情。
-5. 点击 `+` 安装。
-6. 如果插件需要外部服务，按提示完成登录和授权。
-7. 安装完成后，新建一个任务。
+任意 GitHub 仓库都不能直接当成 Codex 插件安装。仓库需要按照 Codex Marketplace 和插件格式提供清单、插件目录及相关文件。
 
-插件目录通常包含以下分类：
+## 三、理论：插件是怎么工作的
 
-- **OpenAI**：OpenAI 提供的插件
-- **Workspace**：工作空间提供的插件
-- **Personal**：个人 Marketplace 中的插件
-- **Installed**：已经安装的插件
+### 3.1 从安装到使用的完整链路
 
----
+插件生效大致经过以下过程：
 
-## 4. 在 Codex CLI 安装插件
+1. **选择来源**：从公共目录、工作区、个人 Marketplace 或第三方 Marketplace 查找插件。
+2. **安装插件**：Codex 保存插件包及其配置。
+3. **连接服务**：如果插件需要 Gmail、GitHub 或其他外部服务，按提示登录并授权。
+4. **创建新会话**：新安装的 Skill、MCP 工具通常在新的聊天或新的 CLI 会话中可用。
+5. **提出任务**：可以直接描述目标，也可以使用 `@` 明确指定插件或其中的 Skill。
+6. **执行并受控**：Codex 仍然受当前环境的沙箱、审批、文件权限、网络权限和外部账号权限约束。
 
-### 4.1 使用插件浏览器
+所以，“插件已安装”只代表能力包已经加入当前环境，不代表它已经登录外部服务，也不代表它可以绕过 Codex 的安全限制。
 
-启动 Codex CLI：
+### 3.2 Marketplace 和插件目录的关系
+
+Marketplace 更像“货架”或“软件源”，插件是货架上的具体商品。一个 Marketplace 可以提供多个插件，一个插件也可以被发布到公共目录或团队目录中。
+
+在 ChatGPT 和 Codex 支持的界面中，公共插件目录可以统一发现插件；在 Codex CLI 中，插件浏览器按 Marketplace 分组展示插件。第三方插件通常需要先添加或切换到对应的 Marketplace，再进行安装。
+
+### 3.3 插件、账号和权限的关系
+
+插件可能同时涉及三层权限：
+
+| 权限层 | 解决的问题 |
+| --- | --- |
+| Codex 环境权限 | 能否读写文件、运行命令或访问网络 |
+| 外部服务权限 | 能否读取 Gmail、GitHub、Slack 等账号数据或执行操作 |
+| 插件自身行为 | 是否包含 Hook、MCP Server 或会向外部服务发送数据 |
+
+这三层互相独立。即使插件需要登录，登录也不等于自动批准所有操作；即使 Codex 允许运行命令，插件也不应被默认信任。
+
+## 四、实践：安装前怎么选择和检查
+
+### 4.1 先确认使用环境
+
+目前安装 Codex 插件主要使用以下入口：
+
+- **ChatGPT 桌面版中的 Codex**：通过 Plugins 页面浏览和安装。
+- **Codex CLI**：通过会话内的 `/plugins` 打开插件浏览器。
+
+Codex IDE 扩展目前不提供插件浏览和安装入口。如果在 IDE 中找不到插件页面，应改用 ChatGPT 桌面版或 Codex CLI 完成安装，再确认该插件能力是否能在目标界面使用。
+
+### 4.2 安装前检查清单
+
+安装第三方插件前，至少检查：
+
+1. 插件名称、维护者和来源是否可信。
+2. 它所在的 Marketplace 是否确实是项目、团队或个人维护的插件市场。
+3. 插件说明中包含哪些 Skill、Connector、MCP Server、Hook 或浏览器能力。
+4. 是否需要登录外部服务，申请了哪些数据和操作权限。
+5. MCP Server 的启动命令、远程地址、环境变量和认证方式是什么。
+6. Hook 会运行哪些命令，是否会读取、修改或上传本地文件。
+7. 插件是否长期维护，版本和依赖是否有明确说明。
+
+来源不明、权限过宽、包含无法解释的命令或要求把密码写入配置文件的插件，不应直接安装到日常工作环境。
+
+## 五、最小例子：安装并使用一个第三方插件
+
+### 5.1 在 ChatGPT 桌面版中安装
+
+1. 打开 ChatGPT 桌面版，并进入 Codex 可用的工作界面。
+2. 打开 **Plugins** 页面。
+3. 搜索插件，或切换到对应的 Workspace、Personal 或第三方来源。
+4. 打开插件详情，先阅读说明和权限，再点击 `+` 安装。
+5. 如果插件需要 Connector，按提示登录并授权；有些插件会等到第一次使用时才要求连接。
+6. 新建一个 Codex 任务，再开始使用插件。
+
+### 5.2 在 Codex CLI 中安装第三方 Marketplace 插件
+
+启动 Codex：
 
 ```bash
 codex
@@ -69,280 +125,65 @@ codex
 /plugins
 ```
 
-插件浏览器支持：
+在插件浏览器中：
 
-- 按 Marketplace 浏览插件
-- 查看插件详情
-- 安装或卸载插件
-- 按 `Space` 启用或停用已安装插件
+1. 选择 **Add Marketplace**，按界面提示添加第三方 Marketplace 来源。
+2. 切换到该 Marketplace，搜索并打开目标插件。
+3. 查看插件详情、来源和权限。
+4. 安装插件；已安装的插件可以使用 `Space` 启用或停用。
+5. 退出当前会话并重新启动一个新的 Codex 会话。
 
-安装完成后，需要启动新的 Codex 会话。
+不同版本的 CLI 可能调整命令行子命令和界面布局，因此以当前 `/plugins` 浏览器中的操作为准，不要机械照抄旧教程中的固定命令。
 
-### 4.2 使用命令行安装
+### 5.3 使用已安装插件
 
-查看当前 Marketplace 和插件：
-
-```bash
-codex plugin list
-```
-
-安装指定插件：
-
-```bash
-codex plugin add 插件名@市场名
-```
-
-也可以把 Marketplace 单独写成参数：
-
-```bash
-codex plugin add 插件名 --marketplace 市场名
-```
-
----
-
-## 5. 安装 GitHub 上的第三方插件
-
-GitHub 仓库需要采用 Codex Marketplace 格式。不能把任意 GitHub 代码仓库直接当作插件安装。
-
-### 5.1 添加第三方 Marketplace
-
-```bash
-codex plugin marketplace add owner/repo --ref main
-```
-
-支持的 Marketplace 来源包括：
-
-- GitHub 风格的 `owner/repo`
-- HTTPS Git 地址
-- SSH Git 地址
-- 本地目录
-
-示例：
-
-```bash
-codex plugin marketplace add https://github.com/owner/repo
-codex plugin marketplace add ./path/to/marketplace
-```
-
-如果只需要仓库中的部分目录，可以使用稀疏检出：
-
-```bash
-codex plugin marketplace add https://github.com/owner/repo --sparse plugins/example
-```
-
-### 5.2 查看 Marketplace 中的插件
-
-```bash
-codex plugin list
-```
-
-输出中会显示：
-
-- Marketplace 名称
-- 插件名称
-- 是否安装
-- 是否启用
-- 插件版本
-- 本地路径或 Git 来源
-
-### 5.3 安装插件
-
-```bash
-codex plugin add 插件名@市场名
-```
-
-例如安装 Ponytail：
-
-```bash
-codex plugin marketplace add DietrichGebert/ponytail
-codex plugin add ponytail@ponytail
-```
-
-安装后重新启动 Codex 桌面版，或者创建新的 Codex CLI 会话。
-
----
-
-## 6. 如何使用插件
-
-### 6.1 直接描述目标
-
-安装插件后，可以直接描述需要的结果：
+可以直接描述想要的结果，让 Codex 自己选择合适的已安装能力：
 
 ```text
-检查当前代码是否存在过度设计。
+请总结今天 Gmail 中未读的重要邮件，只读取邮件，不发送或删除任何内容。
 ```
+
+如果希望明确指定插件或其中的 Skill，可以使用 `@`：
 
 ```text
-总结今天 Gmail 中未读的重要邮件。
+@插件名 检查当前代码改动中的安全风险，只输出问题和修复建议，不修改文件。
 ```
 
-Codex 会根据插件和 Skill 的描述选择合适的能力。
+第一次使用连接类插件时，按提示完成外部服务登录。任务中仍应明确数据范围和允许的操作，例如“只读”“不要发送”“不要修改仓库”。
 
-### 6.2 使用 `@` 明确指定插件或 Skill
+### 5.4 管理、停用和卸载
 
-如果希望明确指定能力，可以在输入框中键入 `@`：
+发现插件不再需要时，可以在插件目录或 CLI 的 `/plugins` 浏览器中查看、停用或卸载插件。
+
+卸载插件不一定会自动撤销外部服务的授权。如果插件曾连接 Gmail、GitHub 或其他服务，还应到对应的账号或连接管理页面单独检查并断开授权。
+
+## 六、总结
+
+### 6.1 最短上手流程
 
 ```text
-@ponytail 帮我用最简单的方式实现这个需求。
+确认来源和权限
+    ↓
+打开 ChatGPT 桌面版 Plugins 页面，或在 Codex CLI 输入 /plugins
+    ↓
+添加或选择第三方 Marketplace
+    ↓
+查看详情并安装
+    ↓
+完成 Connector 或 MCP 配置
+    ↓
+新建 Codex 会话
+    ↓
+直接描述目标，或使用 @插件名 明确指定
 ```
 
-或者指定插件中的某个 Skill：
+### 6.2 一句话记忆
 
-```text
-@ponytail-review 检查当前代码改动是否过度设计。
-```
+**Marketplace 是插件来源，Plugin 是能力包，Skill 是工作方法，MCP 和 Connector 是外部工具与服务连接；安装前看来源和权限，安装后开新会话再使用。**
 
-输入 `@` 后，Codex 会显示当前任务中可用的插件和 Skill。
+### 6.3 官方参考资料
 
-### 6.3 使用 Connector
-
-包含 Connector 的插件可能会在以下时间要求登录：
-
-- 安装插件时
-- 第一次使用相关功能时
-
-例如：
-
-```text
-使用 Gmail 插件总结今天的未读邮件。
-```
-
-外部服务操作同时受到以下限制：
-
-- 外部服务账号自身的权限
-- Codex 沙箱策略
-- Codex 操作审批策略
-- 工作空间管理员配置
-
-### 6.4 使用 MCP 工具
-
-插件中的 MCP Server 负责向 Codex提供外部工具和结构化数据。部分 MCP Server 可能需要额外配置、网络权限或身份认证。
-
-通常不需要直接调用 MCP 工具名，只需要描述目标；只有在需要严格指定工具时，才显式指定插件或 Skill。
-
-### 6.5 检查 Hook
-
-插件可能包含自动运行的 Hook。启用前应检查并确认其用途，尤其关注：
-
-- 会执行哪些本地命令
-- 会读取或修改哪些文件
-- 是否需要网络访问
-- 是否会把数据发送给外部服务
-
----
-
-## 7. 管理插件和 Marketplace
-
-### 查看插件
-
-```bash
-codex plugin list
-```
-
-### 更新第三方 Marketplace
-
-```bash
-codex plugin marketplace upgrade 市场名
-```
-
-### 卸载插件
-
-```bash
-codex plugin remove 插件名@市场名
-```
-
-也可以使用：
-
-```bash
-codex plugin remove 插件名 --marketplace 市场名
-```
-
-### 删除 Marketplace
-
-```bash
-codex plugin marketplace remove 市场名
-```
-
-卸载插件只会从当前 Codex 环境移除插件包。如果插件使用了 Connector，外部服务连接可能仍然保留，需要在 ChatGPT 或对应服务的连接管理页面中单独断开。
-
----
-
-## 8. Plugin、Skill、MCP 和 Connector 的区别
-
-| 名称 | 主要作用 |
-|---|---|
-| Plugin | 可安装、可分发的完整能力包 |
-| Skill | 特定任务的操作流程和说明 |
-| MCP Server | 为 Codex 提供工具、数据和外部操作能力 |
-| Connector | 带身份认证的外部服务连接 |
-| Hook | 在生命周期节点自动执行检查或命令 |
-| Marketplace | 用于发布和发现插件的目录 |
-
-选择建议：
-
-- 只想保存一套重复使用的操作流程：使用 Skill
-- 想把多个 Skill 打包分享：使用 Plugin
-- 需要连接内部系统或外部 API：使用 MCP Server
-- 需要连接 Gmail、Slack、Google Drive 等账号：使用 Connector 插件
-- 需要在执行命令或修改文件前后强制检查：使用 Hook
-
----
-
-## 9. 常见问题
-
-### 安装后为什么看不到插件？
-
-安装完成后需要新建任务或重新启动 Codex。旧任务不会自动获得新安装的 Skill 和工具。
-
-### 为什么插件能看到，但功能不能使用？
-
-依次检查：
-
-1. 插件是否已经安装并启用
-2. 是否新建了任务或会话
-3. Connector 是否完成登录授权
-4. MCP Server 是否完成配置
-5. Hook 是否已经审查和信任
-6. Codex 沙箱或管理员策略是否阻止了相关操作
-
-### 为什么 IDE 扩展中找不到插件入口？
-
-插件浏览和安装目前不支持 Codex IDE 扩展。请使用 Codex 桌面版或 Codex CLI。
-
-### 第三方插件是否安全？
-
-安装前应检查：
-
-- 插件来源和维护者
-- `.codex-plugin/plugin.json`
-- `skills/` 中的操作说明
-- MCP Server 地址和认证方式
-- Hook 中运行的命令
-- 插件请求的文件、网络和外部服务权限
-
----
-
-## 10. 最短上手流程
-
-```bash
-# 1. 添加第三方 Marketplace
-codex plugin marketplace add owner/repo --ref main
-
-# 2. 查看插件
-codex plugin list
-
-# 3. 安装插件
-codex plugin add 插件名@市场名
-
-# 4. 重新启动 Codex 或新建会话
-```
-
-然后直接描述需求，或者用 `@插件名`、`@Skill名` 明确指定能力。
-
----
-
-## 参考资料
-
-- [Codex 插件使用说明](https://developers.openai.com/codex/plugins)
-- [Codex 插件开发说明](https://developers.openai.com/codex/build-plugins)
-- [OpenAI Plugins 文档](https://developers.openai.com/plugins)
+- [OpenAI：Plugins](https://developers.openai.com/codex/plugins)
+- [OpenAI：Build plugins](https://developers.openai.com/codex/build-plugins)
+- [OpenAI：Codex CLI](https://developers.openai.com/codex/cli)
+- [OpenAI：Configuration Reference](https://developers.openai.com/codex/config-reference)

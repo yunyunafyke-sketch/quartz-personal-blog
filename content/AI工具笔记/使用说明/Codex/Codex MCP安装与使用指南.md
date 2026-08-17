@@ -196,6 +196,7 @@ MYSQL_PORT = "3306"
 MYSQL_USER = "公司数据库用户名"
 MYSQL_PASSWORD = "公司数据库密码"
 MYSQL_DATABASE = "aboss_sso_ps"
+MYSQL_SQL_MODE = ""
 ```
 
 说明：
@@ -207,6 +208,28 @@ MYSQL_DATABASE = "aboss_sso_ps"
 - 修改后重启 Codex，再通过 `/mcp` 检查 `zhps_mysql` 状态。
 
 如果公司 VPN 已连接但仍无法解析 `cic.inter` 域名，通常需要使用上述 SOCKS5 包装方式，或者让公司网络提供跳板机/端口转发方案。Codex 的 `experimental_environment = "remote"` 是将 MCP 放到远程执行环境中运行，不等于让本机 MCP 自动连接公司的 VPN。
+
+#### `sql_mode` 不兼容问题
+
+`sql_mode` 是 MySQL 连接建立时的行为设置。`mysql-mcp-server` 默认使用：
+
+```text
+sql_mode = "TRADITIONAL"
+```
+
+`TRADITIONAL` 会启用较严格的数据校验规则，但公司的 Obproxy/数据库兼容层不支持这个连接初始化设置，因此会返回：
+
+```text
+Not supported feature or function
+```
+
+在 `zhps_mysql.env` 中增加：
+
+```toml
+MYSQL_SQL_MODE = ""
+```
+
+表示不额外要求当前 MCP 连接启用 `TRADITIONAL`。该配置只影响当前连接，不会修改数据库的全局配置。验证结果显示，设置为空后，`SELECT 1` 可以正常执行。主要进行只读查询时通常没有问题；如果以后执行写入，需要额外注意数据校验行为。
 
 ## 6. 安全建议
 
