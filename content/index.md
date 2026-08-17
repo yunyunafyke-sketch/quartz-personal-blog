@@ -2,7 +2,7 @@
 title: Home
 publish: true
 ---
-<div class="home-landing" style="--home-wallpaper: url('/static/images/home-spring-blossoms.jpg');">
+<div class="home-landing" style="--home-wallpaper: url('/static/images/home-spring-blossoms.webp');">
   <span class="home-brand" aria-hidden="true">Afyke Blog</span>
 </div>
 <section class="home-library" aria-label="文章目录">

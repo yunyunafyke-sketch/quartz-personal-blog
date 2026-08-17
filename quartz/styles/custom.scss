@@ -803,6 +803,7 @@ body[data-slug="index"] .sidebar.left .flex-component > *:has(.darkmode) {
 @media all and (max-width: 800px) {
   body[data-slug="index"] .home-landing {
     --home-rail-inset: 0.75rem;
+    --home-wallpaper: url("/static/images/home-spring-blossoms-mobile.webp");
   }
 
   body[data-slug="index"] .home-landing::before {
