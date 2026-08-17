@@ -51,16 +51,16 @@ export default (() => {
           <>
             <link
               rel="preload"
-              href={joinSegments(baseDir, "static/images/home-spring-blossoms.webp")}
+              href={joinSegments(baseDir, "static/images/home-spring-blossoms.avif")}
               as="image"
-              type="image/webp"
+              type="image/avif"
               media="(min-width: 801px)"
             />
             <link
               rel="preload"
-              href={joinSegments(baseDir, "static/images/home-spring-blossoms-mobile.webp")}
+              href={joinSegments(baseDir, "static/images/home-spring-blossoms-mobile.avif")}
               as="image"
-              type="image/webp"
+              type="image/avif"
               media="(max-width: 800px)"
             />
           </>
