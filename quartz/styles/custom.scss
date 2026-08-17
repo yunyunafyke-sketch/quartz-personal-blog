@@ -928,6 +928,18 @@ body[data-slug="index"] .home-library details > a:focus-visible {
   background: #edf4ff;
 }
 
+body[data-slug="index"] .home-library details details {
+  margin-left: 1rem;
+}
+
+body[data-slug="index"] .home-library details details > summary {
+  padding-left: 0.8rem;
+}
+
+body[data-slug="index"] .home-library details details > a {
+  padding-left: 2rem;
+}
+
 /* The directory styles set links to display:block, so keep filtered items
    explicitly hidden when the search script applies the hidden attribute. */
 body[data-slug="index"] .home-library details[hidden],
@@ -995,6 +1007,18 @@ body:not([data-slug="index"]) .global-search-library details > a {
 body:not([data-slug="index"]) .global-search-library details > a:hover,
 body:not([data-slug="index"]) .global-search-library details > a:focus-visible {
   background: #1b3558;
+}
+
+body:not([data-slug="index"]) .global-search-library details details {
+  margin-left: 1rem;
+}
+
+body:not([data-slug="index"]) .global-search-library details details > summary {
+  padding-left: 0.8rem;
+}
+
+body:not([data-slug="index"]) .global-search-library details details > a {
+  padding-left: 2rem;
 }
 
 body:not([data-slug="index"]) .global-search-library details[hidden],

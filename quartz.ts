@@ -3,6 +3,11 @@ import rehypeMermaid from "rehype-mermaid"
 import { QuartzTransformerPluginInstance, TreeTransform } from "./quartz/plugins/types"
 import { componentRegistry } from "./quartz/components/registry"
 import { QuartzPluginData } from "./quartz/plugins/vfile"
+import {
+  buildDirectoryTree,
+  compareDirectoryPages,
+  DirectoryTreeNode,
+} from "./quartz/util/directory"
 import { isFolderPath, resolveRelative } from "./quartz/util/path"
 import type { Element, Root } from "hast"
 
@@ -52,53 +57,38 @@ const populateHomeLibrary: TreeTransform = (root: Root, slug, componentData) => 
   const placeholder = findPlaceholder(root.children)
   if (!placeholder) return
 
-  const groups = new Map<string, QuartzPluginData[]>()
-  for (const page of componentData.allFiles as QuartzPluginData[]) {
-    const pageSlug = page.slug ?? ""
-    const pathParts = (page.filePath ?? "").split("/")
-    const category = pathParts[0] === "content" ? pathParts[1] : pathParts[0]
-    if (
-      !category ||
-      category === "tags" ||
-      pageSlug === "index" ||
-      pageSlug.endsWith("/index") ||
-      page.unlisted === true ||
-      !page.frontmatter?.title
-    ) continue
-
-    const pages = groups.get(category) ?? []
-    pages.push(page)
-    groups.set(category, pages)
+  const renderNode = (node: DirectoryTreeNode, topLevel = false): Element => {
+    const details: Element = {
+      type: "element",
+      tagName: "details",
+      properties: topLevel && node === tree[0] ? { open: true } : topLevel ? {} : { open: true },
+      children: [
+        {
+          type: "element",
+          tagName: "summary",
+          properties: {},
+          children: [{ type: "text", value: node.name }],
+        } as Element,
+        ...node.children.map((child) => renderNode(child)),
+        ...node.pages.sort(compareDirectoryPages).map(
+          (page) =>
+            ({
+              type: "element",
+              tagName: "a",
+              properties: {
+                href: resolveRelative("index" as never, page.slug! as never),
+                className: ["internal", "internal-link"],
+              },
+              children: [{ type: "text", value: page.frontmatter!.title! }],
+            }) as Element,
+        ),
+      ],
+    }
+    return details
   }
 
-  placeholder.children = [...groups.entries()]
-    .sort(([first], [second]) => first.localeCompare(second, "zh-CN"))
-    .map(([category, pages], groupIndex) => {
-      pages.sort(byDirectoryOrder)
-      const details: Element = {
-        type: "element",
-        tagName: "details",
-        properties: groupIndex === 0 ? { open: true } : {},
-        children: [
-          {
-            type: "element",
-            tagName: "summary",
-            properties: {},
-            children: [{ type: "text", value: category }],
-          } as Element,
-          ...pages.map((page) => ({
-            type: "element",
-            tagName: "a",
-            properties: {
-              href: resolveRelative("index" as never, page.slug! as never),
-              className: ["internal", "internal-link"],
-            },
-            children: [{ type: "text", value: page.frontmatter!.title! }],
-          }) as Element),
-        ],
-      }
-      return details
-    })
+  const tree = buildDirectoryTree(componentData.allFiles as QuartzPluginData[])
+  placeholder.children = tree.map((node) => renderNode(node, true))
 }
 
 const staticMermaid: QuartzTransformerPluginInstance = {
@@ -127,10 +117,7 @@ const staticMermaid: QuartzTransformerPluginInstance = {
 const config = await loadQuartzConfig()
 for (const pageType of config.plugins.pageTypes ?? []) {
   const currentTransforms = pageType.treeTransforms
-  pageType.treeTransforms = (ctx) => [
-    ...(currentTransforms?.(ctx) ?? []),
-    populateHomeLibrary,
-  ]
+  pageType.treeTransforms = (ctx) => [...(currentTransforms?.(ctx) ?? []), populateHomeLibrary]
 }
 // Render Mermaid before syntax highlighting so the published site contains
 // static SVG images and never needs to download Mermaid in the browser.

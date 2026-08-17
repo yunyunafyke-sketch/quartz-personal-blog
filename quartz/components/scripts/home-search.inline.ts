@@ -64,13 +64,17 @@ function getSearchLibrary() {
   )
 }
 
+function getDirectoryRoot(library: HTMLElement) {
+  return library.querySelector<HTMLElement>(".home-library-list") ?? library
+}
+
 function applyTitleFilter() {
   const input = document.querySelector<HTMLInputElement>(".search-container .search-bar")
   const library = getSearchLibrary()
   if (!input || !library) return
 
   const terms = getSearchTerms(input)
-  for (const details of library.querySelectorAll<HTMLDetailsElement>("details")) {
+  const filterDetails = (details: HTMLDetailsElement) => {
     const links = getDirectoryLinks(details)
     let hasMatch = false
     for (const link of links) {
@@ -82,8 +86,21 @@ function applyTitleFilter() {
       hasMatch ||= matched
     }
 
+    for (const child of [...details.children].filter(
+      (element): element is HTMLDetailsElement => element instanceof HTMLDetailsElement,
+    )) {
+      hasMatch ||= filterDetails(child)
+    }
+
     details.hidden = terms.length > 0 && !hasMatch
     details.open = terms.length > 0 ? hasMatch : details.dataset.homeDefaultOpen === "true"
+    return hasMatch
+  }
+
+  for (const details of [...getDirectoryRoot(library).children].filter(
+    (element): element is HTMLDetailsElement => element instanceof HTMLDetailsElement,
+  )) {
+    filterDetails(details)
   }
 }
 
