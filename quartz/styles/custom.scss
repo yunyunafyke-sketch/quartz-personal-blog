@@ -855,12 +855,13 @@ body[data-slug="index"] .popover {
   z-index: 10001;
 }
 
-body[data-slug="index"]:has(.search-container.active) .home-library {
-  display: block;
+/* Search stays a title list; do not show a second article preview while typing. */
+body[data-slug="index"]:has(.search-container.active) .popover {
+  display: none !important;
 }
 
-body[data-slug="index"]:has(.search-layout.display-results) .home-library {
-  display: none;
+body[data-slug="index"]:has(.search-container.active) .home-library {
+  display: block;
 }
 
 body[data-slug="index"] .home-library-list {
@@ -899,6 +900,13 @@ body[data-slug="index"] .home-library details > a {
 body[data-slug="index"] .home-library details > a:hover,
 body[data-slug="index"] .home-library details > a:focus-visible {
   background: #edf4ff;
+}
+
+/* The directory styles set links to display:block, so keep filtered items
+   explicitly hidden when the search script applies the hidden attribute. */
+body[data-slug="index"] .home-library details[hidden],
+body[data-slug="index"] .home-library details > a[hidden] {
+  display: none !important;
 }
 
 :root[saved-theme="dark"] body[data-slug="index"] .home-library {
@@ -973,11 +981,31 @@ body[data-slug="index"] .search > .search-container.active .result-card {
 }
 
 body[data-slug="index"] .search > .search-container.active .search-layout {
+  display: none !important;
+}
+
+body[data-slug="index"] .search > .search-container.active .search-layout {
   border-color: #d8e0eb;
 }
 
 body[data-slug="index"] .search > .search-container.active .result-card {
   border-bottom-color: #e3e8f0;
+}
+
+body[data-slug="index"] .search > .search-container.active .result-card > .card-description,
+body[data-slug="index"] .search > .search-container.active .result-card > .tags {
+  display: none;
+}
+
+body[data-slug="index"] .search > .search-container.active .preview-container {
+  display: none !important;
+}
+
+body[data-slug="index"] .home-title-match {
+  padding: 0 0.12em;
+  border-radius: 0.2em;
+  background: #f4d76b;
+  color: inherit;
 }
 
 :root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active {
@@ -999,4 +1027,9 @@ body[data-slug="index"] .search > .search-container.active .result-card {
 
 :root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active .result-card {
   border-bottom-color: #304765;
+}
+
+:root[saved-theme="dark"] body[data-slug="index"] .home-title-match {
+  background: #806b24;
+  color: #fff5c4;
 }

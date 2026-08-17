@@ -28,6 +28,11 @@ componentRegistry.setOptionOverrides("@quartz-community/folder-page", {
   sort: byDirectoryOrder,
 })
 
+componentRegistry.setOptionOverrides("@quartz-community/search", {
+  enablePreview: false,
+  fieldPriority: ["title"],
+})
+
 // Build the homepage article directory from the notes that already exist.
 // The homepage only contains a placeholder; article titles are not duplicated there.
 const populateHomeLibrary: TreeTransform = (root: Root, slug, componentData) => {

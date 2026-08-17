@@ -6,6 +6,8 @@ import { QuartzEmitterPlugin } from "../types"
 import spaRouterScript from "../../components/scripts/spa.inline"
 // @ts-ignore
 import popoverScript from "../../components/scripts/popover.inline"
+// @ts-ignore
+import homeSearchScript from "../../components/scripts/home-search.inline"
 import baseStyles from "../../styles/base.scss"
 import customStyles from "../../styles/custom.scss"
 import popoverStyle from "../../components/styles/popover.scss"
@@ -83,6 +85,10 @@ async function joinScripts(scripts: string[]): Promise<string> {
 
 function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentResources) {
   const cfg = ctx.cfg.configuration
+
+  // The homepage directory search is a global page resource rather than a
+  // registered component so it is present in both static builds and dev mode.
+  componentResources.afterDOMLoaded.push(homeSearchScript)
 
   // popovers
   if (cfg.enablePopovers) {
