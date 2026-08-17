@@ -830,6 +830,121 @@ body[data-slug="index"] .sidebar.left .flex-component > *:has(.darkmode) {
   }
 }
 
+/* The homepage keeps a compact, scrollable article directory visible. */
+body[data-slug="index"] .home-library {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  top: calc(12vh + 5.5rem);
+  left: 50%;
+  width: 65%;
+  height: 64vh;
+  box-sizing: border-box;
+  padding: 1.25rem 1.35rem;
+  overflow: hidden;
+  border: 1px solid rgba(216, 224, 235, 0.95);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 1rem 3rem rgba(17, 35, 63, 0.2);
+  color: #1a2433;
+  transform: translateX(-50%);
+}
+
+/* Link previews should remain above the homepage directory while hovering titles. */
+body[data-slug="index"] .popover {
+  z-index: 10001;
+}
+
+body[data-slug="index"]:has(.search-container.active) .home-library {
+  display: block;
+}
+
+body[data-slug="index"]:has(.search-layout.display-results) .home-library {
+  display: none;
+}
+
+body[data-slug="index"] .home-library-list {
+  height: 100%;
+  padding-right: 0.35rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+body[data-slug="index"] .home-library details {
+  border-top: 1px solid #e5eaf1;
+}
+
+body[data-slug="index"] .home-library details:last-child {
+  border-bottom: 1px solid #e5eaf1;
+}
+
+body[data-slug="index"] .home-library summary {
+  padding: 0.7rem 0.15rem;
+  color: #243b5a;
+  cursor: pointer;
+  font-weight: 700;
+  user-select: none;
+}
+
+body[data-slug="index"] .home-library details > a {
+  display: block;
+  padding: 0.45rem 0.8rem 0.55rem 1.2rem;
+  border-radius: 0.45rem;
+  color: #216fe4;
+  line-height: 1.4;
+  text-decoration: none;
+  user-select: text;
+}
+
+body[data-slug="index"] .home-library details > a:hover,
+body[data-slug="index"] .home-library details > a:focus-visible {
+  background: #edf4ff;
+}
+
+:root[saved-theme="dark"] body[data-slug="index"] .home-library {
+  border-color: #304765;
+  background: rgba(18, 35, 61, 0.96);
+  color: #edf3ff;
+}
+
+:root[saved-theme="dark"] body[data-slug="index"] .home-library details {
+  border-color: #304765;
+}
+
+:root[saved-theme="dark"] body[data-slug="index"] .home-library summary {
+  color: #e4edff;
+}
+
+:root[saved-theme="dark"] body[data-slug="index"] .home-library details > a {
+  color: #cfe1ff;
+}
+
+:root[saved-theme="dark"] body[data-slug="index"] .home-library details > a:hover,
+:root[saved-theme="dark"] body[data-slug="index"] .home-library details > a:focus-visible {
+  background: #1b3558;
+}
+
+@media all and (max-width: 800px) {
+  body[data-slug="index"] .home-library {
+    top: 7rem;
+    left: 50%;
+    width: 90%;
+    height: calc(100dvh - 8rem);
+    padding: 1rem;
+    transform: translateX(-50%);
+  }
+
+  body[data-slug="index"] .home-library-list {
+    height: 100%;
+  }
+}
+
+@media all and (min-width: 801px) and (max-width: 1199px) {
+  body[data-slug="index"] .home-library {
+    width: 90%;
+  }
+}
+
 /* Search results stay solid and readable; the navigation rail remains transparent. */
 
 body[data-slug="index"] .search > .search-container.active {

@@ -50,11 +50,49 @@ MYSQL_DATABASE = "personal"
 
 说明：
 
+- `uvx` 是 Python 工具 `uv` 提供的临时运行命令，会自动下载并运行 `mysql-mcp-server`，不需要手动执行 `pip install`。
 - `MYSQL_USER` 必须换成真实数据库用户名。只知道密码还不能连接数据库。
 - 密码只放在本机的 `config.toml` 中，不要提交到 Git，也不要发到群聊或截图中。
 - 如果本机没有 `uvx`，先安装 `uv`，然后再重启 Codex。
 
-## 4. 检查是否连接成功
+## 4. 配置其他 MCP
+
+以后安装其他 MCP，先查看该项目 README 中的安装方式、启动命令和环境变量，再在 `~/.codex/config.toml` 中新增一个配置块。每个 MCP 使用不同的名称。
+
+Python MCP：
+
+```toml
+[mcp_servers.example]
+command = "uvx"
+args = ["--from", "Python包名", "启动入口"]
+```
+
+Node.js MCP：
+
+```toml
+[mcp_servers.example]
+command = "npx"
+args = ["-y", "npm包名"]
+```
+
+本地程序：
+
+```toml
+[mcp_servers.example]
+command = "/绝对路径/程序名"
+args = []
+```
+
+远程 HTTP MCP：
+
+```toml
+[mcp_servers.example]
+url = "https://example.com/mcp"
+```
+
+配置后重启 Codex，输入 `/mcp` 检查连接状态。
+
+## 5. 检查是否连接成功
 
 重启 Codex，在输入框执行：
 
@@ -74,7 +112,7 @@ MYSQL_DATABASE = "personal"
 使用 personal_mysql 查看 users 表的表结构，并查询 5 条数据。不要执行 INSERT、UPDATE、DELETE、DROP 或 ALTER。
 ```
 
-## 5. 连接失败时检查
+## 6. 连接失败时检查
 
 按这个顺序排查：
 
@@ -85,7 +123,7 @@ MYSQL_DATABASE = "personal"
 5. 修改配置后是否重启 Codex。
 6. 在 Codex 中重新执行 `/mcp` 查看状态。
 
-## 6. 安全建议
+## 7. 安全建议
 
 - 最好新建一个只读 MySQL 用户给 MCP 使用，不要使用 root。
 - 只允许这个用户访问 `personal` 数据库。
