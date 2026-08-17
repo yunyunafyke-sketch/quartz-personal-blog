@@ -57,9 +57,16 @@ function highlightTitle(link: HTMLAnchorElement, terms: string[]) {
   return true
 }
 
+function getSearchLibrary() {
+  return (
+    document.querySelector<HTMLElement>(".global-search-library") ??
+    document.querySelector<HTMLElement>(".home-library")
+  )
+}
+
 function applyTitleFilter() {
   const input = document.querySelector<HTMLInputElement>(".search-container .search-bar")
-  const library = document.querySelector<HTMLElement>(".home-library")
+  const library = getSearchLibrary()
   if (!input || !library) return
 
   const terms = getSearchTerms(input)
@@ -81,7 +88,7 @@ function applyTitleFilter() {
 }
 
 function setupTitleSearch() {
-  const library = document.querySelector<HTMLElement>(".home-library")
+  const library = getSearchLibrary()
   if (!library) return
 
   for (const details of library.querySelectorAll<HTMLDetailsElement>("details")) {

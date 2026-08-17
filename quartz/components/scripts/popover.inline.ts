@@ -48,9 +48,13 @@ async function mouseEnterHandler(
   targetUrl.search = ""
   const popoverId = `popover-${link.pathname}`
   const prevPopoverElement = document.getElementById(popoverId)
+  const isSearchDirectoryLink = !!link.closest(".global-search-library, .home-library")
 
   // dont refetch if there's already a popover
   if (!!document.getElementById(popoverId)) {
+    if (isSearchDirectoryLink) {
+      prevPopoverElement?.classList.add("search-directory-preview")
+    }
     showPopover(prevPopoverElement as HTMLElement)
     return
   }
@@ -68,6 +72,9 @@ async function mouseEnterHandler(
   const popoverElement = document.createElement("div")
   popoverElement.id = popoverId
   popoverElement.classList.add("popover")
+  if (isSearchDirectoryLink) {
+    popoverElement.classList.add("search-directory-preview")
+  }
   const popoverInner = document.createElement("div")
   popoverInner.classList.add("popover-inner")
   popoverInner.dataset.contentType = contentType ?? undefined

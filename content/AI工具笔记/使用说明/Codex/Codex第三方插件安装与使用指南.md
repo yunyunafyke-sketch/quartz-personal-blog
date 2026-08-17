@@ -157,9 +157,112 @@ codex
 
 卸载插件不一定会自动撤销外部服务的授权。如果插件曾连接 Gmail、GitHub 或其他服务，还应到对应的账号或连接管理页面单独检查并断开授权。
 
-## 六、总结
+## 六、实例：安装和使用 archify
 
-### 6.1 最短上手流程
+### 6.1 archify 是什么
+
+[archify](https://github.com/tt-a1i/archify) 是 `tt-a1i` 发布的第三方 Agent Skill，专门帮助 Codex 生成可验证的架构图、工作流图、时序图、数据流图和生命周期图。
+
+它生成的是自包含 HTML 文件，并支持预览、校验、导出 PNG 以及静态或带动画的图形。
+
+严格来说，archify 当前是一个第三方 **Skill**，不是通过 Codex `/plugins` 浏览器安装的完整 **Plugin**。它适合作为“从 GitHub 安装第三方 Codex 能力”的示例。
+
+### 6.2 安装 archify
+
+根据仓库 README，全局安装：
+
+```bash
+npx skills add tt-a1i/archify -g
+```
+
+如果只想临时试用，不写入全局环境：
+
+```bash
+npx skills use tt-a1i/archify@archify --agent codex
+```
+
+README 中说明，Codex CLI 的全局 Skill 通常位于：
+
+```text
+~/.agents/skills/
+```
+
+项目级安装则可以放在项目目录下的：
+
+```text
+.agents/skills/
+```
+
+安装完成后，重新启动 Codex 或新建会话，让 Codex 加载新的 Skill。
+
+### 6.3 使用 archify 生成架构图
+
+进入需要分析的代码仓库，启动 Codex：
+
+```bash
+codex
+```
+
+然后直接描述目标：
+
+```text
+分析当前仓库，然后使用 archify 创建一张高层运行时架构图。
+展示 8 到 12 个核心组件、主要调用路径、外部依赖和信任边界。
+把辅助信息放到卡片中，不要增加过多连线。
+```
+
+也可以生成具体的登录时序图：
+
+```text
+使用 archify 绘制登录流程：
+浏览器 -> Web 应用 -> API -> JWT 校验 -> Redis 会话查询 -> PostgreSQL 回源。
+请把缓存未命中路径作为次要路径展示。
+```
+
+archify 支持的主要图类型包括：
+
+| 图类型 | 适合场景 |
+| --- | --- |
+| Architecture | 系统组件、服务、存储和边界 |
+| Workflow | CI/CD、审批、工具调用和操作流程 |
+| Sequence | API 调用、认证、缓存回源和异步交互 |
+| Data Flow | 数据管道、数据来源、转换和存储 |
+| Lifecycle | 状态、重试、等待和终止结果 |
+
+### 6.4 继续修改和导出
+
+生成初稿后，可以继续用自然语言要求局部修改：
+
+```text
+增加 Redis 节点，把认证服务移动到左侧，并突出回滚路径。
+```
+
+archify 会保留结构化源数据，便于继续调整。完成后可以使用 Export 菜单导出 PNG、静态格式或带动画的格式。
+
+如果需要直接使用仓库中的命令行工具，可以在 archify 目录中执行：
+
+```bash
+node bin/archify.mjs doctor
+node bin/archify.mjs demo /tmp/archify-demo
+node bin/archify.mjs guide "展示 CI/CD 检查、审批、部署和回滚"
+```
+
+### 6.5 archify 与完整 Plugin 的区别
+
+这个例子可以帮助理解两种安装方式：
+
+| 能力类型 | archify 的方式 | 完整 Plugin 的方式 |
+| --- | --- | --- |
+| 发布形式 | GitHub 上的 Skill 仓库 | Marketplace 中的插件包 |
+| 安装入口 | `npx skills add` 或 `npx skills use` | ChatGPT Plugins 页面或 Codex `/plugins` |
+| 主要内容 | `SKILL.md`、脚本和示例 | `plugin.json`、Skill、MCP、Connector 或 Hook |
+| 使用方式 | 直接说明“使用 archify” | 直接描述目标或用 `@插件名` 指定 |
+
+因此，不能仅因为仓库在 GitHub 上，就把 archify 当作完整 Plugin 运行 `codex /plugins` 安装。应优先按照仓库 README 提供的安装方式操作。
+
+## 七、总结
+
+### 7.1 最短上手流程
 
 ```text
 确认来源和权限
@@ -177,11 +280,11 @@ codex
 直接描述目标，或使用 @插件名 明确指定
 ```
 
-### 6.2 一句话记忆
+### 7.2 一句话记忆
 
 **Marketplace 是插件来源，Plugin 是能力包，Skill 是工作方法，MCP 和 Connector 是外部工具与服务连接；安装前看来源和权限，安装后开新会话再使用。**
 
-### 6.3 官方参考资料
+### 7.3 官方参考资料
 
 - [OpenAI：Plugins](https://developers.openai.com/codex/plugins)
 - [OpenAI：Build plugins](https://developers.openai.com/codex/build-plugins)
