@@ -170,7 +170,7 @@ codex
 ### 6.2 安装 archify
 
 根据仓库 README，全局安装：
-[npm与npx的区别](../../../前端/Node.js/npm与npx的区别.md)
+[npm与npx的区别](../../../前端/Node/npm与npx的区别.md)
 
 ```bash
 npx skills add tt-a1i/archify -g

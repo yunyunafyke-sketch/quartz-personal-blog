@@ -411,7 +411,7 @@ ResultModel 返回 Controller 和客户端
 
 交互图已按当前项目的 `LogAopConfig`、`LoginFacadeImpl`、`UserInfoQryExe` 和 `UserInfoDTO` 关系生成，图中同时标出了显式 `log.info("personNo: {}", userInfoDTO.getPersonNo())` 的占位符替换过程，以及 AOP 统一日志的 JSON 序列化过程：
 
-[打开 AOP统一日志打印链路交互图](/Volumes/data/ideaWorkSpace/aboss-sso/aop-unified-log-chain.html)
+[打开 AOP统一日志打印链路交互图](/archify/aop-unified-log-chain.html)
 
 图中关键顺序如下：
 
