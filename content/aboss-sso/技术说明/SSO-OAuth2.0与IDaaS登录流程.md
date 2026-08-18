@@ -1,0 +1,337 @@
+---
+publish: true
+date: 2026-08-18
+---
+
+## 一、一句话理解
+
+`aboss-sso` 不是直接替代 IDaaS 完成用户认证，而是接收 IDaaS 返回的授权码，向 IDaaS 换取用户 token 和用户信息，再生成自己的 SSO JWT，并通过 Cookie 返回给客户端。
+
+本项目的完整链路可以概括为：
+
+```text
+客户端
+  → SSO /login-by-code
+  → IDaaS /oauth/token 换 access_token
+  → IDaaS /userinfo 查用户
+  → 账户中心补充账户信息
+  → SSO 生成 JWT
+  → 写 Cookie 并返回 LoginTokenDTO
+```
+
+交互式时序图：[`SSO OAuth2.0 登录与 IDaaS 调用链路`](../../archify/sso-oauth2-idaas.html)
+
+## 二、理论：它是什么
+
+### 2.1 OAuth2.0
+
+OAuth2.0 可以理解为“用户把登录交给认证中心，业务系统只接收一个临时授权凭证”。
+
+在本项目中，关键凭证有三种：
+
+| 凭证 | 作用 | 由谁产生 |
+| --- | --- | --- |
+| `code` / `auth_code` | 一次性授权码，用来换取 IDaaS token | IDaaS 授权流程 |
+| IDaaS `access_token` | 调用 IDaaS 用户信息接口 | IDaaS `/oauth/token` |
+| SSO JWT | 客户端访问本系统时使用的登录态 | `LoginTokenPipelineHandler` |
+
+这三个凭证不是同一个东西。`code` 只能用于换 token；IDaaS `access_token` 主要用于访问 IDaaS；SSO JWT 才是本项目 Web 侧最终写入 Cookie 的登录凭证。
+
+### 2.2 SSO 与 IDaaS 的分工
+
+可以把两者理解为两个不同职责的系统：
+
+- IDaaS 负责确认“这个用户是谁”，并返回用户基本身份信息。
+- SSO 负责把 IDaaS 身份转换成“本系统认可的登录态”，补充本地账户信息、权限上下文和单设备策略。
+- 客户端只需要和 SSO 交互，不需要直接理解本系统的账户数据库结构。
+
+## 三、理论：它是怎么工作的
+
+### 3.1 入口与登录流水线
+
+Web 登录入口位于：
+
+```text
+POST /platform/api/aboss/sso/login-by-code
+```
+
+对应代码位置：
+
+```text
+aboss-sso-adapter/src/main/java/com/aliyun/fsi/insurance/sso/web/LoginController.java
+```
+
+Controller 将请求交给 `OAuth2WebLoginExecutor`。执行器把 `DefaultLoginCmd` 中的 `appId` 和 `code` 写入 `OAuth2WebLoginPipelineContext`，然后按路由顺序执行登录处理器：
+
+```text
+InitLoginPipelineHandler
+  → OAuth2LoginPipelineHandler
+  → UserInfoPipelineHandler
+  → UpdateLoginTimePipelineHandler
+  → AccountInfoPipelineHandler
+  → LoginTokenPipelineHandler
+  → SingleLoginPipelineHandler
+  → WriteCookiePipelineHandler
+  → GreyLoginPipelineHandler
+```
+
+这条 Web 流水线配置在：
+
+```text
+aboss-sso-app/src/main/java/com/aliyun/fsi/insurance/sso/executor/login/LoginPipelineRouteConfig.java
+```
+
+### 3.2 根据 appId 查询 IDaaS 配置
+
+`InitLoginPipelineHandler` 首先调用：
+
+```java
+idaasConfigGateway.getIdaasConfigByAppId(context.getAppId())
+```
+
+如果找不到有效配置，登录直接失败并返回 `appId不存在!`。
+
+配置对象 `IdaasConfig` 主要包含：
+
+```text
+appId
+appSecret
+redirectUrl
+greyStatus
+```
+
+当前实现由 `IdaasConfigGatewayImpl` 调用 `IdaasConfigMapper` 查询有效的 IDaaS 配置，并将结果放入登录上下文。
+
+### 3.3 用授权码换取 IDaaS access_token
+
+`OAuth2LoginPipelineHandler` 调用：
+
+```java
+idaasUserExternalService.authCodeLogin(idaasConfig, context.getCode())
+```
+
+实际实现位于：
+
+```text
+aboss-sso-infrastructure/src/main/java/com/aliyun/fsi/insurance/sso/external/IdaasUserExternalServiceImpl.java
+```
+
+代码将请求发送到：
+
+```text
+POST {cic.idaas.url}/oauth/token
+```
+
+关键参数为：
+
+```text
+grant_type=authorization_code
+code={登录授权码}
+client_id={IdaasConfig.appId}
+client_secret={IdaasConfig.appSecret}
+redirect_uri={IdaasConfig.redirectUrl}
+```
+
+IDaaS 返回 `access_token` 和 `refresh_token` 后，SSO 将返回对象放入登录上下文。
+
+### 3.4 用 IDaaS access_token 获取用户信息
+
+拿到 IDaaS `access_token` 后，`UserInfoPipelineHandler` 调用：
+
+```java
+idaasUserExternalService.getUserInfo(accessToken)
+```
+
+对应请求为：
+
+```text
+GET {cic.idaas.url}/api/bff/v1.2/oauth2/userinfo?access_token={access_token}
+```
+
+SSO 读取的主要用户字段包括：
+
+```text
+sub
+username
+nickname
+phone_number
+email
+ouid
+```
+
+其中 `sub` 是后续查询本地账户中心的重要关联标识。
+
+### 3.5 查询账户中心并更新登录时间
+
+获取 IDaaS 用户基本信息后，`AccountInfoPipelineHandler` 根据 `sub` 查询本地账户：
+
+```java
+accountGateway.queryOne(
+    new Account().setAccountId(context.getIdaasUserBasicInfo().getSub())
+)
+```
+
+如果查到账户，SSO 会把本地账户的角色、账户类型、账户名称和展示名称写入登录上下文。
+
+随后 `UpdateLoginTimePipelineHandler` 根据用户名称更新本地账户的登录时间。
+
+如果 IDaaS 用户在账户中心不存在，系统仍会基于 IDaaS 基本信息生成普通外部账户登录态，并通过钉钉消息发出“IDaaS 数据不在账户中心”的告警。
+
+### 3.6 生成 SSO JWT
+
+`LoginTokenPipelineHandler` 不会直接把 IDaaS `access_token` 当作本项目登录凭证，而是生成一个新的 JWT。
+
+JWT 中会放入以下类型的信息：
+
+```text
+appId
+IDaaS access_token
+登录时间
+登录渠道
+账户角色
+账户类型
+账户 ID
+账户名称
+人员编号
+人员名称
+```
+
+JWT 有效期通过 `AccountLoginWhitelistGateway` 查询。生成逻辑使用 `JwtUtils.createJWT(...)`。
+
+### 3.7 单设备登录、Cookie 与响应
+
+`SingleLoginPipelineHandler` 根据单设备策略处理旧 token：
+
+- 如果未开启单设备策略，直接保存当前有效 token。
+- 如果命中单设备策略，则把旧 token 放入无效 token 缓存，并删除旧的有效 token 记录。
+- 最后保存本次登录产生的有效 token。
+
+Web 登录专用的 `WriteCookiePipelineHandler` 会把 SSO JWT 写入 `TOKEN_COOKIE_KEY` Cookie，并设置 Cookie 的有效期。
+
+最终 `OAuth2WebLoginExecutor` 返回：
+
+```java
+new LoginTokenDTO()
+    .setKey(TOKEN_HEADER_KEY)
+    .setValue(jwtToken)
+    .setExpires(jwtTokenExpires)
+```
+
+## 四、实践：可以拿来干什么
+
+### 4.1 统一多个应用的登录入口
+
+不同应用只需要把 `appId` 和 IDaaS 授权码交给 SSO。SSO 负责统一处理 IDaaS 换 token、本地账户关联、JWT 生成和 Cookie 写入。
+
+### 4.2 将外部身份与本地账户解耦
+
+IDaaS 提供外部身份，例如 `sub`、`username`；本地账户中心提供本系统自己的角色、账户类型和展示信息。两者通过 `sub` / `accountId` 关联，避免把所有业务属性都塞进 IDaaS。
+
+### 4.3 支持本系统自己的登录控制
+
+SSO 自己生成 JWT 后，可以独立实现：
+
+- 本系统的登录有效期；
+- Cookie 读写；
+- 单设备登录；
+- 旧 token 失效；
+- 本地账户信息查询；
+- SSO 登出时清理 IDaaS token。
+
+## 五、最小例子
+
+### 5.1 客户端调用 SSO
+
+客户端拿到 IDaaS 授权码后，调用 SSO：
+
+```http
+POST /platform/api/aboss/sso/login-by-code
+Content-Type: application/json
+
+{
+  "appId": "应用对应的 appId",
+  "code": "IDaaS 返回的授权码"
+}
+```
+
+SSO 成功后会返回类似结构：
+
+```json
+{
+  "key": "Authorization",
+  "value": "SSO 生成的 JWT",
+  "expires": 7200
+}
+```
+
+同时，Web 登录流程会写入 `TOKEN_COOKIE_KEY` Cookie。示例中的具体 token 值、应用 ID 和密钥不应写入文档或日志。
+
+### 5.2 本项目内部调用链
+
+```text
+LoginController.loginByAuthCode
+  → OAuth2WebLoginExecutor.execute
+  → InitLoginPipelineHandler.handle
+  → IdaasConfigGateway.getIdaasConfigByAppId
+  → OAuth2LoginPipelineHandler.handle
+  → IdaasUserExternalService.authCodeLogin
+  → IDaaS POST /oauth/token
+  → UserInfoPipelineHandler.handle
+  → IdaasUserExternalService.getUserInfo
+  → IDaaS GET /api/bff/v1.2/oauth2/userinfo
+  → AccountInfoPipelineHandler.handle
+  → LoginTokenPipelineHandler.handle
+  → SingleLoginPipelineHandler.handle
+  → WriteCookiePipelineHandler.handle
+```
+
+## 六、边界与常见误区
+
+### 6.1 IDaaS 授权页不在本仓库实现
+
+当前仓库从 `login-by-code` 接口接收 `code`。用户如何跳转到 IDaaS 授权页、IDaaS 如何完成用户认证、授权完成后如何回调客户端，未在本仓库中实现，属于仓库外部流程。
+
+因此图中的“用户授权 → 获得 code”被标注为“仓库外部”，不能把它误认为 `aboss-sso` 内部代码。
+
+### 6.2 不要混淆 IDaaS token 和 SSO JWT
+
+IDaaS `access_token` 用于调用 IDaaS 用户信息接口；SSO JWT 用于本系统后续认证。SSO JWT 的 claims 中会保存 IDaaS token，但二者的签发方、使用范围和生命周期不同。
+
+### 6.3 client_secret 属于服务端配置
+
+`client_secret` 来自 `IdaasConfig`，由 SSO 服务端调用 IDaaS 时使用。客户端不应该直接携带或暴露 `client_secret`。
+
+### 6.4 外部调用失败会中断登录
+
+IDaaS 换 token 或查询用户信息失败时，外部服务实现会抛出业务异常，登录流水线不会继续生成 SSO JWT。调用 IDaaS 的日志也不应打印完整的授权码、access_token 或 client_secret。
+
+### 6.5 登出是另一条链路
+
+PC 登出入口为：
+
+```text
+POST /platform/api/aboss/sso/logout
+```
+
+它会清理本地 Cookie，并通过 `LogoutCmdExe` 调用 IDaaS：
+
+```text
+POST {cic.idaas.url}/public/sp/slo/{appId}?access_token={token}
+```
+
+这条登出链路与本文的 OAuth2 登录主链路分开，图中没有展开。
+
+## 七、总结
+
+`aboss-sso` 的 OAuth2 登录本质是一个“IDaaS 身份转换层”：
+
+```text
+IDaaS 授权码
+  → IDaaS access_token
+  → IDaaS 用户信息
+  → 本地账户信息
+  → SSO JWT
+  → Cookie / LoginTokenDTO
+```
+
+记住一句话：IDaaS 负责证明用户身份，SSO 负责把这个身份变成本系统可以使用的登录态。
