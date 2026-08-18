@@ -170,9 +170,40 @@ codex
 ### 6.2 安装 archify
 
 根据仓库 README，全局安装：
+[npm与npx的区别](../../../前端/Node.js/npm与npx的区别.md)
 
 ```bash
 npx skills add tt-a1i/archify -g
+```
+
+如果希望明确指定“只安装到 Codex 的全局环境”，可以使用完整写法：
+
+```bash
+npx -y skills add tt-a1i/archify \
+  --skill archify \
+  --global \
+  --agent codex \
+  --yes
+```
+
+这条命令可以拆成几部分理解：
+
+| 参数 | 作用 |
+| --- | --- |
+| `npx` | 临时下载并运行 `skills` 命令，不需要提前全局安装它 |
+| `-y` | 自动确认 npx 是否下载并运行 `skills` |
+| `skills add tt-a1i/archify` | 从 GitHub 仓库添加 archify |
+| `--skill archify` | 明确指定仓库中的 `archify` Skill |
+| `--global` | 安装到当前用户的全局 Skill 目录，而不是当前项目 |
+| `--agent codex` | 只为 Codex 安装，不再询问其他 Agent |
+| `--yes` | 自动确认安装过程中的其他提示 |
+
+其中，`-y` 和 `--yes` 不是重复参数：`-y` 主要确认 npx 运行远程命令，`--yes` 主要确认 `skills add` 自己的安装选项。想看到选择界面时，可以去掉这两个参数；想避免误选其他 Agent 时，保留 `--agent codex`。
+
+安装后可以用下面的命令检查 Codex 是否已经识别到 archify：
+
+```bash
+npx skills list -g -a codex
 ```
 
 如果只想临时试用，不写入全局环境：

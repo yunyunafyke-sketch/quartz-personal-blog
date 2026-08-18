@@ -9,13 +9,25 @@ publish: true
 
 `aboss-sso` 项目使用 Spring AOP 统一记录部分业务方法的请求参数、返回参数和执行耗时。
 
-以根据 Token 查询用户信息的接口为例，业务代码没有显式执行以下日志：
+需要先区分两种日志来源。业务代码如果显式执行以下日志：
 
 ```java
 log.info("personNo: {}", userInfoDTO.getPersonNo());
 ```
 
-但日志中仍然能看到 `personNo`。原因是 AOP 在业务方法执行完成后，将整个返回对象序列化成 JSON；`UserInfoDTO` 位于返回对象的 `data` 字段中，所以其 `personNo` 会被递归序列化并打印。
+那么日志框架会把第二个参数的值替换第一个参数中的 `{}`，例如：
+
+```text
+personNo: 123456
+```
+
+而当前项目的 `LogAopConfig` 并没有单独调用这行 `personNo` 日志；它在业务方法返回后统一执行：
+
+```java
+log.info("请求类 : {}.{} 请求参数 : {} 返回参数 : {} 耗时 : {} ms", ...);
+```
+
+如果统一日志中仍然能看到 `personNo`，原因是 AOP 将整个返回对象序列化成 JSON；`UserInfoDTO` 位于返回对象的 `data` 字段中，所以其 `personNo` 会被递归序列化并打印。
 
 ## 2. 核心代码位置
 
@@ -395,6 +407,32 @@ personNo 随 data 一起进入返回参数日志
 ResultModel 返回 Controller 和客户端
 ```
 
-## 10. 一句话结论
+## 10. AOP统一日志打印链路图
+
+交互图已按当前项目的 `LogAopConfig`、`LoginFacadeImpl`、`UserInfoQryExe` 和 `UserInfoDTO` 关系生成，图中同时标出了显式 `log.info("personNo: {}", userInfoDTO.getPersonNo())` 的占位符替换过程，以及 AOP 统一日志的 JSON 序列化过程：
+
+[打开 AOP统一日志打印链路交互图](/Volumes/data/ideaWorkSpace/aboss-sso/aop-unified-log-chain.html)
+
+图中关键顺序如下：
+
+```text
+业务调用方
+    ↓
+Spring AOP 代理
+    ↓
+LogAopConfig.doAround()
+    ↓
+joinPoint.proceed() 执行业务方法
+    ↓
+业务代码显式 log.info(...)（如果有）
+    ↓
+返回 result
+    ↓
+JSON.toJSONString(joinPoint.getArgs()) / JSON.toJSONString(result)
+    ↓
+统一 log.info(...) 写出类名、方法名、入参、返回值和耗时
+```
+
+## 11. 一句话结论
 
 `personNo` 不是被单独打印的，而是在 `UserInfoQryExe` 中设置到 `UserInfoDTO` 后，随 `ResultModel` 返回给 `LoginFacadeImpl` 的 AOP 代理，再由 `LogAopConfig` 将整个返回对象序列化为 JSON 并统一写入日志。
