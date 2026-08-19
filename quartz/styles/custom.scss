@@ -36,13 +36,9 @@
   border-radius: 999px;
 }
 
-.toc-content.overflow > li.depth-0 {
-  display: none;
-}
-
 // Make heading levels visually obvious in the right-hand table of contents.
 .toc-content.overflow > li.depth-1 {
-  padding-left: 0 !important;
+  padding-left: 1.25rem !important;
   margin-top: 0.35rem;
 
   > a {
@@ -52,7 +48,7 @@
 }
 
 .toc-content.overflow > li.depth-2 {
-  padding-left: 1.25rem !important;
+  padding-left: 2.5rem !important;
 
   > a {
     font-size: 0.94rem;
@@ -60,7 +56,7 @@
 }
 
 .toc-content.overflow > li.depth-3 {
-  padding-left: 2.5rem !important;
+  padding-left: 3.75rem !important;
 
   > a {
     font-size: 0.88rem;
@@ -83,7 +79,7 @@
 }
 
 .toc-content.overflow > li.depth-3::before {
-  left: 1.5rem;
+  left: 2.75rem;
 }
 
 // Keep folder and tag listing dates on a single line.
