@@ -8,7 +8,7 @@ date: 2026-08-20
 > [!tip] 核心结论
 > 截图中的内容是宝塔面板管理的一段 Nginx 站点配置，不是 Nginx 源码。它让 Nginx 对外接收请求：普通页面返回前端静态文件，`/api/` 请求转发给本机 `8081` 端口的后端服务。
 
-<img src="Nginx配置与反向代理入门.assets/dimo.webp" alt="迪莫：站在请求入口" width="96" align="right">
+<img class="pet-icon" src="Nginx配置与反向代理入门.assets/dimo.webp" alt="迪莫：站在请求入口" width="96" align="right">
 
 > [!info] 阅读路线
 > 先看懂“请求从哪里来”，再看 Nginx 如何分流，最后用 `nginx -t`、`curl` 和日志排错。整篇只需要抓住一条主线：**页面找文件，接口找后端**。
@@ -35,7 +35,7 @@ server {
 
 表示一个网站的虚拟主机配置。一个 Nginx 可以通过多个 `server` 同时管理多个网站。
 
-<img src="Nginx配置与反向代理入门.assets/xiaoxingguang.webp" alt="小星光：网站入口" width="88" align="right">
+<img class="pet-icon" src="Nginx配置与反向代理入门.assets/xiaoxingguang.webp" alt="小星光：网站入口" width="88" align="right">
 
 > [!tip] 一个好记的类比
 > `server` 像一间店铺，`server_name` 是店铺招牌，`location` 是店内的分流指示牌，后端服务则像店铺后面的仓库。
@@ -80,7 +80,7 @@ location /api/ {
 
 `location /api/` 匹配以 `/api/` 开头的请求。`proxy_pass` 表示反向代理：浏览器只访问 Nginx，Nginx 再把请求交给后端。
 
-<img src="Nginx配置与反向代理入门.assets/yinsugou.webp" alt="音速犬：请求转发" width="92" align="right">
+<img class="pet-icon" src="Nginx配置与反向代理入门.assets/yinsugou.webp" alt="音速犬：请求转发" width="92" align="right">
 
 > [!example] 反向代理的白话版
 > 浏览器把请求交给 Nginx，Nginx 再替浏览器去找 `127.0.0.1:8081`。浏览器不需要直接暴露后端端口，这就是“反向代理”。
@@ -120,7 +120,7 @@ Nginx 会依次尝试：
 
 这种写法常用于 Vue、React 等前端单页应用。前端路由例如 `/user/list` 可能不是服务器上的真实文件，但仍然需要先返回 `index.html`，再由前端 JavaScript 渲染页面。
 
-<img src="Nginx配置与反向代理入门.assets/banbanke.webp" alt="板板壳：前端路由保护" width="92" align="right">
+<img class="pet-icon" src="Nginx配置与反向代理入门.assets/banbanke.webp" alt="板板壳：前端路由保护" width="92" align="right">
 
 > [!info] 为什么不能只返回 404？
 > 因为 `/user/list` 可能是前端路由，不是服务器上的真实文件。`try_files` 把它兜底到 `index.html`，让前端应用有机会接管后续渲染。
@@ -253,9 +253,9 @@ nginx -s reload
 
 记忆句：**Nginx 负责站在最前面接收请求，再决定是返回文件，还是把请求转交给后端。**
 
-<img src="Nginx配置与反向代理入门.assets/shengyuyiwang.webp" alt="圣羽翼王：继续探索" width="96" align="right">
+<img class="pet-icon" src="Nginx配置与反向代理入门.assets/shengyuyiwang.webp" alt="圣羽翼王：继续探索" width="96" align="right">
 
 ### 7.1 🔗 继续阅读
 
-- <img src="Nginx配置与反向代理入门.assets/xiaoxingguang.webp" alt="小星光" width="36"> [[基于Quartz搭建的个人博客/1.Quartz个人博客使用教程]]
-- <img src="Nginx配置与反向代理入门.assets/yinsugou.webp" alt="音速犬" width="36"> [[基于Quartz搭建的个人博客/2.使用 rsync 增量部署 Quartz 博客]]
+- <img class="pet-icon" src="Nginx配置与反向代理入门.assets/xiaoxingguang.webp" alt="小星光" width="36"> [[基于Quartz搭建的个人博客/1.Quartz个人博客使用教程]]
+- <img class="pet-icon" src="Nginx配置与反向代理入门.assets/yinsugou.webp" alt="音速犬" width="36"> [[基于Quartz搭建的个人博客/2.使用 rsync 增量部署 Quartz 博客]]

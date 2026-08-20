@@ -2,6 +2,15 @@
 
 // put your custom CSS here!
 
+// Pet sprites use transparent backgrounds. The Things theme applies a
+// screenshot-like card shadow to every image, so keep decorative pet sprites
+// floating without a white frame or shadow.
+body .markdown-rendered img.pet-icon {
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 // Use the document title as the page heading, not as a repeated TOC entry.
 .toc {
   // Let the TOC occupy the remaining sidebar height without clipping its list.
