@@ -38,14 +38,7 @@ pnpm-debug.log*
 !.env.template
 
 # Editor and IDE local state
-.idea/.gitignore
-.idea/**/workspace.xml
-.idea/**/shelf/
-.idea/**/tasks.xml
-.idea/**/usage.statistics.xml
-.idea/**/httpRequests/
-.idea/**/dataSources/
-.idea/**/dataSources.local.xml
+.idea/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
