@@ -6,7 +6,7 @@ function SearchDirectory({ fileData, allFiles }: QuartzComponentProps) {
   const tree = buildDirectoryTree(allFiles)
 
   const renderNode = (node: DirectoryTreeNode, topLevel = false) => (
-    <details open={topLevel ? node === tree[0] : true}>
+    <details open={topLevel && node === tree[0]}>
       <summary>{node.name}</summary>
       {node.children.map((child) => renderNode(child))}
       {node.pages.sort(compareDirectoryPages).map((page) => (

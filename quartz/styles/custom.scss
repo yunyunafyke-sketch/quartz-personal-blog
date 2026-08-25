@@ -1031,6 +1031,33 @@ body:not([data-slug="index"]) .global-search-library details > a[hidden] {
   display: none !important;
 }
 
+/* Use a chevron that points right when collapsed and down when expanded. */
+body .home-library summary {
+  display: flex;
+  align-items: center;
+  list-style: none;
+}
+
+body .home-library summary::-webkit-details-marker {
+  display: none;
+}
+
+body .home-library summary::before {
+  flex: 0 0 0.45rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin: 0 0.7rem 0.15rem 0.15rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  content: "";
+  transform: rotate(-45deg);
+  transition: transform 140ms ease;
+}
+
+body .home-library details[open] > summary::before {
+  transform: rotate(45deg);
+}
+
 /* Keep search-directory previews at the top of the search panel instead of
    letting Floating UI flip them below links near the bottom of the list. */
 body:not([data-slug="index"]):has(.search-container.active) .popover.search-directory-preview {

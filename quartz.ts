@@ -61,7 +61,7 @@ const populateHomeLibrary: TreeTransform = (root: Root, slug, componentData) => 
     const details: Element = {
       type: "element",
       tagName: "details",
-      properties: topLevel && node === tree[0] ? { open: true } : topLevel ? {} : { open: true },
+      properties: topLevel && node === tree[0] ? { open: true } : {},
       children: [
         {
           type: "element",
