@@ -1,27 +1,68 @@
-# Dependencies
+# Dependencies and package-manager caches
 node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.pnp.*
 
-# Build output and caches
+# Build output, generated files, and caches
 public/
 dist/
-.quartz-cache/
+build/
+coverage/
 .cache/
+.quartz-cache/
+.quartz/
+*.tsbuildinfo
+*.tsbuildinfo.*
 
-# Environment and local secrets
+# Test, profiling, and diagnostic output
+playwright-report/
+test-results/
+blob-report/
+.nyc_output/
+*.lcov
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.heapsnapshot
+*.cpuprofile
+.0x/
+
+# Environment variables and local secrets
 .env
 .env.*
 !.env.example
+!.env.template
 
-# OS-generated files
-.DS_Store
-Thumbs.db
-
-# IDE temporary files
-.idea/workspace.xml
+# Editor and IDE local state
+.idea/.gitignore
 .idea/**/workspace.xml
 .idea/**/shelf/
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
+.idea/**/httpRequests/
+.idea/**/dataSources/
+.idea/**/dataSources.local.xml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.swp
+*.swo
+*~
 
-# Obsidian workspace settings
+# Obsidian local workspace state
 .obsidian/
+
+# OS-generated files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
