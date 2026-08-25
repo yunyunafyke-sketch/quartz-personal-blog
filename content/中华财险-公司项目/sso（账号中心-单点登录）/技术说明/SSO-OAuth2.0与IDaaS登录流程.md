@@ -19,7 +19,7 @@ date: 2026-08-18
   → 写 Cookie 并返回 LoginTokenDTO
 ```
 
-交互式时序图：[`SSO OAuth2.0 登录与 IDaaS 调用链路`](../../archify/sso-oauth2-idaas.html)
+交互式时序图：[`SSO OAuth2.0 登录与 IDaaS 调用链路`](../../../archify/sso-oauth2-idaas.html)
 
 ## 二、理论：它是什么
 
