@@ -232,4 +232,4 @@ PasswordWebLoginExecutor
 相关笔记：
 
 - [[Maven多模块项目高级知识]]
-- [[SSO-OAuth2.0与IDaaS登录流程]]
+- [[../项目说明/1.SSO-OAuth2.0与IDaaS登录流程]]
