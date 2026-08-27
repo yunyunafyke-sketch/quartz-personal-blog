@@ -1,6 +1,7 @@
 ---
 title: Codex第三方插件安装与使用指南
 publish: true
+date: 2026-08-17
 ---
 
 # Codex 第三方插件安装与使用指南

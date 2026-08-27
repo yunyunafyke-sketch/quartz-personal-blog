@@ -1,6 +1,7 @@
 ---
 title: Codex Hook单独配置与提交通知
 publish: true
+date: 2026-08-17
 ---
 
 # Codex Hook 单独配置与提交通知

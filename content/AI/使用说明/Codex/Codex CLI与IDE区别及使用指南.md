@@ -1,6 +1,7 @@
 ---
 title: Codex CLI与IDE区别及使用指南
 publish: true
+date: 2026-07-29
 ---
 
 # Codex CLI 与 IDE 扩展的区别及使用指南

@@ -1,5 +1,6 @@
 ---
 publish: true
+title: Archify使用与安装指南
 date: 2026-08-18
 ---
 

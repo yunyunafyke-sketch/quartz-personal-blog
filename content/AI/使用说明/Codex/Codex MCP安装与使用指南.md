@@ -1,6 +1,7 @@
 ---
 title: Codex MCP安装与使用指南
 publish: true
+date: 2026-07-29
 ---
 
 # Codex MCP 安装与使用指南
