@@ -115,6 +115,50 @@ const staticMermaid: QuartzTransformerPluginInstance = {
 }
 
 const config = await loadQuartzConfig()
+
+// Quartz 默认会把每篇笔记的正文写入 static/contentIndex.json。
+// 本站搜索只按标题匹配，生成索引时不传入正文，以减小索引体积。
+const contentIndex = config.plugins.emitters.find((emitter) => emitter.name === "ContentIndex")
+if (contentIndex) {
+  const emitWithoutBody = (
+    emit: () => unknown,
+    content: Parameters<typeof contentIndex.emit>[1],
+  ): Promise<unknown> => {
+    const originalTexts = content.map(([, file]) => file.data.text)
+    content.forEach(([, file]) => {
+      file.data.text = ""
+    })
+
+    try {
+      return Promise.resolve(emit()).finally(() => {
+        content.forEach(([, file], index) => {
+          file.data.text = originalTexts[index]
+        })
+      })
+    } catch (error) {
+      content.forEach(([, file], index) => {
+        file.data.text = originalTexts[index]
+      })
+      throw error
+    }
+  }
+
+  const originalEmit = contentIndex.emit
+  contentIndex.emit = (ctx, content, resources) =>
+    emitWithoutBody(() => originalEmit(ctx, content, resources), content) as ReturnType<
+      typeof originalEmit
+    >
+
+  const originalPartialEmit = contentIndex.partialEmit
+  if (originalPartialEmit) {
+    contentIndex.partialEmit = (ctx, content, resources, changeEvents) =>
+      emitWithoutBody(
+        () => originalPartialEmit(ctx, content, resources, changeEvents),
+        content,
+      ) as ReturnType<typeof originalPartialEmit>
+  }
+}
+
 for (const pageType of config.plugins.pageTypes ?? []) {
   const currentTransforms = pageType.treeTransforms
   pageType.treeTransforms = (ctx) => [...(currentTransforms?.(ctx) ?? []), populateHomeLibrary]
