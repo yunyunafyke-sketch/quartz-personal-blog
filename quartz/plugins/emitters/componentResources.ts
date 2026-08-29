@@ -8,6 +8,8 @@ import spaRouterScript from "../../components/scripts/spa.inline"
 import popoverScript from "../../components/scripts/popover.inline"
 // @ts-ignore
 import homeSearchScript from "../../components/scripts/home-search.inline"
+// @ts-ignore
+import desktopLayoutScript from "../../components/scripts/desktop-layout.inline"
 import baseStyles from "../../styles/base.scss"
 import customStyles from "../../styles/custom.scss"
 import popoverStyle from "../../components/styles/popover.scss"
@@ -89,6 +91,7 @@ function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentReso
   // The homepage directory search is a global page resource rather than a
   // registered component so it is present in both static builds and dev mode.
   componentResources.afterDOMLoaded.push(homeSearchScript)
+  componentResources.afterDOMLoaded.push(desktopLayoutScript)
 
   // popovers
   if (cfg.enablePopovers) {

@@ -2,6 +2,213 @@
 
 // put your custom CSS here!
 
+// Desktop notes can be arranged like Obsidian: both sidebars resize by their
+// divider and may be folded away, leaving the article all available space.
+@media all and (min-width: 1200px) {
+  #quartz-body {
+    --left-sidebar-width: clamp(180px, 20vw, 320px);
+    --right-sidebar-width: clamp(180px, 20vw, 320px);
+    --layout-divider-width: 10px;
+    grid-template-columns:
+      var(--left-sidebar-width)
+      var(--layout-divider-width)
+      minmax(0, 1fr)
+      var(--layout-divider-width)
+      var(--right-sidebar-width) !important;
+    grid-template-areas:
+      "grid-sidebar-left grid-divider-left grid-header grid-divider-right grid-sidebar-right"
+      "grid-sidebar-left grid-divider-left grid-center grid-divider-right grid-sidebar-right"
+      "grid-sidebar-left grid-divider-left grid-footer grid-divider-right grid-sidebar-right" !important;
+    column-gap: 0 !important;
+    transition: grid-template-columns 0.18s ease;
+  }
+
+  #quartz-body.left-sidebar-collapsed {
+    grid-template-columns: 0 0 minmax(0, 1fr) var(--layout-divider-width) var(--right-sidebar-width) !important;
+  }
+
+  #quartz-body.right-sidebar-collapsed {
+    grid-template-columns: var(--left-sidebar-width) var(--layout-divider-width) minmax(0, 1fr) 0 0 !important;
+  }
+
+  #quartz-body.left-sidebar-collapsed.right-sidebar-collapsed {
+    grid-template-columns: 0 0 minmax(0, 1fr) 0 0 !important;
+  }
+
+  #quartz-body .layout-divider {
+    display: block;
+    position: relative;
+    z-index: 3;
+    cursor: col-resize;
+    touch-action: none;
+  }
+
+  #quartz-body .layout-divider::after {
+    position: absolute;
+    top: 5.5rem;
+    bottom: 1.5rem;
+    left: 50%;
+    width: 1px;
+    content: "";
+    background: color-mix(in srgb, var(--lightgray) 78%, transparent);
+    transition:
+      background 0.15s ease,
+      width 0.15s ease;
+  }
+
+  #quartz-body .layout-divider:hover::after,
+  body.is-resizing-layout #quartz-body .layout-divider::after {
+    width: 2px;
+    background: var(--secondary);
+  }
+
+  #quartz-body .layout-divider-left {
+    grid-area: grid-divider-left;
+  }
+  #quartz-body .layout-divider-right {
+    grid-area: grid-divider-right;
+  }
+  #quartz-body.left-sidebar-collapsed .layout-divider-left,
+  #quartz-body.right-sidebar-collapsed .layout-divider-right {
+    display: none;
+  }
+
+  #quartz-body.left-sidebar-collapsed .sidebar.left,
+  #quartz-body.right-sidebar-collapsed .sidebar.right {
+    visibility: hidden;
+    overflow: hidden;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  #quartz-body > .center {
+    grid-column: 3;
+    grid-row: 1 / 4;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  #quartz-body > .center > .page-header,
+  #quartz-body > .center > article,
+  #quartz-body > .center > .page-footer {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #quartz-body .layout-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    height: 2.75rem;
+    box-sizing: border-box;
+    border-bottom: 1px solid color-mix(in srgb, var(--lightgray) 72%, transparent);
+    background: color-mix(in srgb, var(--light) 92%, transparent);
+    backdrop-filter: blur(12px) saturate(1.1);
+    pointer-events: none;
+  }
+
+  #quartz-body .sidebar-toggle {
+    position: absolute;
+    top: 0.35rem;
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    padding: 0;
+    color: var(--darkgray);
+    border: 0;
+    border-radius: 0.35rem;
+    background: transparent;
+    cursor: pointer;
+    pointer-events: auto;
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+  }
+
+  #quartz-body .sidebar-toggle svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  #quartz-body .sidebar-toggle .sidebar-icon-pane {
+    stroke-width: 2.2;
+  }
+
+  #quartz-body .sidebar-toggle:hover,
+  #quartz-body .sidebar-toggle:focus-visible,
+  #quartz-body .sidebar-toggle.is-collapsed {
+    color: var(--secondary);
+    background: color-mix(in srgb, var(--secondary) 12%, transparent);
+    outline: none;
+  }
+
+  #quartz-body .sidebar-toggle::after {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    width: max-content;
+    max-width: 10rem;
+    padding: 0.28rem 0.48rem;
+    content: attr(data-tooltip);
+    color: var(--light);
+    border: 1px solid color-mix(in srgb, var(--dark) 15%, transparent);
+    border-radius: 0.3rem;
+    background: var(--dark);
+    box-shadow: 0 0.25rem 0.75rem color-mix(in srgb, var(--dark) 18%, transparent);
+    font-size: 0.75rem;
+    line-height: 1.2;
+    opacity: 0;
+    transform: translateY(-0.15rem);
+    transition:
+      opacity 0.12s ease,
+      transform 0.12s ease;
+    pointer-events: none;
+  }
+
+  #quartz-body .sidebar-toggle:hover::after,
+  #quartz-body .sidebar-toggle:focus-visible::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #quartz-body .sidebar-toggle-left {
+    left: calc(max(0px, (100vw - 1500px) / 2) + var(--left-sidebar-width) - 2.35rem);
+  }
+
+  #quartz-body .sidebar-toggle-right {
+    right: calc(max(0px, (100vw - 1500px) / 2) + var(--right-sidebar-width) - 2.35rem);
+  }
+
+  #quartz-body.left-sidebar-collapsed .sidebar-toggle-left {
+    left: calc(max(0px, (100vw - 1500px) / 2) + 0.4rem);
+  }
+
+  #quartz-body.right-sidebar-collapsed .sidebar-toggle-right {
+    right: calc(max(0px, (100vw - 1500px) / 2) + 0.4rem);
+  }
+
+  #quartz-body .sidebar-toggle-left::after {
+    left: 0;
+  }
+
+  #quartz-body .sidebar-toggle-right::after {
+    right: 0;
+  }
+}
+
+body[data-slug="index"] .layout-controls {
+  display: none !important;
+}
+
 // Pet sprites use transparent backgrounds. The Things theme applies a
 // screenshot-like card shadow to every image, so keep decorative pet sprites
 // floating without a white frame or shadow.
@@ -109,7 +316,6 @@ body .markdown-rendered img.pet-icon {
   margin-bottom: 0 !important;
   line-height: 1.4;
 }
-
 
 /* ========================================
    Home Page
@@ -269,7 +475,12 @@ body[data-slug="index"] .sidebar.left .search-button p {
   overflow: hidden;
   padding: clamp(2.5rem, 10vh, 8rem) clamp(1.5rem, 9vw, 12rem) 2rem;
   background-image:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.42) 52%, rgba(255, 255, 255, 0.08) 100%),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.82) 0%,
+      rgba(255, 255, 255, 0.42) 52%,
+      rgba(255, 255, 255, 0.08) 100%
+    ),
     var(--home-wallpaper);
   background-position: center;
   background-size: cover;
@@ -277,7 +488,12 @@ body[data-slug="index"] .sidebar.left .search-button p {
 
 :root[saved-theme="dark"] .home-landing {
   background-image:
-    linear-gradient(90deg, rgba(5, 12, 25, 0.85) 0%, rgba(5, 12, 25, 0.5) 54%, rgba(5, 12, 25, 0.16) 100%),
+    linear-gradient(
+      90deg,
+      rgba(5, 12, 25, 0.85) 0%,
+      rgba(5, 12, 25, 0.5) 54%,
+      rgba(5, 12, 25, 0.16) 100%
+    ),
     var(--home-wallpaper);
 }
 
@@ -345,11 +561,7 @@ body[data-slug="index"] .sidebar.left .search-button p {
   border-radius: 50%;
   background: var(--secondary);
 
-  box-shadow: 0 0 0 4px color-mix(
-                  in srgb,
-                  var(--secondary) 15%,
-                  transparent
-  );
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 15%, transparent);
 }
 
 /* 主标题 */
@@ -372,11 +584,7 @@ body[data-slug="index"] .sidebar.left .search-button p {
 }
 
 .home-title > span {
-  background: linear-gradient(
-                  120deg,
-                  var(--secondary),
-                  var(--tertiary)
-  );
+  background: linear-gradient(120deg, var(--secondary), var(--tertiary));
 
   -webkit-background-clip: text;
   background-clip: text;
@@ -429,27 +637,19 @@ body[data-slug="index"] .sidebar.left .search-button p {
 
   color: var(--darkgray);
 
-  background: color-mix(
-                  in srgb,
-                  var(--light) 90%,
-                  var(--secondary)
-  );
+  background: color-mix(in srgb, var(--light) 90%, var(--secondary));
 
   transition:
-          transform 0.2s ease,
-          border-color 0.2s ease,
-          background 0.2s ease;
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .home-status span:hover {
   transform: translateY(-2px);
   border-color: var(--secondary);
 
-  background: color-mix(
-                  in srgb,
-                  var(--light) 94%,
-                  var(--secondary)
-  );
+  background: color-mix(in srgb, var(--light) 94%, var(--secondary));
 }
 
 /* 分割线 */
@@ -463,11 +663,7 @@ body[data-slug="index"] .sidebar.left .search-button p {
 
   margin: 4rem 0 1.5rem;
 
-  background: linear-gradient(
-                  to right,
-                  var(--lightgray),
-                  transparent
-  );
+  background: linear-gradient(to right, var(--lightgray), transparent);
 }
 
 /* 底部文字 */
@@ -565,8 +761,18 @@ body[data-slug="index"] .home-landing {
   min-height: 100svh;
   padding: clamp(5.5rem, 13vh, 8rem) clamp(1.25rem, 6vw, 6rem) 3rem;
   background-image:
-    linear-gradient(180deg, rgba(7, 18, 35, 0.42) 0%, rgba(7, 18, 35, 0.08) 42%, rgba(7, 18, 35, 0.62) 100%),
-    linear-gradient(90deg, rgba(7, 18, 35, 0.48) 0%, rgba(7, 18, 35, 0.1) 56%, rgba(7, 18, 35, 0.28) 100%),
+    linear-gradient(
+      180deg,
+      rgba(7, 18, 35, 0.42) 0%,
+      rgba(7, 18, 35, 0.08) 42%,
+      rgba(7, 18, 35, 0.62) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(7, 18, 35, 0.48) 0%,
+      rgba(7, 18, 35, 0.1) 56%,
+      rgba(7, 18, 35, 0.28) 100%
+    ),
     var(--home-wallpaper);
   background-position: center;
   background-size: cover;
@@ -1189,16 +1395,33 @@ body[data-slug="index"] .home-title-match {
   background: transparent;
 }
 
-:root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active .search-space > input,
+:root[saved-theme="dark"]
+  body[data-slug="index"]
+  .search
+  > .search-container.active
+  .search-space
+  > input,
 :root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active .search-layout,
-:root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active .results-container,
-:root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active .preview-container,
+:root[saved-theme="dark"]
+  body[data-slug="index"]
+  .search
+  > .search-container.active
+  .results-container,
+:root[saved-theme="dark"]
+  body[data-slug="index"]
+  .search
+  > .search-container.active
+  .preview-container,
 :root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active .result-card {
   background: #12233d;
   color: #edf3ff;
 }
 
-:root[saved-theme="dark"] body[data-slug="index"] .search > .search-container.active .search-layout {
+:root[saved-theme="dark"]
+  body[data-slug="index"]
+  .search
+  > .search-container.active
+  .search-layout {
   border-color: #304765;
 }
 

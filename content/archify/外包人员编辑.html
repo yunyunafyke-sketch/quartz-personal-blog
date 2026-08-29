@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人员编辑 - 外包人员管理</title>
+    <style>
+        /* ========== 基础重置 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #d43030;
+            --primary-dark: #b52a2a;
+            --primary-light: #fef0f0;
+            --success: #67c23a;
+            --warning: #e6a23c;
+            --danger: #f56c6c;
+            --info: #909399;
+            --text-main: #303133;
+            --text-regular: #606266;
+            --text-secondary: #909399;
+            --border-color: #dcdfe6;
+            --border-light: #ebeef5;
+            --bg-color: #f5f7fa;
+            --bg-page: #f0f2f5;
+            --border-radius: 4px;
+            --shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ========== 顶部导航 ========== */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .top-nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .top-nav .logo {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+        }
+
+        .top-nav .nav-links {
+            display: flex;
+            gap: 28px;
+        }
+
+        .top-nav .nav-links a {
+            color: var(--text-regular);
+            text-decoration: none;
+            font-size: 14px;
+            position: relative;
+            padding: 16px 0;
+        }
+
+        .top-nav .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .top-nav .nav-links a.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .top-nav .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .top-header .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: var(--text-regular);
+            font-size: 13px;
+        }
+
+        .top-header .header-right .badge {
+            background: var(--primary);
+            color: #fff;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* ========== 左侧菜单 ========== */
+        .layout {
+            display: flex;
+            padding-top: 50px;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: #fff;
+            border-right: 1px solid var(--border-light);
+            position: fixed;
+            top: 50px;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-menu {
+            padding: 12px 0;
+        }
+
+        .menu-group {
+            margin-bottom: 8px;
+        }
+
+        .menu-title {
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .menu-items {
+            list-style: none;
+        }
+
+        .menu-items li {
+            padding: 11px 20px 11px 36px;
+            color: var(--text-regular);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .menu-items li:hover {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .menu-items li.active {
+            color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 500;
+        }
+
+        .menu-items li.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary);
+        }
+
+        /* ========== 主内容区 ========== */
+        .main-content {
+            flex: 1;
+            margin-left: 200px;
+            padding: 16px 20px 80px;
+            min-width: 0;
+        }
+
+        .breadcrumb {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary);
+        }
+
+        .breadcrumb .sep {
+            margin: 0 6px;
+        }
+
+        .breadcrumb .current {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .page-header {
+            margin-bottom: 16px;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* ========== 表单 ========== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px 24px;
+        }
+
+        .form-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-item.full-width {
+            grid-column: span 3;
+        }
+
+        .form-label {
+            font-size: 13px;
+            color: var(--text-regular);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .form-label .required::before {
+            content: '*';
+            color: var(--primary);
+            margin-right: 2px;
+        }
+
+        .form-input,
+        .form-select {
+            height: 34px;
+            padding: 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            color: var(--text-main);
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+        }
+
+        .form-input:disabled,
+        .form-select:disabled,
+        .form-input[readonly] {
+            background: #f5f7fa;
+            color: var(--text-regular);
+            cursor: not-allowed;
+        }
+
+        .form-input::placeholder {
+            color: #c0c4cc;
+        }
+
+        textarea.form-input {
+            height: auto;
+            min-height: 80px;
+            padding: 10px 12px;
+            resize: vertical;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ========== 表格 ========== */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+            white-space: nowrap;
+        }
+
+        .data-table th {
+            background: #f5f7fa;
+            color: var(--text-regular);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .data-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .data-table .empty-row td {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 32px;
+        }
+
+        /* ========== 底部按钮栏 ========== */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 200px;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid var(--border-light);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            z-index: 200;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 34px;
+            padding: 0 20px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: #fff;
+            color: var(--text-regular);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: #fff;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ========== Toast ========== */
+        .toast-container {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: toastIn 0.2s ease;
+        }
+
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--danger); }
+        .toast-info { background: var(--info); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 1200px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .form-item.full-width {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-item.full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="top-header">
+        <div class="top-nav">
+            <div class="logo">中华财险</div>
+            <div class="nav-links">
+                <a href="#">运营支撑</a>
+                <a href="#">资金财务</a>
+                <a href="#" class="active">人力资源</a>
+                <a href="#">业务管理</a>
+                <a href="#">数据门户</a>
+                <a href="#">个人中心</a>
+            </div>
+        </div>
+        <div class="header-right">
+            <span>罗金龙-00006286</span>
+            <span class="badge">退出</span>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- 左侧菜单 -->
+        <aside class="sidebar">
+            <div class="sidebar-menu">
+                <div class="menu-group">
+                    <div class="menu-title">外包人员管理</div>
+                    <ul class="menu-items">
+                        <li class="active" onclick="goToList()">人员管理</li>
+                        <li>供应商管理</li>
+                        <li>业务条线管理</li>
+                    </ul>
+                </div>
+                <div class="menu-group">
+                    <div class="menu-title">计划管理</div>
+                    <ul class="menu-items">
+                        <li>项目管理</li>
+                    </ul>
+                </div>
+                <div class="menu-group">
+                    <div class="menu-title">协议管理</div>
+                    <ul class="menu-items">
+                        <li>协议新增</li>
+                        <li>协议列表</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容 -->
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="#">外包人员管理</a>
+                <span class="sep">/</span>
+                <a href="#" onclick="goToList()">人员管理</a>
+                <span class="sep">/</span>
+                <span class="current">人员编辑</span>
+            </div>
+
+            <div class="page-header">
+                <h1 class="page-title">人员编辑</h1>
+            </div>
+
+            <!-- 基本信息 -->
+            <div class="card">
+                <div class="card-header">基本信息</div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-item">
+                            <label class="form-label">人员工号</label>
+                            <input type="text" class="form-input" id="basicEmpNo" value="202408010001" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">人员姓名</label>
+                            <input type="text" class="form-input" id="basicName" value="张三" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">手机号</label>
+                            <input type="text" class="form-input" id="basicPhone" value="13800138000" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">用工类型</label>
+                            <input type="text" class="form-input" id="basicEmpType" value="劳务外包" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">归属部门/团队</label>
+                            <input type="text" class="form-input" id="basicDept" value="车险理赔团队" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">归属经营组织</label>
+                            <input type="text" class="form-input" id="basicOrg" value="中华联合财产保险股份有限公司-山东分公司" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 岗位信息 -->
+            <div class="card">
+                <div class="card-header">岗位信息</div>
+                <div class="card-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>工作岗位编码</th>
+                                <th>工作岗位名称</th>
+                                <th>工作岗位类型</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>GW2024080001</td>
+                                <td>车险理赔查勘岗</td>
+                                <td>主岗位</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 工作信息 -->
+            <div class="card">
+                <div class="card-header">工作信息</div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-item">
+                            <label class="form-label"><span class="required"></span>关联项目</label>
+                            <select class="form-select" id="workProject" onchange="onProjectChange()">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label"><span class="required"></span>关联协议</label>
+                            <select class="form-select" id="workAgreement" onchange="onAgreementChange()">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">归属业务条线</label>
+                            <input type="text" class="form-input" id="workBusinessLine" placeholder="选择关联项目后自动带出" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">归属供应商</label>
+                            <input type="text" class="form-input" id="workSupplier" placeholder="选择关联协议后自动带出" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">在职状态</label>
+                            <input type="text" class="form-input" id="workStatus" value="已入场" readonly>
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">入场时间</label>
+                            <input type="date" class="form-input" id="workEntryDate" value="2024-08-01">
+                        </div>
+                        <div class="form-item">
+                            <label class="form-label">离场时间</label>
+                            <input type="date" class="form-input" id="workLeaveDate" value="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任职记录 -->
+            <div class="card">
+                <div class="card-header">任职记录</div>
+                <div class="card-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>更新时间</th>
+                                <th>在职状态</th>
+                                <th>人员姓名</th>
+                                <th>手机号</th>
+                                <th>入场时间</th>
+                                <th>离场时间</th>
+                                <th>关联项目</th>
+                                <th>关联协议</th>
+                                <th>归属业务条线</th>
+                                <th>归属供应商</th>
+                                <th>归属部门/团队</th>
+                                <th>归属组织</th>
+                                <th>工作岗位</th>
+                                <th>用工类型</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordTableBody">
+                            <tr>
+                                <td>2024-08-01 10:30:00</td>
+                                <td>已入场</td>
+                                <td>张三</td>
+                                <td>13800138000</td>
+                                <td>2024-08-01</td>
+                                <td>-</td>
+                                <td>车险理赔外包项目</td>
+                                <td>XY2024080001</td>
+                                <td>车险</td>
+                                <td>山东外包服务有限公司</td>
+                                <td>车险理赔团队</td>
+                                <td>山东分公司</td>
+                                <td>车险理赔查勘岗</td>
+                                <td>劳务外包</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="bottom-bar">
+        <button class="btn btn-primary" onclick="submitForm()">提交</button>
+        <button class="btn" onclick="goToList()">返回</button>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ========== 模拟数据 ==========
+        const projectData = [
+            { id: '', name: '请选择', businessLine: '', remaining: 0 },
+            { id: 'P2024080001', name: '车险理赔外包项目', businessLine: '车险', remaining: 5 },
+            { id: 'P2024080002', name: '非车险核损外包项目', businessLine: '非车险', remaining: 0 },
+            { id: 'P2024080003', name: '客服中心外包项目', businessLine: '客服', remaining: 12 },
+            { id: 'P2024080004', name: '核心系统改造外包项目', businessLine: '科技', remaining: 3 }
+        ];
+
+        const agreementData = [
+            { id: '', name: '请选择', projectId: '', supplier: '' },
+            { id: 'XY2024080001', name: 'XY2024080001-车险理赔外包协议', projectId: 'P2024080001', supplier: '山东外包服务有限公司' },
+            { id: 'XY2024080002', name: 'XY2024080002-车险理赔补充协议', projectId: 'P2024080001', supplier: '济南人力资源有限公司' },
+            { id: 'XY2024080003', name: 'XY2024080003-非车险核损外包协议', projectId: 'P2024080002', supplier: '青岛外包科技有限公司' },
+            { id: 'XY2024080004', name: 'XY2024080004-客服中心外包协议', projectId: 'P2024080003', supplier: '北京客服外包公司' },
+            { id: 'XY2024080005', name: 'XY2024080005-核心系统改造协议', projectId: 'P2024080004', supplier: '深圳科技外包公司' }
+        ];
+
+        // ========== 初始化 ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            initProjectSelect();
+        });
+
+        function initProjectSelect() {
+            const projectSelect = document.getElementById('workProject');
+            projectSelect.innerHTML = '<option value="">请选择</option>';
+            projectData.forEach(project => {
+                if (project.id) {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    option.dataset.remaining = project.remaining;
+                    option.dataset.businessLine = project.businessLine;
+                    projectSelect.appendChild(option);
+                }
+            });
+        }
+
+        // ========== 联动逻辑 ==========
+        function onProjectChange() {
+            const projectSelect = document.getElementById('workProject');
+            const agreementSelect = document.getElementById('workAgreement');
+            const businessLineInput = document.getElementById('workBusinessLine');
+            const supplierInput = document.getElementById('workSupplier');
+
+            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+            const projectId = projectSelect.value;
+
+            // 重置协议和供应商
+            agreementSelect.innerHTML = '<option value="">请选择</option>';
+            supplierInput.value = '';
+
+            if (!projectId) {
+                businessLineInput.value = '';
+                return;
+            }
+
+            // 带出业务条线
+            businessLineInput.value = selectedOption.dataset.businessLine || '';
+
+            // 加载该项目下的协议
+            const agreements = agreementData.filter(item => item.projectId === projectId);
+            agreements.forEach(agreement => {
+                const option = document.createElement('option');
+                option.value = agreement.id;
+                option.textContent = agreement.name;
+                option.dataset.supplier = agreement.supplier;
+                agreementSelect.appendChild(option);
+            });
+        }
+
+        function onAgreementChange() {
+            const agreementSelect = document.getElementById('workAgreement');
+            const supplierInput = document.getElementById('workSupplier');
+
+            const selectedOption = agreementSelect.options[agreementSelect.selectedIndex];
+            if (!agreementSelect.value) {
+                supplierInput.value = '';
+                return;
+            }
+
+            supplierInput.value = selectedOption.dataset.supplier || '';
+        }
+
+        // ========== 提交校验 ==========
+        function submitForm() {
+            const projectSelect = document.getElementById('workProject');
+            const agreementSelect = document.getElementById('workAgreement');
+            const entryDate = document.getElementById('workEntryDate').value;
+            const leaveDate = document.getElementById('workLeaveDate').value;
+
+            // 必填校验
+            if (!projectSelect.value) {
+                showToast('error', '请选择关联项目');
+                projectSelect.focus();
+                return;
+            }
+
+            if (!agreementSelect.value) {
+                showToast('error', '请选择关联协议');
+                agreementSelect.focus();
+                return;
+            }
+
+            if (!entryDate) {
+                showToast('error', '请填写入场时间');
+                document.getElementById('workEntryDate').focus();
+                return;
+            }
+
+            if (leaveDate && leaveDate < entryDate) {
+                showToast('error', '离场时间不能早于入场时间');
+                document.getElementById('workLeaveDate').focus();
+                return;
+            }
+
+            // 项目额度校验
+            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+            const remaining = parseInt(selectedOption.dataset.remaining || 0, 10);
+
+            if (remaining <= 0) {
+                showToast('error', '项目计划额度不足，请先申请计划数量');
+                return;
+            }
+
+            // 提交成功：模拟更新任职记录
+            const businessLine = document.getElementById('workBusinessLine').value;
+            const supplier = document.getElementById('workSupplier').value;
+            const projectName = selectedOption.textContent;
+            const agreementName = agreementSelect.options[agreementSelect.selectedIndex].textContent;
+            const empNo = document.getElementById('basicEmpNo').value;
+            const name = document.getElementById('basicName').value;
+            const phone = document.getElementById('basicPhone').value;
+            const dept = document.getElementById('basicDept').value;
+            const org = document.getElementById('basicOrg').value;
+            const empType = document.getElementById('basicEmpType').value;
+            const status = document.getElementById('workStatus').value;
+            const now = formatDateTime(new Date());
+
+            addRecord({
+                updateTime: now,
+                status,
+                name,
+                phone,
+                entryDate,
+                leaveDate: leaveDate || '-',
+                project: projectName,
+                agreement: agreementName,
+                businessLine,
+                supplier,
+                dept,
+                org,
+                position: '车险理赔查勘岗',
+                empType
+            });
+
+            showToast('success', '提交成功');
+        }
+
+        function addRecord(record) {
+            const tbody = document.getElementById('recordTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${record.updateTime}</td>
+                <td>${record.status}</td>
+                <td>${record.name}</td>
+                <td>${record.phone}</td>
+                <td>${record.entryDate}</td>
+                <td>${record.leaveDate}</td>
+                <td>${record.project}</td>
+                <td>${record.agreement}</td>
+                <td>${record.businessLine}</td>
+                <td>${record.supplier}</td>
+                <td>${record.dept}</td>
+                <td>${record.org}</td>
+                <td>${record.position}</td>
+                <td>${record.empType}</td>
+            `;
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+
+        // ========== 页面跳转 ==========
+        function goToList() {
+            showToast('info', '返回人员列表');
+            setTimeout(() => {
+                window.location.href = '外包人员管理.html';
+            }, 500);
+        }
+
+        // ========== 工具函数 ==========
+        function formatDateTime(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        }
+
+        function showToast(type, message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 200);
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

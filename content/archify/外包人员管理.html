@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人员查询 - 外包人员管理</title>
+    <style>
+        /* ========== 基础重置 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #d43030;
+            --primary-dark: #b52a2a;
+            --primary-light: #fef0f0;
+            --success: #67c23a;
+            --warning: #e6a23c;
+            --danger: #f56c6c;
+            --info: #909399;
+            --text-main: #303133;
+            --text-regular: #606266;
+            --text-secondary: #909399;
+            --border-color: #dcdfe6;
+            --border-light: #ebeef5;
+            --bg-color: #f5f7fa;
+            --bg-page: #f0f2f5;
+            --border-radius: 4px;
+            --shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ========== 顶部导航 ========== */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .top-nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .top-nav .nav-logo {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-nav .nav-logo .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .top-menu {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .top-menu li {
+            font-size: 14px;
+            color: var(--text-regular);
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+            padding: 15px 0;
+        }
+
+        .top-menu li:hover,
+        .top-menu li.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .top-menu li.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .org-select {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            color: var(--primary);
+            font-size: 13px;
+            cursor: pointer;
+            background: #fff;
+            transition: all 0.2s;
+        }
+
+        .org-select:hover {
+            background: var(--primary-light);
+        }
+
+        .top-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-regular);
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .top-icon:hover {
+            background: var(--bg-color);
+            color: var(--primary);
+        }
+
+        /* ========== 左侧菜单 ========== */
+        .sidebar {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            bottom: 0;
+            width: 200px;
+            background: #fff;
+            box-shadow: 1px 0 4px rgba(0,0,0,0.05);
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        .side-menu {
+            padding: 8px 0;
+        }
+
+        .side-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            color: var(--text-regular);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .side-menu-item:hover {
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .side-menu-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .side-menu-item .menu-icon {
+            width: 18px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* ========== 主内容区 ========== */
+        .main-wrapper {
+            margin-left: 200px;
+            margin-top: 50px;
+            min-height: calc(100vh - 50px);
+            padding: 16px;
+        }
+
+        .breadcrumb {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary);
+        }
+
+        .breadcrumb .sep {
+            margin: 0 6px;
+        }
+
+        .breadcrumb .current {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 16px;
+        }
+
+        /* ========== 卡片 ========== */
+        .card {
+            background: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 16px;
+        }
+
+        /* ========== 查询筛选区 ========== */
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px 12px;
+            align-items: end;
+        }
+
+        .form-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-item label {
+            font-size: 13px;
+            color: var(--text-regular);
+            font-weight: normal;
+        }
+
+        .form-item input,
+        .form-item select {
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--text-main);
+            background: #fff;
+            transition: border-color 0.2s;
+            outline: none;
+            width: 100%;
+        }
+
+        .form-item input::placeholder {
+            color: #c0c4cc;
+        }
+
+        .form-item input:focus,
+        .form-item select:focus {
+            border-color: var(--primary);
+        }
+
+        .form-item select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23909399' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+        }
+
+        .org-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .org-wrapper select {
+            flex: 1;
+        }
+
+        .org-wrapper .include-sub {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            font-size: 13px;
+            color: var(--text-regular);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .org-wrapper .include-sub input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .search-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            align-items: end;
+        }
+
+        /* ========== 按钮 ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 32px;
+            padding: 0 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            background: #fff;
+            color: var(--text-regular);
+        }
+
+        .btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .btn-danger:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-sm {
+            height: 28px;
+            padding: 0 12px;
+            font-size: 12px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ========== 工具栏 ========== */
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 18px;
+            background: var(--border-color);
+            margin: 0 2px;
+        }
+
+        .selected-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .selected-count strong {
+            color: var(--primary);
+            font-size: 15px;
+            margin: 0 2px;
+        }
+
+        .total-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== 表格 ========== */
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 1600px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table thead th {
+            background: #f5f7fa;
+            color: var(--text-regular);
+            font-weight: 600;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .data-table thead th.th-blue {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .data-table tbody td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--primary-light);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .col-checkbox {
+            width: 40px;
+            text-align: center !important;
+        }
+
+        .col-index {
+            width: 50px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .col-action {
+            width: 90px;
+            text-align: center;
+        }
+
+        /* 复选框 */
+        input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        input[type="checkbox"]:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.6;
+            border: 1px solid transparent;
+        }
+
+        .tag-blue {
+            background: #ecf5ff;
+            color: #409eff;
+            border-color: #d9ecff;
+        }
+
+        .tag-green {
+            background: #f0f9eb;
+            color: var(--success);
+            border-color: #c2e7b0;
+        }
+
+        .tag-orange {
+            background: #fdf6ec;
+            color: var(--warning);
+            border-color: #f5dab1;
+        }
+
+        .tag-gray {
+            background: #f4f4f5;
+            color: var(--text-secondary);
+            border-color: #e9e9eb;
+        }
+
+        .tag-red {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: #fbc4c4;
+        }
+
+        /* 操作链接 */
+        .link-btn {
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .link-btn:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .link-btn + .link-btn {
+            margin-left: 8px;
+        }
+
+        /* ========== 分页 ========== */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .page-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-right: 12px;
+        }
+
+        .page-btn {
+            min-width: 32px;
+            height: 32px;
+            padding: 0 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #fff;
+            color: var(--text-regular);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ========== 弹窗 ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 640px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            animation: modalIn 0.2s ease;
+        }
+
+        .modal.modal-lg {
+            max-width: 960px;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: none;
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* ========== 批量操作弹窗 ========== */
+        .batch-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .batch-info {
+            background: var(--primary-light);
+            border: 1px solid #fbc4c4;
+            border-radius: 6px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .batch-info .info-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .batch-info .info-text {
+            font-size: 13px;
+            color: var(--text-regular);
+        }
+
+        .batch-info .info-text strong {
+            color: var(--primary);
+        }
+
+        .batch-selected-summary {
+            background: #f5f7fa;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-regular);
+        }
+
+        .batch-selected-summary strong {
+            color: var(--primary);
+            font-size: 15px;
+            margin: 0 2px;
+        }
+
+        .batch-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .batch-action-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .batch-action-item .action-label {
+            width: 120px;
+            font-size: 13px;
+            color: var(--text-regular);
+            flex-shrink: 0;
+        }
+
+        .batch-action-item select {
+            flex: 1;
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--text-main);
+            background: #fff;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23909399' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+        }
+
+        .batch-action-item select:focus {
+            border-color: var(--primary);
+        }
+
+        .batch-action-item input {
+            flex: 1;
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--text-main);
+            background: #fff;
+            outline: none;
+        }
+
+        .batch-action-item input::placeholder {
+            color: #c0c4cc;
+        }
+
+        .batch-action-item input[readonly] {
+            background: #fff;
+            color: var(--text-main);
+            cursor: default;
+        }
+
+        .batch-action-item.required .action-label::before {
+            content: '*';
+            color: var(--primary);
+            margin-right: 4px;
+        }
+
+        .field-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== 提示消息 ========== */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 3000;
+            transition: transform 0.3s ease;
+            font-size: 14px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--primary); }
+
+        .toast .toast-icon { font-size: 18px; }
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.error .toast-icon { color: var(--danger); }
+        .toast.info .toast-icon { color: var(--primary); }
+
+        /* ========== 空状态 ========== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state .empty-text { font-size: 14px; }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 1280px) {
+            .search-form {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-wrapper { margin-left: 0; }
+            .search-form { grid-template-columns: 1fr; }
+            .search-buttons { justify-content: stretch; }
+            .search-buttons .btn { flex: 1; }
+            .table-toolbar { flex-direction: column; align-items: stretch; }
+            .data-table { min-width: 1200px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="top-header">
+        <div class="top-nav">
+            <div class="nav-logo">
+                <span class="logo-icon">W</span>
+                工作台
+            </div>
+            <ul class="top-menu">
+                <li class="active">运营支撑</li>
+                <li>资金财务</li>
+                <li>人力资源</li>
+                <li>业务管理</li>
+                <li>数据门户</li>
+                <li>个人中心</li>
+            </ul>
+        </div>
+        <div class="top-right">
+            <div class="org-select">
+                <span>🏢</span>
+                <span>浙江分公司</span>
+                <span>▼</span>
+            </div>
+            <div class="top-icon">🔔</div>
+            <div class="top-icon">⚙</div>
+            <div class="top-icon">👤</div>
+        </div>
+    </header>
+
+    <!-- 左侧菜单 -->
+    <aside class="sidebar">
+        <div class="side-menu">
+            <div class="side-menu-item">
+                <span class="menu-icon">📅</span>
+                计划管理
+            </div>
+            <div class="side-menu-item">
+                <span class="menu-icon">📁</span>
+                项目管理
+            </div>
+            <div class="side-menu-item">
+                <span class="menu-icon">📄</span>
+                协议管理
+            </div>
+            <div class="side-menu-item active">
+                <span class="menu-icon">👥</span>
+                外包人员管理
+            </div>
+            <div class="side-menu-item">
+                <span class="menu-icon">🏭</span>
+                供应商管理
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-wrapper">
+        <div class="breadcrumb">
+            <a href="javascript:void(0)">外包人员管理</a>
+            <span class="sep">/</span>
+            <span class="current">人员查询</span>
+        </div>
+        <h1 class="page-title">人员查询</h1>
+
+        <!-- 查询筛选区 -->
+        <div class="card">
+            <div class="card-title">查询条件</div>
+            <div class="search-form">
+                <div class="form-item">
+                    <label>账号名称</label>
+                    <input type="text" id="searchAccount" placeholder="请输入账号名称">
+                </div>
+                <div class="form-item">
+                    <label>用户名称</label>
+                    <input type="text" id="searchName" placeholder="请输入用户名称">
+                </div>
+                <div class="form-item">
+                    <label>归属组织</label>
+                    <div class="org-wrapper">
+                        <select id="searchOrg">
+                            <option value="">请选择归属组织</option>
+                            <option value="浙江分公司">浙江分公司</option>
+                            <option value="杭州中心支公司">杭州中心支公司</option>
+                            <option value="拱墅支公司">拱墅支公司</option>
+                            <option value="城东支公司">城东支公司</option>
+                            <option value="宁波中心支公司">宁波中心支公司</option>
+                        </select>
+                        <label class="include-sub">
+                            <input type="checkbox" id="includeSub">
+                            <span>包含下级</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>归属业务条线</label>
+                    <select id="searchBusinessLine">
+                        <option value="">请选择</option>
+                        <option value="车险">车险</option>
+                        <option value="非车险">非车险</option>
+                        <option value="健康险">健康险</option>
+                        <option value="意外险">意外险</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>关联项目</label>
+                    <input type="text" id="searchProject" placeholder="请输入关联项目">
+                </div>
+                <div class="form-item">
+                    <label>关联协议</label>
+                    <select id="searchAgreement">
+                        <option value="">请选择关联协议</option>
+                        <option value="电脑测试0618-XM2026000259">电脑测试0618-XM2026000259</option>
+                        <option value="测试审批协议-XM2026000259">测试审批协议-XM2026000259</option>
+                        <option value="H260518000000">H260518000000</option>
+                        <option value="H260703000000">H260703000000</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>在职状态</label>
+                    <select id="searchStatus">
+                        <option value="">请选择</option>
+                        <option value="待入场">待入场</option>
+                        <option value="已入场">已入场</option>
+                        <option value="已离场">已离场</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>手机号</label>
+                    <input type="text" id="searchPhone" placeholder="请输入手机号">
+                </div>
+                <div class="form-item" style="grid-column: span 1;"></div>
+                <div class="form-item" style="grid-column: span 1;"></div>
+                <div class="form-item" style="grid-column: span 1;"></div>
+                <div class="search-buttons">
+                    <button class="btn" onclick="handleReset()">↻ 重置</button>
+                    <button class="btn btn-primary" onclick="handleSearch()">🔍 查询</button>
+                    <button class="btn" onclick="toggleSearch()">收起 ▲</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据列表 -->
+        <div class="card" style="padding: 16px 20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div class="card-title" style="margin-bottom:0;">人员列表</div>
+            </div>
+            <div class="table-toolbar">
+                <div class="toolbar-left">
+                    <button class="btn btn-sm" onclick="openBatchActionModal()" id="batchActionBtn" disabled>⚙ 批量操作</button>
+                    <span class="toolbar-divider"></span>
+                    <span class="selected-count">已选择 <strong id="selectedCount">0</strong> 条</span>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-checkbox th-blue">
+                                <input type="checkbox" id="checkAll" onchange="toggleSelectAll(this)">
+                            </th>
+                            <th class="col-index">序号</th>
+                            <th>账号名称</th>
+                            <th>用户名称</th>
+                            <th>手机号</th>
+                            <th>归属部门/团队</th>
+                            <th>归属分公司</th>
+                            <th>归属中支公司</th>
+                            <th>归属支公司</th>
+                            <th>归属业务条线</th>
+                            <th>关联项目</th>
+                            <th>关联协议</th>
+                            <th>在职状态</th>
+                            <th>归属供应商</th>
+                            <th>最后操作人</th>
+                            <th>最后操作时间</th>
+                            <th class="col-action th-blue">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+                <span class="page-info" id="pageInfo"></span>
+                <button class="page-btn" id="prevBtn" onclick="changePage(-1)">‹</button>
+                <div id="pageNumbers" style="display:flex;gap:4px;"></div>
+                <button class="page-btn" id="nextBtn" onclick="changePage(1)">›</button>
+                <select id="pageSize" onchange="changePageSize(this.value)" style="height:32px;padding:0 8px;border:1px solid var(--border-color);border-radius:4px;font-size:13px;margin-left:8px;cursor:pointer;">
+                    <option value="10">10条/页</option>
+                    <option value="20" selected>20条/页</option>
+                    <option value="50">50条/页</option>
+                </select>
+            </div>
+        </div>
+    </main>
+
+    <!-- 批量操作弹窗 -->
+    <div class="modal-overlay" id="batchActionModal">
+        <div class="modal" style="max-width: 520px;">
+            <div class="modal-header">
+                <div class="modal-title">批量操作</div>
+                <button class="modal-close" onclick="closeBatchActionModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="batch-form">
+                    <div class="batch-selected-summary">本次已勾选 <strong id="batchSelectedCount">0</strong> 人</div>
+                    <div class="batch-actions">
+                        <div class="batch-action-item required">
+                            <span class="action-label">关联项目</span>
+                            <select id="batchProject" onchange="onBatchProjectChange()">
+                                <option value="">请选择关联项目</option>
+                            </select>
+                        </div>
+                        <div class="batch-action-item required">
+                            <span class="action-label">关联协议</span>
+                            <select id="batchAgreement" onchange="onBatchAgreementChange()">
+                                <option value="">请选择关联协议</option>
+                            </select>
+                        </div>
+                        <div class="batch-action-item">
+                            <span class="action-label">归属业务条线</span>
+                            <input type="text" id="batchBusinessLine" readonly placeholder="选择关联项目后自动带出">
+                        </div>
+                        <div class="batch-action-item">
+                            <span class="action-label">归属供应商</span>
+                            <input type="text" id="batchSupplier" readonly placeholder="选择关联协议后自动带出">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeBatchActionModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitBatchAction()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon"></span>
+        <span id="toastMsg"></span>
+    </div>
+
+    <script>
+        // ========== 模拟数据 ==========
+        const departments = ['拱墅支公司车商四团队', '城东支公司团客一团队', '滨江支公司直销二团队', '西湖支公司综拓三团队'];
+        const subCompanies = ['浙江分公司'];
+        const middleCompanies = ['杭州中心支公司', '宁波中心支公司', '温州中心支公司'];
+        const branchCompanies = ['拱墅支公司', '城东支公司', '滨江支公司', '西湖支公司', '海曙支公司'];
+        const businessLines = ['车险', '非车险', '健康险', '意外险'];
+        const projects = ['电脑测试0618', '理赔系统升级', '核心系统改造', '客户服务平台'];
+        const agreements = ['电脑测试0618-XM2026000259', '测试审批协议-XM2026000259', 'H260518000000', 'H260703000000'];
+        const suppliers = ['测试供应商A', '测试供应商B', '杭州外包科技', '宁波人力服务'];
+        const statuses = ['待入场', '已入场', '已离场'];
+        const operators = ['张三-zhsan001', '李四-lisi002', '王五-wangw003', '赵六-zhaol004'];
+        const surnames = ['张', '李', '王', '刘', '陈', '杨', '赵', '黄', '周', '吴', '徐', '孙', '马', '朱', '胡', '林', '郭', '何'];
+        const givenNames = ['伟', '芳', '娜', '敏', '静', '丽', '强', '磊', '军', '洋', '勇', '艳', '杰', '娟', '涛', '明', '超', '霞', '平', '刚', '秀英', '建国', '海燕', '志强'];
+
+        function formatDateTime(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const h = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            const s = String(date.getSeconds()).padStart(2, '0');
+            return `${y}-${m}-${d} ${h}:${min}:${s}`;
+        }
+
+        function randomDateTime() {
+            const now = new Date();
+            const past = new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000);
+            return formatDateTime(past);
+        }
+
+        function generateData() {
+            const data = [];
+            const fixedData = [
+                { id: 1, account: 'zhes08330100101', name: '测试-0824-关联工作岗位', phone: '13449888098', dept: '拱墅支公司车商四团队', businessLine: '车险', project: '电脑测试0618', agreement: '电脑测试0618-XM2026000259', status: '已入场', supplier: '测试' },
+                { id: 2, account: 'zhes08330100100', name: '测试-0824', phone: '13449888098', dept: '城东支公司团客一团队', businessLine: '车险', project: '0706测试', agreement: '测试审批协议-XM2026000259', status: '已入场', supplier: '测试' }
+            ];
+
+            fixedData.forEach((item, idx) => {
+                data.push({
+                    ...item,
+                    subCompany: '浙江分公司',
+                    middleCompany: '杭州中心支公司',
+                    branchCompany: idx === 0 ? '拱墅支公司' : '城东支公司',
+                    lastOperator: '张三-zhsan001',
+                    lastOperateTime: randomDateTime()
+                });
+            });
+
+            for (let i = 2; i < 87; i++) {
+                const surname = surnames[Math.floor(Math.random() * surnames.length)];
+                const givenName = givenNames[Math.floor(Math.random() * givenNames.length)];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                data.push({
+                    id: i + 1,
+                    account: 'zhes' + String(8330100100 + i),
+                    name: surname + givenName,
+                    phone: '1' + (Math.floor(Math.random() * 4) + 3) + Math.floor(Math.random() * 900000000 + 100000000),
+                    dept: departments[Math.floor(Math.random() * departments.length)],
+                    subCompany: subCompanies[Math.floor(Math.random() * subCompanies.length)],
+                    middleCompany: middleCompanies[Math.floor(Math.random() * middleCompanies.length)],
+                    branchCompany: branchCompanies[Math.floor(Math.random() * branchCompanies.length)],
+                    businessLine: businessLines[Math.floor(Math.random() * businessLines.length)],
+                    project: projects[Math.floor(Math.random() * projects.length)],
+                    agreement: agreements[Math.floor(Math.random() * agreements.length)],
+                    status: status,
+                    supplier: suppliers[Math.floor(Math.random() * suppliers.length)],
+                    lastOperator: operators[Math.floor(Math.random() * operators.length)],
+                    lastOperateTime: randomDateTime()
+                });
+            }
+            return data;
+        }
+
+        // ========== 项目-协议-供应商 数据 ==========
+        const projectOptions = [
+            {
+                name: '电脑测试0618',
+                businessLine: '车险',
+                remainingQuota: 3,
+                agreements: [
+                    { name: '电脑测试0618-XM2026000259', supplier: '测试供应商A' },
+                    { name: '电脑测试0618-XM2026000260', supplier: '杭州外包科技' }
+                ]
+            },
+            {
+                name: '理赔系统升级',
+                businessLine: '非车险',
+                remainingQuota: 10,
+                agreements: [
+                    { name: '测试审批协议-XM2026000259', supplier: '测试供应商B' },
+                    { name: '理赔协议-XM2026000300', supplier: '宁波人力服务' }
+                ]
+            },
+            {
+                name: '核心系统改造',
+                businessLine: '健康险',
+                remainingQuota: 5,
+                agreements: [
+                    { name: 'H260518000000', supplier: '测试供应商A' },
+                    { name: 'H260703000000', supplier: '宁波人力服务' }
+                ]
+            },
+            {
+                name: '客户服务平台',
+                businessLine: '意外险',
+                remainingQuota: 2,
+                agreements: [
+                    { name: '客服平台协议-XM2026000400', supplier: '杭州外包科技' }
+                ]
+            }
+        ];
+
+        // ========== 全局状态 ==========
+        let allData = generateData();
+        let filteredData = [...allData];
+        let currentPage = 1;
+        let pageSize = 20;
+        let selectedIds = new Set();
+
+        // ========== 状态标签 ==========
+        function getStatusTagClass(status) {
+            switch (status) {
+                case '已入场': return 'tag-green';
+                case '待入场': return 'tag-blue';
+                case '已离场': return 'tag-gray';
+                default: return 'tag-gray';
+            }
+        }
+
+        function isSelectable(item) {
+            return item.status === '待入场' || item.status === '已入场';
+        }
+
+        // ========== 渲染表格 ==========
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredData.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="17">
+                            <div class="empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-text">暂无数据</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = pageData.map((item, index) => {
+                    const selectable = isSelectable(item);
+                    const showEdit = selectable;
+                    return `
+                        <tr>
+                            <td class="col-checkbox">
+                                <input type="checkbox"
+                                       ${selectedIds.has(item.id) ? 'checked' : ''}
+                                       ${!selectable ? 'disabled' : ''}
+                                       onchange="toggleSelect(${item.id}, this.checked)">
+                            </td>
+                            <td class="col-index">${start + index + 1}</td>
+                            <td>${item.account}</td>
+                            <td>${item.name}</td>
+                            <td>${item.phone}</td>
+                            <td>${item.dept}</td>
+                            <td>${item.subCompany}</td>
+                            <td>${item.middleCompany}</td>
+                            <td>${item.branchCompany}</td>
+                            <td><span class="tag tag-blue">${item.businessLine}</span></td>
+                            <td>${item.project}</td>
+                            <td>${item.agreement}</td>
+                            <td><span class="tag ${getStatusTagClass(item.status)}">${item.status}</span></td>
+                            <td>${item.supplier}</td>
+                            <td>${item.lastOperator}</td>
+                            <td>${item.lastOperateTime}</td>
+                            <td class="col-action">
+                                <a class="link-btn" onclick="viewDetail(${item.id})">详情</a>
+                                ${showEdit ? `<a class="link-btn" onclick="editSingle(${item.id})">修改</a>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            updatePagination();
+            updateSelectedCount();
+            updateCheckAllState();
+            updateBatchActionBtn();
+        }
+
+        // ========== 分页 ==========
+        function updatePagination() {
+            const total = filteredData.length;
+            const totalPages = Math.ceil(total / pageSize) || 1;
+            const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, total);
+
+            document.getElementById('pageInfo').textContent = `共 ${total} 条，${start}-${end} 条`;
+
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+
+            const pageNumbersDiv = document.getElementById('pageNumbers');
+            pageNumbersDiv.innerHTML = '';
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+                btn.textContent = i;
+                btn.onclick = () => goToPage(i);
+                pageNumbersDiv.appendChild(btn);
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable();
+        }
+
+        function changePage(delta) {
+            const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderTable();
+            }
+        }
+
+        function changePageSize(value) {
+            pageSize = parseInt(value);
+            currentPage = 1;
+            renderTable();
+        }
+
+        // ========== 选择 ==========
+        function toggleSelect(id, checked) {
+            const item = allData.find(d => d.id === id);
+            if (item && !isSelectable(item)) return;
+
+            if (checked) {
+                selectedIds.add(id);
+            } else {
+                selectedIds.delete(id);
+            }
+            updateSelectedCount();
+            updateCheckAllState();
+            updateBatchActionBtn();
+        }
+
+        function toggleSelectAll(checkbox) {
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredData.slice(start, end);
+            pageData.forEach(item => {
+                if (!isSelectable(item)) return;
+                if (checkbox.checked) {
+                    selectedIds.add(item.id);
+                } else {
+                    selectedIds.delete(item.id);
+                }
+            });
+            renderTable();
+        }
+
+        function updateCheckAllState() {
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredData.slice(start, end);
+            const selectableData = pageData.filter(isSelectable);
+            const checkAll = document.getElementById('checkAll');
+            if (selectableData.length === 0) {
+                checkAll.checked = false;
+                checkAll.indeterminate = false;
+            } else {
+                const allChecked = selectableData.every(item => selectedIds.has(item.id));
+                const someChecked = selectableData.some(item => selectedIds.has(item.id));
+                checkAll.checked = allChecked;
+                checkAll.indeterminate = !allChecked && someChecked;
+            }
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedIds.size;
+        }
+
+        function updateBatchActionBtn() {
+            const btn = document.getElementById('batchActionBtn');
+            btn.disabled = selectedIds.size === 0;
+        }
+
+        // ========== 查询 ==========
+        function handleSearch() {
+            applyCurrentFilter();
+            renderTable();
+            showToast('success', `查询完成，共找到 ${filteredData.length} 条记录`);
+        }
+
+        function handleReset() {
+            document.getElementById('searchAccount').value = '';
+            document.getElementById('searchName').value = '';
+            document.getElementById('searchOrg').value = '';
+            document.getElementById('includeSub').checked = false;
+            document.getElementById('searchBusinessLine').value = '';
+            document.getElementById('searchProject').value = '';
+            document.getElementById('searchAgreement').value = '';
+            document.getElementById('searchStatus').value = '';
+            document.getElementById('searchPhone').value = '';
+
+            filteredData = [...allData];
+            currentPage = 1;
+            selectedIds.clear();
+            renderTable();
+            showToast('success', '已重置查询条件');
+        }
+
+        function toggleSearch() {
+            showToast('info', '收起/展开功能占位');
+        }
+
+        // ========== 批量操作 ==========
+        function openBatchActionModal() {
+            if (selectedIds.size === 0) {
+                showToast('error', '请至少选择一条记录');
+                return;
+            }
+
+            document.getElementById('batchSelectedCount').textContent = selectedIds.size;
+
+            const projectSelect = document.getElementById('batchProject');
+            projectSelect.innerHTML = '<option value="">请选择关联项目</option>' + projectOptions.map(p =>
+                `<option value="${p.name}">${p.name}</option>`
+            ).join('');
+
+            document.getElementById('batchAgreement').innerHTML = '<option value="">请选择关联协议</option>';
+            document.getElementById('batchBusinessLine').value = '';
+            document.getElementById('batchSupplier').value = '';
+
+            document.getElementById('batchActionModal').classList.add('show');
+        }
+
+        function closeBatchActionModal() {
+            document.getElementById('batchActionModal').classList.remove('show');
+        }
+
+        function onBatchProjectChange() {
+            const projectName = document.getElementById('batchProject').value;
+            const agreementSelect = document.getElementById('batchAgreement');
+            const businessLineInput = document.getElementById('batchBusinessLine');
+
+            if (!projectName) {
+                agreementSelect.innerHTML = '<option value="">请选择关联协议</option>';
+                businessLineInput.value = '';
+                document.getElementById('batchSupplier').value = '';
+                return;
+            }
+
+            const project = projectOptions.find(p => p.name === projectName);
+            if (project) {
+                businessLineInput.value = project.businessLine;
+                agreementSelect.innerHTML = '<option value="">请选择关联协议</option>' + project.agreements.map(a =>
+                    `<option value="${a.name}">${a.name}</option>`
+                ).join('');
+            }
+            document.getElementById('batchSupplier').value = '';
+        }
+
+        function onBatchAgreementChange() {
+            const projectName = document.getElementById('batchProject').value;
+            const agreementName = document.getElementById('batchAgreement').value;
+            const supplierInput = document.getElementById('batchSupplier');
+
+            if (!projectName || !agreementName) {
+                supplierInput.value = '';
+                return;
+            }
+
+            const project = projectOptions.find(p => p.name === projectName);
+            if (project) {
+                const agreement = project.agreements.find(a => a.name === agreementName);
+                supplierInput.value = agreement ? agreement.supplier : '';
+            }
+        }
+
+        function submitBatchAction() {
+            const projectName = document.getElementById('batchProject').value;
+            const agreementName = document.getElementById('batchAgreement').value;
+
+            if (!projectName) {
+                showToast('error', '请选择关联项目');
+                return;
+            }
+            if (!agreementName) {
+                showToast('error', '请选择关联协议');
+                return;
+            }
+
+            const project = projectOptions.find(p => p.name === projectName);
+            if (!project) {
+                showToast('error', '项目不存在');
+                return;
+            }
+
+            const selectCount = selectedIds.size;
+            if (selectCount > project.remainingQuota) {
+                showToast('error', `项目计划额度不足，实际剩余数量${project.remainingQuota}，当前选择人员数量${selectCount}，请先申请计划数量`);
+                return;
+            }
+
+            const agreement = project.agreements.find(a => a.name === agreementName);
+            const operator = '当前用户-curr001';
+            const time = formatDateTime(new Date());
+            let modifyCount = 0;
+            let toEntryCount = 0;
+            allData.forEach(item => {
+                if (selectedIds.has(item.id)) {
+                    item.project = projectName;
+                    item.agreement = agreementName;
+                    item.businessLine = project.businessLine;
+                    item.supplier = agreement ? agreement.supplier : item.supplier;
+                    if (item.status === '待入场') {
+                        item.status = '已入场';
+                        toEntryCount++;
+                    }
+                    item.lastOperator = operator;
+                    item.lastOperateTime = time;
+                    modifyCount++;
+                }
+            });
+
+            project.remainingQuota -= selectCount;
+
+            applyCurrentFilter();
+            closeBatchActionModal();
+            renderTable();
+            showToast('success', `成功操作 ${modifyCount} 条记录，其中 ${toEntryCount} 条由“待入场”转为“已入场”`);
+            selectedIds.clear();
+            updateSelectedCount();
+            updateBatchActionBtn();
+        }
+
+        // ========== 单条操作 ==========
+        function viewDetail(id) {
+            const item = allData.find(d => d.id === id);
+            showToast('info', `查看详情：${item ? item.name : id}`);
+        }
+
+        function editSingle(id) {
+            const item = allData.find(d => d.id === id);
+            if (item && !isSelectable(item)) {
+                showToast('error', '已离场人员不可修改');
+                return;
+            }
+            selectedIds.clear();
+            selectedIds.add(id);
+            openBatchActionModal();
+        }
+
+        // ========== 过滤 ==========
+        function applyCurrentFilter() {
+            const account = document.getElementById('searchAccount').value.trim().toLowerCase();
+            const name = document.getElementById('searchName').value.trim();
+            const phone = document.getElementById('searchPhone').value.trim();
+            const org = document.getElementById('searchOrg').value;
+            const includeSub = document.getElementById('includeSub').checked;
+            const businessLine = document.getElementById('searchBusinessLine').value;
+            const project = document.getElementById('searchProject').value.trim();
+            const agreement = document.getElementById('searchAgreement').value;
+            const status = document.getElementById('searchStatus').value;
+
+            filteredData = allData.filter(item => {
+                if (account && !item.account.toLowerCase().includes(account)) return false;
+                if (name && !item.name.includes(name)) return false;
+                if (phone && !item.phone.includes(phone)) return false;
+                if (businessLine && item.businessLine !== businessLine) return false;
+                if (project && !item.project.includes(project)) return false;
+                if (agreement && item.agreement !== agreement) return false;
+                if (status && item.status !== status) return false;
+                if (org) {
+                    if (includeSub) {
+                        if (item.subCompany !== org && !item.middleCompany.includes(org.replace('分公司', '').replace('中心支公司', '')) && !item.branchCompany.includes(org.replace('分公司', '').replace('中心支公司', ''))) return false;
+                    } else {
+                        if (item.subCompany !== org && item.middleCompany !== org && item.branchCompany !== org) return false;
+                    }
+                }
+                return true;
+            });
+
+            currentPage = 1;
+        }
+
+        // ========== Toast 提示 ==========
+        let toastTimer = null;
+        function showToast(type, msg) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msgEl = document.getElementById('toastMsg');
+
+            toast.className = 'toast ' + type;
+            icon.textContent = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ⓘ');
+            msgEl.textContent = msg;
+
+            toast.classList.add('show');
+
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // ========== 弹窗事件 ==========
+        document.getElementById('batchActionModal').addEventListener('click', function (e) {
+            if (e.target === this) closeBatchActionModal();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeBatchActionModal();
+            }
+        });
+
+        // ========== 初始化 ==========
+        renderTable();
+    </script>
+</body>
+</html>
