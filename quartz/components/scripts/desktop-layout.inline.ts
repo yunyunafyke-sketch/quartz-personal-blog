@@ -20,6 +20,14 @@ function setupDesktopLayout() {
   const body = document.getElementById("quartz-body")
   if (!body || !window.matchMedia("(min-width: 1200px)").matches) return
 
+  // The homepage reuses the left sidebar as a floating search toolbar. It
+  // should stay visible even when the visitor collapsed the article sidebar
+  // on a previous page; keep the saved preference for regular notes only.
+  if (document.body.dataset.slug === "index") {
+    body.classList.remove("left-sidebar-collapsed", "right-sidebar-collapsed")
+    return
+  }
+
   const preferences = readPreferences()
   const save = () => localStorage.setItem(layoutStorageKey, JSON.stringify(preferences))
   const setWidth = (side: SidebarSide, width: number) => {
