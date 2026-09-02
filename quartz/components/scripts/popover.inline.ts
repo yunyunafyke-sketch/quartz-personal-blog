@@ -4,12 +4,14 @@ import { fetchCanonical } from "./util"
 
 const p = new DOMParser()
 let activeAnchor: HTMLAnchorElement | null = null
+let popoverRequestId = 0
 
 async function mouseEnterHandler(
   this: HTMLAnchorElement,
   { clientX, clientY }: { clientX: number; clientY: number },
 ) {
   const link = (activeAnchor = this)
+  const requestId = ++popoverRequestId
   if (link.dataset.noPopover === "true") {
     return
   }
@@ -118,16 +120,17 @@ async function mouseEnterHandler(
     return
   }
 
-  document.body.appendChild(popoverElement)
-  if (activeAnchor !== this) {
+  if (activeAnchor !== this || requestId !== popoverRequestId || !this.isConnected) {
     return
   }
 
+  document.body.appendChild(popoverElement)
   showPopover(popoverElement)
 }
 
 function clearActivePopover() {
   activeAnchor = null
+  popoverRequestId++
   const allPopoverElements = document.querySelectorAll(".popover")
   allPopoverElements.forEach((popoverElement) => popoverElement.classList.remove("active-popover"))
 }
@@ -144,5 +147,6 @@ function setupPopovers() {
   }
 }
 
+document.addEventListener("prenav", clearActivePopover)
 document.addEventListener("nav", setupPopovers)
 document.addEventListener("render", setupPopovers)
