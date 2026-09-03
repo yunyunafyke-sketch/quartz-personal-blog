@@ -81,6 +81,16 @@
     padding-right: 0;
   }
 
+  // 搜索组件位于左侧栏中。侧栏折叠时只恢复已经打开的搜索浮层，
+  // 不恢复搜索按钮和其他侧栏内容，也不会创建第二个搜索组件。
+  #quartz-body.left-sidebar-collapsed .sidebar.left:has(.search-container.active) {
+    overflow: visible;
+  }
+
+  #quartz-body.left-sidebar-collapsed .sidebar.left .search-container.active {
+    visibility: visible;
+  }
+
   #quartz-body > .center {
     grid-column: 3;
     grid-row: 1 / 4;
