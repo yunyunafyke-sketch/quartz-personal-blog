@@ -57,6 +57,8 @@ plugins:
         light: github-light
         dark: github-dark
       keepBackground: false
+      # 关闭插件内置复制功能，改用支持 HTTP 降级的本地复制脚本。
+      clipboard: false
     order: 20
   - source: "@quartz-community/obsidian-flavored-markdown"
     enabled: true

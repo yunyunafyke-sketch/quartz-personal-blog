@@ -1,0 +1,33 @@
+// 复制按钮覆盖在代码块右上角，颜色跟随 Quartz 明暗主题变量。
+.clipboard-button {
+  position: absolute;
+  right: 0;
+  display: flex;
+  margin: 0.3rem;
+  padding: 0.4rem;
+  border: 1px solid var(--dark);
+  border-radius: 5px;
+  background-color: var(--light);
+  color: var(--gray);
+  opacity: 0;
+  transition: 0.2s;
+
+  & > svg {
+    fill: var(--light);
+    filter: contrast(0.3);
+  }
+
+  &:hover {
+    border-color: var(--secondary);
+    cursor: pointer;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+// 平时隐藏按钮，鼠标进入代码块后再显示，避免干扰正文阅读。
+pre:hover > .clipboard-button {
+  opacity: 1;
+}

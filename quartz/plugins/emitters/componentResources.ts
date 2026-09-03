@@ -10,11 +10,14 @@ import popoverScript from "../../components/scripts/popover.inline"
 import homeSearchScript from "../../components/scripts/home-search.inline"
 // @ts-ignore
 import desktopLayoutScript from "../../components/scripts/desktop-layout.inline"
+// @ts-ignore
+import clipboardScript from "../../components/scripts/clipboard.inline"
 // Mermaid 流程图原始尺寸切换脚本。
 // @ts-ignore
 import mermaidSizeToggleScript from "../../components/scripts/mermaid-size-toggle.inline"
 import baseStyles from "../../styles/base.scss"
 import customStyles from "../../styles/custom.scss"
+import clipboardStyle from "../../components/styles/clipboard.scss"
 import popoverStyle from "../../components/styles/popover.scss"
 import { BuildCtx } from "../../util/ctx"
 import { QuartzComponent } from "../../components/types"
@@ -95,6 +98,9 @@ function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentReso
   // registered component so it is present in both static builds and dev mode.
   componentResources.afterDOMLoaded.push(homeSearchScript)
   componentResources.afterDOMLoaded.push(desktopLayoutScript)
+  // 使用本地复制脚本，为普通 HTTP 页面提供传统剪贴板降级能力。
+  componentResources.afterDOMLoaded.push(clipboardScript)
+  componentResources.css.push(clipboardStyle)
   // 页面 DOM 就绪后再识别流程图并挂载尺寸切换按钮。
   componentResources.afterDOMLoaded.push(mermaidSizeToggleScript)
 
