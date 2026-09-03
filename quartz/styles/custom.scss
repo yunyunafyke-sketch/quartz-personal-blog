@@ -218,6 +218,83 @@ body .markdown-rendered img.pet-icon {
   box-shadow: none !important;
 }
 
+// Mermaid 默认适应正文宽度；用户可按需切换到原始尺寸，并在固定视口中滚动查看细节。
+.mermaid-size-viewer {
+  margin: 1rem 0;
+}
+
+// 尺寸切换按钮固定放在流程图右上方，避免遮挡图中内容。
+.mermaid-size-viewer__controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.4rem;
+}
+
+.mermaid-size-viewer__toggle {
+  padding: 0.35rem 0.7rem;
+  color: var(--darkgray);
+  border: 1px solid var(--lightgray);
+  border-radius: 0.4rem;
+  background: var(--light);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--dark) 10%, transparent);
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.mermaid-size-viewer__toggle:hover,
+.mermaid-size-viewer__toggle:focus-visible,
+.mermaid-size-viewer__toggle[aria-pressed="true"] {
+  color: var(--secondary);
+  border-color: var(--secondary);
+  background: color-mix(in srgb, var(--secondary) 9%, var(--light));
+  outline: none;
+}
+
+.mermaid-size-viewer__viewport > picture {
+  display: block;
+  line-height: 0;
+}
+
+// 默认模式沿用原有行为：流程图最大宽度不超过正文区域。
+.mermaid-size-viewer__viewport img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+// 原始尺寸模式限制可视区域高度，并通过横向、纵向滚动查看完整流程图。
+.mermaid-size-viewer.is-original-size .mermaid-size-viewer__viewport {
+  max-height: min(80vh, 56rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--lightgray);
+  border-radius: 0.5rem;
+  background: var(--light);
+  scrollbar-gutter: stable both-edges;
+}
+
+// 使用 Mermaid 构建时写入的宽高，避免浏览器再次把图片压缩到正文宽度。
+.mermaid-size-viewer.is-original-size .mermaid-size-viewer__viewport > picture {
+  width: var(--mermaid-original-width);
+  min-width: var(--mermaid-original-width);
+  height: var(--mermaid-original-height);
+}
+
+.mermaid-size-viewer.is-original-size .mermaid-size-viewer__viewport img {
+  width: var(--mermaid-original-width);
+  height: var(--mermaid-original-height);
+  max-width: none;
+  margin: 0;
+}
+
 // Use the document title as the page heading, not as a repeated TOC entry.
 .toc {
   // Let the TOC occupy the remaining sidebar height without clipping its list.

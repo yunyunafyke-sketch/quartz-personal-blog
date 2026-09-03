@@ -10,6 +10,9 @@ import popoverScript from "../../components/scripts/popover.inline"
 import homeSearchScript from "../../components/scripts/home-search.inline"
 // @ts-ignore
 import desktopLayoutScript from "../../components/scripts/desktop-layout.inline"
+// Mermaid 流程图原始尺寸切换脚本。
+// @ts-ignore
+import mermaidSizeToggleScript from "../../components/scripts/mermaid-size-toggle.inline"
 import baseStyles from "../../styles/base.scss"
 import customStyles from "../../styles/custom.scss"
 import popoverStyle from "../../components/styles/popover.scss"
@@ -92,6 +95,8 @@ function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentReso
   // registered component so it is present in both static builds and dev mode.
   componentResources.afterDOMLoaded.push(homeSearchScript)
   componentResources.afterDOMLoaded.push(desktopLayoutScript)
+  // 页面 DOM 就绪后再识别流程图并挂载尺寸切换按钮。
+  componentResources.afterDOMLoaded.push(mermaidSizeToggleScript)
 
   // popovers
   if (cfg.enablePopovers) {
