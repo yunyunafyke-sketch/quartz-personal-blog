@@ -3,6 +3,7 @@ import rehypeMermaid from "rehype-mermaid"
 import { QuartzTransformerPluginInstance, TreeTransform } from "./quartz/plugins/types"
 import { componentRegistry } from "./quartz/components/registry"
 import PersonalFooter from "./quartz/components/PersonalFooter"
+import FolderContentWithDates from "./quartz/components/FolderContentWithDates"
 import { QuartzPluginData } from "./quartz/plugins/vfile"
 import {
   buildDirectoryTree,
@@ -31,11 +32,6 @@ const byDirectoryOrder = (first: QuartzPluginData, second: QuartzPluginData): nu
     sensitivity: "base",
   })
 }
-
-// Keep folder listing pages in the same natural order as the directory explorer.
-componentRegistry.setOptionOverrides("@quartz-community/folder-page", {
-  sort: byDirectoryOrder,
-})
 
 componentRegistry.setOptionOverrides("@quartz-community/search", {
   enablePreview: false,
@@ -119,6 +115,14 @@ const staticMermaid: QuartzTransformerPluginInstance = {
 }
 
 const config = await loadQuartzConfig()
+
+// Community folder pages aggregate child dates but omit the selected date type
+// for generated subfolders. Use the same list component with that missing data
+// restored, so directory rows show the most recent date of their descendants.
+const folderPage = config.plugins.pageTypes?.find((pageType) => pageType.name === "FolderPage")
+if (folderPage) {
+  folderPage.body = () => FolderContentWithDates({ sort: byDirectoryOrder })
+}
 
 // Quartz 默认会把每篇笔记的正文写入 static/contentIndex.json。
 // 本站搜索只按标题匹配，生成索引时不传入正文，以减小索引体积。
