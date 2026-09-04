@@ -55,4 +55,3 @@ function setupPersonalFooter() {
 
 document.addEventListener("nav", setupPersonalFooter)
 document.addEventListener("render", setupPersonalFooter)
-setupPersonalFooter()
