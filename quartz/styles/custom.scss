@@ -9,12 +9,14 @@
     --left-sidebar-width: clamp(180px, 20vw, 320px);
     --right-sidebar-width: clamp(180px, 20vw, 320px);
     --layout-divider-width: 10px;
+    min-height: 100dvh;
     grid-template-columns:
       var(--left-sidebar-width)
       var(--layout-divider-width)
       minmax(0, 1fr)
       var(--layout-divider-width)
       var(--right-sidebar-width) !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
     grid-template-areas:
       "grid-sidebar-left grid-divider-left grid-header grid-divider-right grid-sidebar-right"
       "grid-sidebar-left grid-divider-left grid-center grid-divider-right grid-sidebar-right"
@@ -93,7 +95,10 @@
 
   #quartz-body > .center {
     grid-column: 3;
-    grid-row: 1 / 4;
+    // The standalone site footer owns the third grid row. Keep the center
+    // content in the header/article rows so the footer cannot overlap the end
+    // of a long article.
+    grid-row: 1 / 3;
     width: 100%;
     max-width: none;
     min-width: 0;
@@ -223,9 +228,13 @@ body[data-slug="index"] .layout-controls {
 // screenshot-like card shadow to every image, so keep decorative pet sprites
 // floating without a white frame or shadow.
 body .markdown-rendered img.pet-icon {
+  display: inline-block;
+  height: auto;
+  margin: 0 0.2em;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+  vertical-align: middle;
 }
 
 // Mermaid 默认适应正文宽度；用户可按需切换到原始尺寸，并在固定视口中滚动查看细节。
