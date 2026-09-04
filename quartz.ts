@@ -2,6 +2,7 @@ import { loadQuartzConfig, loadQuartzLayout } from "./quartz/plugins/loader/conf
 import rehypeMermaid from "rehype-mermaid"
 import { QuartzTransformerPluginInstance, TreeTransform } from "./quartz/plugins/types"
 import { componentRegistry } from "./quartz/components/registry"
+import PersonalFooter from "./quartz/components/PersonalFooter"
 import { QuartzPluginData } from "./quartz/plugins/vfile"
 import {
   buildDirectoryTree,
@@ -10,6 +11,9 @@ import {
 } from "./quartz/util/directory"
 import { isFolderPath, resolveRelative } from "./quartz/util/path"
 import type { Element, Root } from "hast"
+
+// 用本站的个性化页脚替换社区默认页脚，同时保留 Quartz 的配置加载与布局机制。
+componentRegistry.register("@quartz-community/footer", PersonalFooter, "local-personal-footer")
 
 const byDirectoryOrder = (first: QuartzPluginData, second: QuartzPluginData): number => {
   const firstIsFolder = isFolderPath(first.slug ?? "")

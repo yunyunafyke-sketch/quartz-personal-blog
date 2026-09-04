@@ -238,9 +238,10 @@ plugins:
   - source: "@quartz-community/footer"
     enabled: true
     options:
-      links:
-        GitHub: https://github.com/jackyzha0/quartz
-        Discord Community: https://discord.gg/cRFFHYye7t
+      author: Afyke
+      githubUrl: https://github.com/yunyunafyke-sketch
+      coffeeText: 如果对您有用，可以请我喝一杯 Coffee ☕
+      qrImage: static/images/alipay-qr.jpg
     layout:
       position: footer
       priority: 50

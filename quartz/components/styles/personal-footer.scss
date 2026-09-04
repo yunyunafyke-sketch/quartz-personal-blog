@@ -1,0 +1,196 @@
+.personal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin: 1.5rem 0 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--lightgray);
+  color: var(--darkgray);
+  opacity: 1;
+
+  &__copyright {
+    margin: 0;
+    font-size: 0.95rem;
+
+    span {
+      color: var(--dark);
+      font-weight: 650;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  &__action {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.35rem;
+    margin: 0;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 999px;
+    background: var(--light);
+    color: var(--darkgray);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      border-color 0.18s ease,
+      background-color 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover {
+      border-color: var(--secondary);
+      background: color-mix(in srgb, var(--secondary) 10%, var(--light));
+      color: var(--secondary);
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--secondary);
+      outline-offset: 2px;
+    }
+  }
+
+  &__github svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: currentColor;
+    flex: 0 0 auto;
+  }
+
+  &__coffee {
+    color: var(--secondary);
+  }
+
+  &__modal[hidden] {
+    display: none;
+  }
+
+  &__modal {
+    position: fixed;
+    z-index: 10000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    padding: clamp(1rem, 4vw, 2rem);
+    background: rgb(15 23 42 / 66%);
+    backdrop-filter: blur(7px);
+  }
+
+  &__modal-card {
+    position: relative;
+    box-sizing: border-box;
+    width: min(25rem, 100%);
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
+    padding: 1.35rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 1.25rem;
+    background: var(--light);
+    color: var(--darkgray);
+    box-shadow: 0 24px 70px rgb(0 0 0 / 28%);
+    text-align: center;
+
+    h2 {
+      margin: 0 2rem 0.25rem;
+      color: var(--dark);
+      font-size: 1.25rem;
+    }
+
+    p {
+      margin: 0 1rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: calc(100dvh - 10rem);
+      margin: 0 auto;
+      border-radius: 0.85rem;
+      object-fit: contain;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__modal-close {
+    position: absolute;
+    z-index: 1;
+    top: 0.7rem;
+    right: 0.7rem;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--lightgray);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--lightgray) 55%, var(--light));
+    color: var(--darkgray);
+    font: inherit;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--secondary);
+      color: var(--secondary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--secondary);
+      outline-offset: 2px;
+    }
+  }
+}
+
+body.personal-footer-modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .personal-footer {
+    align-items: flex-start;
+    flex-direction: column;
+
+    &__actions {
+      align-items: stretch;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    &__action {
+      width: 100%;
+    }
+
+    &__modal-card {
+      padding: 1.1rem;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .personal-footer__action {
+    transition: none;
+  }
+}
