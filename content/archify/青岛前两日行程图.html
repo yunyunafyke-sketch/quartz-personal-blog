@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>李梦瑶和陈伟力的3日游青岛游</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: #19333c;
+      background:
+        radial-gradient(circle at 10% 5%, #ffedd4 0 12%, transparent 33%),
+        radial-gradient(circle at 92% 22%, #cfeeff 0 11%, transparent 31%),
+        #f8f7f2;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    main { max-width: 1060px; margin: 0 auto; padding: 48px 24px 64px; }
+    header { margin-bottom: 38px; }
+    .eyebrow { margin: 0 0 8px; color: #62828b; font-size: 13px; letter-spacing: .14em; font-weight: 700; }
+    h1 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(34px, 6vw, 62px); letter-spacing: .03em; font-weight: 600; }
+    .subtitle { margin: 14px 0 0; color: #5b7279; font-size: 16px; }
+    .days { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .day { position: relative; overflow: hidden; border: 1px solid rgba(41, 95, 108, .13); border-radius: 26px; background: rgba(255,255,255,.7); box-shadow: 0 18px 40px rgba(35, 71, 81, .08); }
+    .day::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 8px; }
+    .old-town::before { background: linear-gradient(90deg, #e6a649, #e8775f); }
+    .mountain::before { background: linear-gradient(90deg, #4aa7c9, #376fb1); }
+    .airport::before { background: linear-gradient(90deg, #9b596f, #d5534f); }
+    .day-head { padding: 30px 30px 22px; }
+    .day-label { display: inline-block; margin-bottom: 10px; font-size: 12px; letter-spacing: .13em; font-weight: 800; }
+    .old-town .day-label { color: #b85c37; }
+    .mountain .day-label { color: #256d94; }
+    .airport .day-label { color: #9a4650; }
+    h2 { margin: 0; font-size: 27px; }
+    .tagline { margin: 8px 0 0; color: #698087; font-size: 14px; }
+    .route { position: relative; margin: 2px 30px 30px; padding: 0 0 2px 25px; }
+    .route::before { content: ""; position: absolute; top: 12px; bottom: 8px; left: 6px; width: 2px; background: #d9e3e2; }
+    .stop { position: relative; display: grid; grid-template-columns: 70px 1fr; gap: 12px; padding: 0 0 21px; }
+    .stop:last-child { padding-bottom: 0; }
+    .stop::before { content: ""; position: absolute; z-index: 1; left: -24px; top: 4px; width: 12px; height: 12px; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 0 1px #cbd9d9; }
+    .old-town .stop::before { background: #e18b4d; }
+    .mountain .stop::before { background: #3992ba; }
+    .airport .stop::before { background: #b75a61; }
+    time { padding-top: 1px; color: #6d858c; font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .place { font-size: 16px; font-weight: 800; line-height: 1.3; }
+    .hint { margin-top: 4px; color: #687d84; font-size: 13px; line-height: 1.45; }
+    .highlight .place { color: #d35c3d; }
+    .mountain .highlight .place { color: #1c719b; }
+    .urgent .place { color: #bd3f42 !important; }
+    .urgent .hint { color: #a45759; font-weight: 700; }
+    footer { margin-top: 28px; padding: 18px 22px; border-radius: 16px; background: rgba(255,255,255,.54); color: #526d75; font-size: 14px; line-height: 1.65; }
+    footer strong { color: #274b55; }
+    @media (max-width: 720px) { main { padding: 32px 16px 42px; } .days { grid-template-columns: 1fr; gap: 18px; } .day-head { padding: 27px 24px 19px; } .route { margin: 2px 24px 25px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">LI MENGYAO &amp; CHEN WEILI · QINGDAO</p>
+      <h1>李梦瑶和陈伟力的<br>3日游青岛游</h1>
+      <p class="subtitle">老城慢游 → 崂山看海 → 海岸夜景 → 准时抵达机场</p>
+    </header>
+
+    <section class="days" aria-label="青岛三日行程路线">
+      <article class="day old-town">
+        <div class="day-head">
+          <div class="day-label">DAY 1</div>
+          <h2>老城文艺慢游</h2>
+          <p class="tagline">大部分步行 · 把时间留给海风和日落</p>
+        </div>
+        <div class="route">
+          <div class="stop"><time>09:00</time><div><div class="place">栈桥</div><div class="hint">从海边开启一天</div></div></div>
+          <div class="stop"><time>10:15</time><div><div class="place">圣弥厄尔大教堂</div><div class="hint">拍外景即可</div></div></div>
+          <div class="stop"><time>11:30</time><div><div class="place">中山路午饭</div><div class="hint">前海沿 / 1937 青岛老味道</div></div></div>
+          <div class="stop"><time>13:30</time><div><div class="place">福山支路</div></div></div>
+          <div class="stop"><time>15:15</time><div><div class="place">琴屿路</div><div class="hint">沿海慢走，拍小青岛方向</div></div></div>
+          <div class="stop highlight"><time>16:40</time><div><div class="place">小青岛公园</div><div class="hint">等海边日落</div></div></div>
+          <div class="stop"><time>晚上</time><div><div class="place">中山路酒店</div><div class="hint">早点休息，备战崂山</div></div></div>
+        </div>
+      </article>
+
+      <article class="day mountain">
+        <div class="day-head">
+          <div class="day-label">DAY 2</div>
+          <h2>崂山与海岸夜景</h2>
+          <p class="tagline">早出发 · 登山看海 · 晚上看灯光秀</p>
+        </div>
+        <div class="route">
+          <div class="stop"><time>07:20</time><div><div class="place">中山路酒店出发</div><div class="hint">前往崂山仰口</div></div></div>
+          <div class="stop highlight"><time>08:30<br>–14:00</time><div><div class="place">崂山仰口景区</div><div class="hint">往返索道，控制好下山时间</div></div></div>
+          <div class="stop"><time>14:30</time><div><div class="place">返回市区</div></div></div>
+          <div class="stop"><time>16:00</time><div><div class="place">小麦岛公园</div></div></div>
+          <div class="stop"><time>17:30</time><div><div class="place">五四广场</div></div></div>
+          <div class="stop"><time>18:50</time><div><div class="place">打车去第三海水浴场</div><div class="hint">目标 19:15 前抵达</div></div></div>
+          <div class="stop highlight"><time>19:30</time><div><div class="place">第三海水浴场灯光秀</div><div class="hint">散场车多，提前预约返程网约车</div></div></div>
+          <div class="stop"><time>21:00</time><div><div class="place">返回中山路</div></div></div>
+        </div>
+      </article>
+
+      <article class="day airport">
+        <div class="day-head">
+          <div class="day-label">DAY 3</div>
+          <h2>老城收尾 · 赶机场</h2>
+          <p class="tagline">严格控时 · 15:50 前必须出发</p>
+        </div>
+        <div class="route">
+          <div class="stop"><time>10:00<br>–12:00</time><div><div class="place">八大关</div><div class="hint">梧桐大道、花石楼外景、第二海水浴场</div></div></div>
+          <div class="stop"><time>12:10<br>–13:00</time><div><div class="place">太平山观光索道</div><div class="hint">中山公园站上，只买单程票；大风或排队久就跳过</div></div></div>
+          <div class="stop"><time>13:05<br>–13:35</time><div><div class="place">就近简餐</div><div class="hint">快餐即可，不安排耗时正餐</div></div></div>
+          <div class="stop"><time>14:00<br>–15:30</time><div><div class="place">青岛啤酒博物馆</div><div class="hint">只走核心展厅、原浆体验、啤酒豆</div></div></div>
+          <div class="stop urgent"><time>15:40</time><div><div class="place">必须离馆</div><div class="hint">提前叫车、停止购物和额外体验</div></div></div>
+          <div class="stop urgent"><time>15:50</time><div><div class="place">出发去胶东机场</div><div class="hint">最晚不能晚于 16:00</div></div></div>
+          <div class="stop urgent"><time>约 17:20</time><div><div class="place">抵达机场</div><div class="hint">直奔值机 / 托运 / 安检</div></div></div>
+          <div class="stop urgent"><time>18:00</time><div><div class="place">航班起飞</div></div></div>
+        </div>
+      </article>
+    </section>
+
+    <footer><strong>出行提示：</strong>Day 1 不赶行程；Day 2 穿舒适鞋并带水、防晒和充电宝；Day 3 的底线是 <strong>15:50 出发去机场</strong>，不要为多玩一会儿赌路况。</footer>
+  </main>
+</body>
+</html>
