@@ -1,7 +1,10 @@
 ---
+# 首页及钉钉链接卡片标题。
 title: Afyke Blog
+# 普通页面描述与社交平台描述保持一致。
 description: 记录技术、博客搭建与个人项目
 socialDescription: 记录技术、博客搭建与个人项目
+# 钉钉卡片使用的 Open Graph 横向封面图。
 socialImage: og-cover-dingtalk-cyberpunk.png
 publish: true
 ---

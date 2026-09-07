@@ -25,11 +25,17 @@ export default (() => {
     const url = new URL(`https://${cfg.baseUrl ?? "example.com"}`)
     const path = url.pathname as FullSlug
     const baseDir = fileData.slug === "404" ? path : pathToRoot(fileData.slug!)
-    const iconPath = joinSegments(baseDir, "static/icon.png")
-    const faviconPath = joinSegments(baseDir, "static/favicon.ico")
-    const appleTouchIconPath = joinSegments(baseDir, "static/apple-touch-icon.png")
+    // 钉钉抓取器使用绝对地址，避免相对路径解析失败。
+    const staticAssetUrl = (assetPath: string) =>
+      cfg.baseUrl
+        ? `https://${cfg.baseUrl}/static/${assetPath}`
+        : joinSegments(baseDir, "static", assetPath)
+    // 保留原有浏览器与移动端图标资源。
+    const iconPath = staticAssetUrl("icon.png")
+    const faviconPath = staticAssetUrl("favicon.ico")
+    const appleTouchIconPath = staticAssetUrl("apple-touch-icon.png")
 
-    // Url of current page
+    // 首页使用根地址作为 OG 规范链接，避免生成 /index。
     const socialUrl =
       fileData.slug === "404" || fileData.slug === "index"
         ? url.toString()
@@ -90,6 +96,7 @@ export default (() => {
         <meta name="twitter:description" content={description} />
         <meta property="og:description" content={description} />
         <meta property="og:image:alt" content={description} />
+        {/* 首页固定封面为 1200×630，供钉钉预先确定卡片图片比例。 */}
         {fileData.slug === "index" && fileData.frontmatter?.socialImage && (
           <>
             <meta property="og:image:width" content="1200" />
@@ -117,6 +124,9 @@ export default (() => {
           </>
         )}
 
+        {/* favicon.ico 置于首位，供钉钉卡片优先抓取。 */}
+        <link rel="icon" type="image/x-icon" href={faviconPath} />
+        {/* 保留原有浏览器 PNG favicon 与 Apple Touch Icon 兼容性。 */}
         <link rel="icon" type="image/png" sizes="360x360" href={iconPath} />
         <link rel="shortcut icon" type="image/x-icon" href={faviconPath} />
         <link rel="apple-touch-icon" sizes="180x180" href={appleTouchIconPath} />
