@@ -26,10 +26,14 @@ export default (() => {
     const path = url.pathname as FullSlug
     const baseDir = fileData.slug === "404" ? path : pathToRoot(fileData.slug!)
     const iconPath = joinSegments(baseDir, "static/icon.png")
+    const faviconPath = joinSegments(baseDir, "static/favicon.ico")
+    const appleTouchIconPath = joinSegments(baseDir, "static/apple-touch-icon.png")
 
     // Url of current page
     const socialUrl =
-      fileData.slug === "404" ? url.toString() : joinSegments(url.toString(), fileData.slug!)
+      fileData.slug === "404" || fileData.slug === "index"
+        ? url.toString()
+        : joinSegments(url.toString(), fileData.slug!)
 
     const usesCustomOgImage = ctx.cfg.plugins.emitters.some((e) => e.name === "CustomOgImages")
     const ogImageDefaultPath = `https://${cfg.baseUrl}/static/og-image.png`
@@ -78,7 +82,7 @@ export default (() => {
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossOrigin="anonymous" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        <meta name="og:site_name" content={cfg.pageTitle}></meta>
+        <meta property="og:site_name" content={cfg.pageTitle}></meta>
         <meta property="og:title" content={title} />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -86,6 +90,12 @@ export default (() => {
         <meta name="twitter:description" content={description} />
         <meta property="og:description" content={description} />
         <meta property="og:image:alt" content={description} />
+        {fileData.slug === "index" && fileData.frontmatter?.socialImage && (
+          <>
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+          </>
+        )}
 
         {!usesCustomOgImage && (
           <>
@@ -107,7 +117,9 @@ export default (() => {
           </>
         )}
 
-        <link rel="icon" href={iconPath} />
+        <link rel="icon" type="image/png" sizes="360x360" href={iconPath} />
+        <link rel="shortcut icon" type="image/x-icon" href={faviconPath} />
+        <link rel="apple-touch-icon" sizes="180x180" href={appleTouchIconPath} />
         <meta name="description" content={description} />
         <meta name="generator" content="Quartz" />
 

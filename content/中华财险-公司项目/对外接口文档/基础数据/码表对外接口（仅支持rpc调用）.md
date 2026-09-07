@@ -1,701 +1,1084 @@
 ---
 publish: true
 ---
+码表关联导入模版的excel解锁密码@cic12345
 
-https://cic_irc.yuque.com/tyl581/ggwv9w/gxohhk0q4w9tuvl1
+[https://cic_irc.yuque.com/tyl581/ggwv9w/vruo83cus2wzkord](https://cic_irc.yuque.com/tyl581/ggwv9w/vruo83cus2wzkord)
 
-## Maven 依赖
+# pom坐标
 
 ```
 <dependency>
- <groupId>com.aliyun.fsi.insurance</groupId>
- <artifactId>aboss-sso-client</artifactId>
- <version>1.3.6-RELEASE</version>
+    <groupId>com.aliyun.fsi.insurance</groupId>
+    <artifactId>aboss-code-client</artifactId>
+    <version>1.4.1-RELEASE</version>
 </dependency>
 ```
 
----
+# 一、码表相关接口
 
-# Aboss-SSO RPC 接口文档
+码表
 
-接口定义：`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade`  
-接口实现：`com.aliyun.fsi.insurance.sso.impl.AccountRpcFacadeImpl`  
-传输协议：SOFA Bolt  
-统一响应结构：`ResultModel<T>` / `PageResultModelSupport<T>`
+基础代码类型表 t_abs_basic_type
 
----
+基础代码表 t_abs_basic_code
 
-## 一、账号查询相关
+## 1.1查询码表类型列表(typeCodes、typeName和typeFrom不能同时为空)
 
-### 1.1 根据账户id查询用户详细信息
+URL: `services.queryTypes`
 
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountInfo(AccountIdQry accountIdQry)`|
-|**接口描述**|根据账户id查询用户详细信息|
-|**是否需要认证**|否|
+/platform/api/aboss/basic-code/front/query-types
 
-**请求参数（AccountIdQry）**
+Type: `POST`
+
+Author: zhanghua
+
+Content-Type: `application/json; charset=utf-8`
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryTypes(BasicTypeQrybasicTypeQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|typeCodes|string[]|类型代码|false|-|
+|typeName|string|类型名称|false|-|
+|typeFrom|string|typeFrom 归属域|false|-|
+|status|int8|状态(为空返回所有有效数据，1:启用，0:停用) status如果不传，那么status=0和status=1的数据都会返回|false|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryTypes({
+  typeCodes: ["ycvkro"],
+  typeName: "granville.quigley",
+  typeFrom: "saz2af",
+  status: 16
+});
+```
+
+#### 返回参数说明：
 
 |   |   |   |   |
 |---|---|---|---|
-|参数名|类型|必填|说明|
-|accId|String|是|账户id|
+|Field|Type|Description|Since|
+|typeCode|string|类型代码|-|
+|typeName|string|类型名称|-|
+|typeFrom|string|来源（域来源）|-|
+|status|int8|启用停用(1:启用，0:停用)|-|
 
-**响应结果（AccountDetailDTO）**
+#### 返回参数示例：
+
+```
+[
+  {
+    "typeCode": "48435",
+    "typeName": "granville.quigley",
+    "typeFrom": "glqida",
+    "status": 104
+  }
+]
+```
+
+## 1.2根据type查询码值列表
+
+URL: `services.queryCodesByType`
+
+/platform/api/aboss/basic-code/front/query-codes-by-type
+
+Type:POST
+
+Author: zhanghua
+
+Content-Type:application/json; charset=utf-8
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryByType(BasicCodeByTypeQrybasicCodeByTypeQry)1.根据 typeCode查询2.根据 typeCode和码值名模糊查询3.根据 typeCode和码值列表查询
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|typeCode|string|代码类型|true|-|
+|basicValue|string|码值名称|false|-|
+|codes|string[]|码值集合|false|-|
+|status|int8|状态(为空返回所有有效数据,1:启用，0:停用) ，status如果不传，那么status=0和status=1的数据都会返回|false|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryCodesByType({
+  typeCode: "63636",
+  basicValue: "594jd9",
+  codes: [ "oo5wip"],
+  status: 37
+});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|typeCode|string|类型代码|-|
+|basicCode|string|基础代码编码|-|
+|basicValue|string|基础代码值|-|
+|parentCode|string|父级组件编码|-|
+|status|int8|启用停用(1:启用，0:停用)|-|
+
+#### 返回参数示例：
+
+```
+[
+  {
+    "typeCode": "63636",
+    "basicCode": "63636",
+    "basicValue": "36wff5",
+    "parentCode": "63636",
+    "status": 11
+  }
+]
+```
+
+## 1.3根据多个 type+code 的码值列表查询集合
+
+URL: `services.queryCodesBatch`
+
+/platform/api/aboss/basic-code/front/query-codes-batch
+
+Type:POST
+
+Author: zhanghua
+
+Content-Type:application/json; charset=utf-8
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryBatch(List< BasicTypeAndCodeQry > basicTypeAndCodeQries)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|typeCode|string|代码类型|true|-|
+|code|string|代码code|true|-|
+|status|int8|状态(为空返回所有有效数据,1:启用，0:停用)，status如果不传，那么status=0和status=1的数据都会返回|false|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryCodesBatch([
+  {
+    "typeCode": "63636",
+    "code": "63636",
+    "status": 70
+  }
+]);
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|typeCode|string|类型代码|-|
+|basicCode|string|基础代码编码|-|
+|basicValue|string|基础代码值|-|
+|parentCode|string|父级组件编码|-|
+|status|int8|启用停用(1:启用，0:停用)|-|
+
+#### 返回参数示例：
+
+```
+[
+  {
+    "typeCode": "63636",
+    "basicCode": "63636",
+    "basicValue": "2cr499",
+    "parentCode": "63636",
+    "status": 44
+  }
+]
+```
+
+## 1.4根据type+父code查询码值列表
+
+URL: `services.queryCodesByParentCode`
+
+/platform/api/aboss/basic-code/front/query-codes-by-parent-code
+
+Type: `POST`
+
+Author: zhanghua
+
+Content-Type: `application/json; charset=utf-8`
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryByParentCode(BasicCodesByParentCodeQrybasicCodesByParentCodeQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|typeCode|string|代码类型|true|-|
+|parenCode|string|父编码（待废弃）|false|-|
+|parentCode|string|父编码|false|-|
+|status|int8|状态(为空返回所有有效数据,1:启用，0:停用)，status如果不传，那么status=0和status=1的数据都会返回|false|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryCodesByParentCode({
+  typeCode: "48435",
+  parenCode: "48435",
+  parentCode: "48435",
+  status: 103
+});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|typeCode|string|类型代码|-|
+|basicCode|string|基础代码编码|-|
+|basicValue|string|基础代码值|-|
+|parentCode|string|父级组件编码|-|
+|status|int8|启用停用(1:启用，0:停用)|-|
+
+#### 返回参数示例：
+
+```
+[
+  {
+    "typeCode": "48435",
+    "basicCode": "48435",
+    "basicValue": "17vzbi",
+    "parentCode": "48435",
+    "status": 18
+  }
+]
+```
+
+## 1.5根据多个type查询码值列表
+
+URL: `services.queryCodesByTypes`
+
+/platform/api/aboss/basic-code/front/query-codes-by-types
+
+Type:POST
+
+Author: zhanghua
+
+Content-Type:application/json; charset=utf-8
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryByTypes(BasicCodeByTypesQrybasicCodeByTypesQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|typeCodes|array|代码类型集合|false|-|
+|status|int8|状态(为空返回所有有效数据,1:启用，0:停用)，status如果不传，那么status=0和status=1的数据都会返回|false|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryCodesByTypes({
+  typeCodes: ["rxk273"],
+  status: 0
+});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|typeCode|string|类型代码|-|
+|basicCode|string|基础代码编码|-|
+|basicValue|string|基础代码值|-|
+|parentCode|string|父级组件编码|-|
+|status|int8|启用停用(1:启用，0:停用)|-|
+
+#### 返回参数示例：
+
+```
+{
+  "mapKey": [
+    {
+      "typeCode": "85212",
+      "basicCode": "85212",
+      "basicValue": "r4iyrn",
+      "parentCode": "85212",
+      "status": 49
+    }
+  ]
+}
+```
+
+## 1.6根据keyword（支持模糊）分页查询指定码表中的码值列表
+
+URL: `services.queryCodesByTypeWithKeyword`
+
+/platform/api/aboss/basic-code/front/query-codes-by-type-with-keyword
+
+Type: `POST`
+
+Author: zhanghua
+
+Content-Type: `application/json; charset=utf-8`
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryCodesByTypeWithKeyword(BasicCodeByTypeKeywordQry basicCodeByTypeKeywordQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|pageSize|int32|每页展示条数|true|-|
+|pageIndex|int32|当前页码|true|-|
+|typeCode|string|代码类型|true|-|
+|keyword|string|码值basicCode或者basicValue|false|-|
+|status|int8|状态(为空返回所有有效数据,1:启用，0:停用)，status如果不传，那么status=0和status=1的数据都会返回|false|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryCodesByTypeWithKeyword({
+  pageSize: 10,
+  pageIndex: 1,
+  typeCode: "48435",
+  keyword: "nvhlcy",
+  status: 108
+});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|typeCode|string|类型代码|-|
+|basicCode|string|基础代码编码|-|
+|basicValue|string|基础代码值|-|
+|parentCode|string|父级组件编码|-|
+|status|int8|启用停用(1:启用，0:停用)|-|
+
+#### 返回参数示例：
+
+```
+[
+  {
+    "typeCode": "48435",
+    "basicCode": "48435",
+    "basicValue": "17ic79",
+    "parentCode": "48435",
+    "status": 1
+  }
+]
+```
+
+## 1.7根据keyword（支持模糊）分页查询码表列表
+
+URL: `services.queryTypesWithKeyword`
+
+/platform/api/aboss/basic-code/front/query-types-with-keyword
+
+Type: `POST`
+
+Author: zhanghua
+
+Content-Type: `application/json; charset=utf-8`
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryTypesWithKeyword(BasicTypeByKeywordQry basicTypeByKeywordQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|pageSize|int32|每页展示条数|true|-|
+|pageIndex|int32|当前页码|true|-|
+|keyword|string|typeCode(支持模糊)或者typeName(支持模糊)|false|-|
+|typeFrom|string|typeFrom 归属域|false|-|
+|status|int8|状态(为空返回所有有效数据,1:启用，0:停用)，status如果不传，那么status=0和status=1的数据都会返回|false|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryTypesWithKeyword({
+  pageSize: 10,
+  pageIndex: 1,
+  keyword: "n5h9dx",
+  typeFrom: "ml4ms9",
+  status: 101
+});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|typeCode|string|类型代码|-|
+|typeName|string|类型名称|-|
+|typeFrom|string|来源（域来源）|-|
+|status|int8|启用停用(1:启用，0:停用)|-|
+
+#### 返回参数示例：
+
+```
+[
+  {
+    "typeCode": "48435",
+    "typeName": "granville.quigley",
+    "typeFrom": "vrmwu1",
+    "status": 65
+  }
+]
+```
+
+## 1.8根据码表和码值查询所有上级
+
+URL: `/platform/api/aboss/basic-code/front/query-path`
+
+/platform/api/aboss/basic-code/front/query-path
+
+Type: `POST`
+
+Author: zhanghua
+
+Content-Type: `application/json; charset=utf-8`
+
+Description: com.aliyun.fsi.insurance.dict.api.CodeRPCFacade.queryPath(BasicTypeAndCodeQrybasicTypeAndCodeQry)入参 area_cd + 110115 返回 ["110000","110100","110115"]
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|typeCode|string|代码类型|true|-|
+|code|string|代码code|true|-|
+
+#### 请求示例:
+
+```
+curl -X POST -H 'Content-Type: application/json; charset=utf-8' -i /platform/api/aboss/basic-code/front/query-path --data '{
+  "typeCode": "area_cd",
+  "code": "110115",
+}'
+```
+
+#### 返回参数示例:
+
+```
+[
+  "110000",
+  "110100",
+  "110115"
+]
+```
+
+# 二、关联码相关接口
+
+关联码
+
+关联关系 t_abs_relationship
+
+## 2.1 根据关联编码查询所有的关联关系集合
+
+URL: `services.queryAllRelationship`
+
+/platform/api/aboss/basic-code/front/query-all-relationship
+
+Type: POST
+
+Author: zhanghua
+
+Content-Type: application/json; charset=utf-8
+
+Description:com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade.queryAllRelationship(RelationshipQryrelationshipQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|associationCode|string|关联编码|true|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryAllRelationship({associationCode: "85212"});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|associationCode|string|码表关联编码|-|
+|associationName|string|名称|-|
+|associationFrom|string|归属(枚举值)|-|
+|associationTypes|array|码表类型|-|
+|relationshipDTOList|array|关联关系集合|-|
+|└─id|string|ID|-|
+|└─associationCode|string|关联编码|-|
+|└─relationshipList|array|码表类型集合|-|
+|└─typeCode|string|代码类型|-|
+|└─codes|array|编码集合|-|
+|└─codeValues|array|码值code-码值name||
+
+#### 返回参数示例：
+
+```
+{
+    "associationCode": "test_code",
+    "associationName": "test",
+    "associationFrom": "M010008",
+    "associationTypes": [
+        "imagpie_flow_metaservice_type_cd",
+        "imagpie_flower_service_field_cd"
+    ],
+    "relationshipDTOList": [
+        {
+            "id": "7002949945079869440",
+            "associationCode": "test_code",
+            "relationshipList": [
+                {
+                    "typeCode": "imagpie_flow_metaservice_type_cd",
+                    "codes": [
+                        "methodName",
+                        "facadeName",
+                        "invokeName"
+                    ],
+                    "codeValues": {
+                        "invokeName": "调用方法",
+                        "methodName": "方法名称",
+                        "facadeName": "接口名称"
+                    }
+                },
+                {
+                    "typeCode": "imagpie_flower_service_field_cd",
+                    "codes": [
+                        "local",
+                        "http",
+                        "sofa"
+                    ],
+                    "codeValues": {
+                        "sofa": "RPC服务",
+                        "http": "HTTP服务",
+                        "local": "本地服务"
+                    }
+                }
+            ]
+        }
+    ]
+}
+```
+
+## 2.2 根据关联编码集合批量查询所有的关联关系集合
+
+URL: `services.queryBatchRelationship`
+
+/platform/api/aboss/basic-code/front/query-batch-relationship
+
+Type: POST
+
+Author: zhanghua
+
+Content-Type: application/json; charset=utf-8
+
+Description:com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade.queryBatchRelationship(List<RelationshipQry> relationshipQries)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|associationCode|string|关联编码|true|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryBatchRelationship({associationCode: "85212"});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|associationCode|string|码表关联编码|-|
+|associationName|string|名称|-|
+|associationFrom|string|归属(枚举值)|-|
+|associationTypes|array|码表类型|-|
+|relationshipDTOList|array|关联关系集合|-|
+|└─id|string|ID|-|
+|└─associationCode|string|关联编码|-|
+|└─relationshipList|array|码表类型集合|-|
+|└─typeCode|string|代码类型|-|
+|└─codes|array|编码集合|-|
+|└─codeValues|array|码值code-码值name||
+
+#### 返回参数示例：
+
+```
+[
+    {
+        "associationCode": "test_code",
+        "associationName": "test",
+        "associationFrom": "M010008",
+        "associationTypes": [
+            "imagpie_flow_metaservice_type_cd",
+            "imagpie_flower_service_field_cd"
+        ],
+        "relationshipDTOList": [
+            {
+                "id": "7002949945079869440",
+                "associationCode": "test_code",
+                "relationshipList": [
+                    {
+                        "typeCode": "imagpie_flow_metaservice_type_cd",
+                        "codes": [
+                            "methodName",
+                            "facadeName",
+                            "invokeName"
+                        ],
+                        "codeValues": {
+                            "invokeName": "调用方法",
+                            "methodName": "方法名称",
+                            "facadeName": "接口名称"
+                        }
+                    },
+                    {
+                        "typeCode": "imagpie_flower_service_field_cd",
+                        "codes": [
+                            "local",
+                            "http",
+                            "sofa"
+                        ],
+                        "codeValues": {
+                            "sofa": "RPC服务",
+                            "http": "HTTP服务",
+                            "local": "本地服务"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
+```
+
+## 2.3 校验关联关系是否存在
+
+URL: `services.checkRelationship`
+
+/platform/api/aboss/basic-code/front/check-relationship
+
+Type: POST
+
+Author: zhanghua
+
+Content-Type: application/json; charset=utf-8
+
+Description:com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade.checkRelationship(CheckRelationshipcheckRelationship)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|associationCode|string|码表关联编码|true|-|
+|values|array|码值键值对集合|false|-|
+|└─typeCode|string|代码类型|true|-|
+|└─codes|string[]|编码集合|true|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.checkRelationship({
+  associationCode: "85212",
+  values: [{ "typeCode": "85212", "codes": ["nrzh8h"] }]
+});
+```
+
+#### 返回参数示例：
+
+true
+
+# 三、行政区相关接口
+
+行政区
+
+行政区表 t_abs_basic_area
+
+## 3.1 查询行政区码表集合
+
+URL: `services.queryAreas`
+
+/platform/api/aboss/basic-code/front/query-areas
+
+Type: POST
+
+Author: zhanghua
+
+Content-Type: application/json; charset=utf-8
+
+Description:com.aliyun.fsi.insurance.dict.api.AreaCodeRPCFacade.queryAreas(AreaCodeQry areaCodeQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|code|string|地区编码(支持模糊查询)|false|-|
+|name|string|地区编码名(支持模糊查询)|false|-|
+|postCode|string|邮编|false|-|
+|areaNumber|string|区号|false|-|
+|proReferred|string|省份简称|false|-|
+|parentCode|string|父编码|false|-|
+|level|int8|省市区层级（1，2，3）|false|-|
+|status|int8|状态(为空返回所有有效数据,1:启用，0:停用) ，status如果不传，那么status=0和status=1的数据都会返回|false||
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryAreas({
+  code: "85212",
+  name: "mattie.torp",
+  postCode: "85212",
+  areaNumber: "hjgqut",
+  proReferred: "i8r03p",
+  parentCode: "85212",
+  level: 47
+});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|id|string|ID|-|
+|code|string|编码|-|
+|name|string|编码名|-|
+|provinceName|string|省份名|-|
+|cityName|string|市区名|-|
+|areaName|string|地区名|-|
+|parentCode|string|父级编码|-|
+|level|int8|省市区层级|-|
+|postCode|string|邮编|-|
+|areaNumber|string|电话区号|-|
+|proReferred|string|省份简称|-|
+|isValid|int8|是否有效|-|
+|status|int8|启用停用(1:启用，0:停用)||
+|gmtModified|string|更新时间|-|
+
+#### 返回参数示例：
+
+```
+[
+  {
+    "id": "17",
+    "code": "85212",
+    "name": "mattie.torp",
+    "provinceName": "mattie.torp",
+    "cityName": "mattie.torp",
+    "areaName": "mattie.torp",
+    "parentCode": "85212",
+    "level": 37,
+    "postCode": "85212",
+    "areaNumber": "k5wvyq",
+    "proReferred": "bujtli",
+    "isValid": 99,
+    "gmtModified": "2022-11-18 15:13:03",
+    "status": 1
+  }
+]
+```
+
+## 3.2 根据code集合查询所有的行政区码表集合
+
+URL: `services.queryAreasByCodes`
+
+/platform/api/aboss/basic-code/front/query-areas-by-codes
+
+Type: POST
+
+Author: zhanghua
+
+Content-Type: application/json; charset=utf-8
+
+Description:com.aliyun.fsi.insurance.dict.api.AreaCodeRPCFacade.queryAreasByCodes(AreaCodesQryareaCodesQry)
+
+#### 请求参数:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|codes|array|地区编码集合|true|-|
+
+#### 请求示例:
+
+```
+import { services } from '@cic/mp-support';
+
+services.queryAreasByCodes({codes: [ "77vxod"]});
+```
+
+#### 返回参数说明：
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|id|string|ID|-|
+|code|string|编码|-|
+|name|string|编码名|-|
+|provinceName|string|省份名|-|
+|cityName|string|市区名|-|
+|areaName|string|地区名|-|
+|parentCode|string|父级编码|-|
+|level|int8|省市区层级|-|
+|postCode|string|邮编|-|
+|areaNumber|string|电话区号|-|
+|proReferred|string|省份简称|-|
+|isValid|int8|是否有效|-|
+|status|int8|启用停用(1:启用，0:停用)||
+|gmtModified|string|更新时间|-|
+
+#### 返回参数示例：
+
+```
+[
+  {
+    "id": "17",
+    "code": "85212",
+    "name": "mattie.torp",
+    "provinceName": "mattie.torp",
+    "cityName": "mattie.torp",
+    "areaName": "mattie.torp",
+    "parentCode": "85212",
+    "level": 45,
+    "postCode": "85212",
+    "areaNumber": "l41ecc",
+    "proReferred": "bb5fn8",
+    "isValid": 81,
+    "gmtModified": "2022-11-18 15:13:03",
+    "status": 1
+  }
+]
+```
+
+  
+
+## 3.3根据关联编码查询关联码表（返回码表详情）
+
+URL:`/platform/api/aboss/basic-code/front/query-relation-ship-detail`
+
+Type:`POST`
+
+Author: zhanghua
+
+Content-Type:`application/json; charset=utf-8`
+
+Description: com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade#queryRelationshipDetail(com.aliyun.fsi.insurance.dict.dto.request.association.query.RelationshipQry)
+
+Body-parameters:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|associationCode|string|关联编码|true|-|
+
+Request-example:
+
+```
+curl -X POST -H 'Content-Type: application/json; charset=utf-8' -i /platform/api/aboss/basic-code/front/query-relation-ship-detail --data '{
+  "associationCode": "46667"
+}'
+```
+
+Response-fields:
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|associationCode|string|码表关联编码|-|
+|associationName|string|名称|-|
+|associationFrom|string|归属(枚举值)|-|
+|associationTypes|array|码表类型|-|
+|associationRelationDetailSubDTOList|array|关联关系集合|-|
+|└─relationshipDetailList|array|关联关系集合|-|
+|└─typeCode|string|码表关联编码|-|
+|└─basicCodeList|array|关联关系集合|-|
+|└─typeCode|string|码表类型代码|-|
+|└─typeName|string|码表类型名称|-|
+|└─basicCode|string|基础代码编码|-|
+|└─basicValue|string|基础代码值|-|
+|└─parentCode|string|父级组件编码|-|
+|└─isValid|int8|有效无效标识(1:有效，0:无效)|-|
+|└─status|int8|启用停用标识(1:启用，0:停用)|-|
+
+Response-example:
+
+```
+{
+  "associationCode": "46667",
+  "associationName": "laura.hartmann",
+  "associationFrom": "x6szuw",
+  "associationTypes": [
+    "np7ovc"
+  ],
+  "associationRelationDetailSubDTOList": [
+    {
+      "relationshipDetailList": [
+        {
+          "typeCode": "46667",
+          "basicCodeList": [
+            {
+              "typeCode": "46667",
+              "typeName": "laura.hartmann",
+              "basicCode": "46667",
+              "basicValue": "2kdh23",
+              "parentCode": "46667",
+              "isValid": 46,
+              "status": 57
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## 3.4根据批量关联编码查询关联码表（返回码表详情）
+
+URL:`/platform/api/aboss/basic-code/front/query-batch-relation-ship-detail`
+
+Type:`POST`
+
+Author: zhanghua
+
+Content-Type:`application/json; charset=utf-8`
+
+Description: com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade#queryBatchRelationshipDetail(java.util.List<com.aliyun.fsi.insurance.dict.dto.request.association.query.RelationshipQry>)
+
+Body-parameters:
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Parameter|Type|Description|Required|Since|
+|associationCode|string|关联编码|true|-|
+
+Request-example:
+
+```
+curl -X POST -H 'Content-Type: application/json; charset=utf-8' -i /platform/api/aboss/basic-code/front/query-batch-relation-ship-detail --data '[
+  {
+    "associationCode": "46667"
+  }
+]'
+```
+
+Response-fields:
+
+|   |   |   |   |
+|---|---|---|---|
+|Field|Type|Description|Since|
+|associationCode|string|码表关联编码|-|
+|associationName|string|名称|-|
+|associationFrom|string|归属(枚举值)|-|
+|associationTypes|array|码表类型|-|
+|associationRelationDetailSubDTOList|array|关联关系集合|-|
+|└─relationshipDetailList|array|关联关系集合|-|
+|└─typeCode|string|码表关联编码|-|
+|└─basicCodeList|array|关联关系集合|-|
+|└─typeCode|string|码表类型代码|-|
+|└─typeName|string|码表类型名称|-|
+|└─basicCode|string|基础代码编码|-|
+|└─basicValue|string|基础代码值|-|
+|└─parentCode|string|父级组件编码|-|
+|└─isValid|int8|有效无效标识(1:有效，0:无效)|-|
+|└─status|int8|启用停用标识(1:启用，0:停用)|-|
+
+Response-example:
+
+```
+[
+  {
+    "associationCode": "46667",
+    "associationName": "laura.hartmann",
+    "associationFrom": "d5npo4",
+    "associationTypes": [
+      "rvjr2y"
+    ],
+    "associationRelationDetailSubDTOList": [
+      {
+        "relationshipDetailList": [
+          {
+            "typeCode": "46667",
+            "basicCodeList": [
+              {
+                "typeCode": "46667",
+                "typeName": "laura.hartmann",
+                "basicCode": "46667",
+                "basicValue": "qw2llq",
+                "parentCode": "46667",
+                "isValid": 123,
+                "status": 34
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+# 四、新老接口迁移对比
 
 |   |   |   |
 |---|---|---|
-|参数名|类型|说明|
-|accId|String|账户Id|
-|accountName|String|登录名称|
-|externalId|String|外部id|
-|displayName|String|显示名称|
-|accountRole|String|账户角色(1:普通用户，2:超级管理员)|
-|accountType|String|账户类型(0:内部账户，1:外部账户)|
-|phoneNo|String|手机号|
-|email|String|邮箱（已废弃）|
-|accountStartDt|String|账户有效期-起期|
-|accountEndDt|String|账户有效期-止期|
-|expire|Boolean|账号过期状态 (true: 过期, false: 正常)|
-|faceId|String|人脸识别图片fileid|
-|avatarId|String|账户图片fileid|
-|branchOrgCode|String|归属组织编码|
-|branchOrgName|String|归属组织名称|
-|operatingOrgCode|String|所属经营组织编码|
-|operatingOrgName|String|所属经营组织名称|
-|externalSource|String|外部id所属来源(应用名)|
-|externalHead|String|外部负责人|
-|externalClassification|String|外部账户业务分类|
-|enabled|Boolean|账户状态(true:启用，false:禁用)|
-|isValid|Boolean|是否有效|
-|twoFactor|Boolean|二次认证状态(true:开启，false:关闭)|
-|dingUserId|String|钉钉userId|
-|relatedAccountId|String|关联账户id(双向对称)|
-|gmtModified|Date|修改时间|
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如账户id为空）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.2 根据账户id集合查找用户详细信息列表
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountListByAccountIds(AccountIdsQry accountIdsQry)`|
-|**接口描述**|根据账户id集合查找用户详细信息列表（最多支持100条）|
-|**是否需要认证**|否|
-
-**请求参数（AccountIdsQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|accIds|List<String>|是|账户id集合（最多100条）|
-
-**响应结果**
-
-返回 `ResultModel<List<AccountDetailDTO>>`，AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如账户id集合为空或超过100条）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.3 根据归属组织编码查找用户详细信息集合（不包含下级机构）
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountListByBranchOrgCode(BranchOrgCodeQry branchOrgCodeQry)`|
-|**接口描述**|根据归属组织编码查找用户详细信息集合（不包含下级机构）|
-|**是否需要认证**|否|
-
-**请求参数（BranchOrgCodeQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|branchOrgCode|String|是|归属组织编码|
-|isValid|Boolean|否|在职状态(true:在职，false:离职，不传返回所有)|
-
-**响应结果**
-
-返回 `ResultModel<List<AccountDetailDTO>>`，AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如归属组织编码为空）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.4 根据关键字模糊查询（分页，最多返回100条）
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountListByKeyword(KeywordQry keywordQry)`|
-|**接口描述**|根据账户名/用户名模糊查询（分页，最多返回100条）|
-|**是否需要认证**|否|
-
-**请求参数（KeywordQry，继承 PageQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|keyword|String|是|模糊查询关键字（支持账号名、用户名）|
-|pageSize|Integer|是|每页展示条数（最大100条）|
-|pageIndex|Integer|是|当前页码|
-
-**响应结果（PageResultModelSupport）**
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码|
-|msg|String|响应消息|
-|data|List<AccountDetailDTO>|账户详情列表|
-|totalCount|Integer|总记录数|
-|pageIndex|Integer|当前页码|
-|pageSize|Integer|每页条数|
-
-AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如关键字为空、分页参数非法）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.5 根据账户手机号查询账户详情
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountInfoByPhoneNo(AccountPhoneNoQry accountPhoneNoQry)`|
-|**接口描述**|根据账户手机号查询账户详情|
-|**是否需要认证**|否|
-
-**请求参数（AccountPhoneNoQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|phoneNo|String|是|手机号（11位数字）|
-
-**响应结果**
-
-返回 `ResultModel<AccountDetailDTO>`，AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如手机号为空或格式不正确）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.6 根据钉钉userId获取账号信息
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountInfoByDingUserId(AccountDingUserIdQry accountDingUserIdQry)`|
-|**接口描述**|根据钉钉userId获取账号信息|
-|**是否需要认证**|否|
-
-**请求参数（AccountDingUserIdQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|dingUserId|String|是|钉钉id|
-
-**响应结果**
-
-返回 `ResultModel<AccountDetailDTO>`，AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如钉钉id为空）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.7 根据账户id查询人脸识别图片
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountFaceImage(AccountFullIdQry accountFullIdQry)`|
-|**接口描述**|根据账户id查询人脸识别图片|
-|**是否需要认证**|否|
-
-**请求参数（AccountFullIdQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|accountId|String|是|账户id|
-
-**响应结果（AccountFaceImageDTO）**
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|fileId|String|文件id|
-|fileName|String|文件名|
-|size|Long|文件大小|
-|mimeType|String|文件mime类型|
-|gmtCreate|Date|创建（上传）时间|
-|url|String|图片url|
-|thnUrl|String|缩略图url|
-|accountId|String|账户Id|
-|accountName|String|登录名称|
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如账户id为空）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.8 根据账户信息查询账户信息列表（分页，最多返回100条）
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountListByAccount(AccountFullQry accountFullQry)`|
-|**接口描述**|根据账户信息查询账户信息列表（分页，最多返回100条）|
-|**是否需要认证**|否|
-
-**请求参数（AccountFullQry，继承 PageQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|accId|String|否|账户id|
-|displayName|String|否|显示名(模糊查询左匹配)|
-|accountType|String|否|账户类型(0:内部账户，1:外部账户)|
-|branchOrgCode|String|否|归属组织编码(返回当前机构以及子机构)|
-|enabled|Boolean|否|是否启用(true:启用，false:停用)|
-|isValid|Boolean|否|在职状态(true:在职，false:离职)|
-|pageSize|Integer|是|每页展示条数（最大100条）|
-|pageIndex|Integer|是|当前页码|
-
-**响应结果（PageResultModelSupport）**
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码|
-|msg|String|响应消息|
-|data|List<AccountDetailDTO>|账户详情列表|
-|totalCount|Integer|总记录数|
-|pageIndex|Integer|当前页码|
-|pageSize|Integer|每页条数|
-
-AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如分页参数非法）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 1.9 根据登录时间范围分页获取账号信息
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountListByLoginTime(AccountLoginTimeQry accountLoginTimeQry)`|
-|**接口描述**|根据登录时间范围分页获取账号信息（分页，最多返回100条）|
-|**是否需要认证**|否|
-
-**请求参数（AccountLoginTimeQry，继承 PageQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|loginTimeStart|Date|是|登录时间起期（格式：yyyy-MM-dd HH:mm:ss）|
-|loginTimeEnd|Date|否|登录时间止期（格式：yyyy-MM-dd HH:mm:ss）|
-|pageSize|Integer|是|每页展示条数（最大100条）|
-|pageIndex|Integer|是|当前页码|
-
-**响应结果（PageResultModelSupport）**
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码|
-|msg|String|响应消息|
-|data|List<AccountNameDTO>|账号信息列表|
-|totalCount|Integer|总记录数|
-|pageIndex|Integer|当前页码|
-|pageSize|Integer|每页条数|
-
-**AccountNameDTO 字段说明**
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|accId|String|账号id|
-|displayName|String|显示名称|
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如登录时间起期为空、分页参数非法）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-## 二、外部账号相关
-
-### 2.1 根据外部id+外部来源查询外部账户集合
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountListByExternalIds(AccountExternalIdsQry accountExternalIdsQry)`|
-|**接口描述**|根据外部id+外部来源查询外部账户集合（最多支持100条）|
-|**是否需要认证**|否|
-
-**请求参数（AccountExternalIdsQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|externalIds|List<String>|是|外部id集合（最大100条）|
-|externalSource|String|是|外部来源|
-
-**响应结果**
-
-返回 `ResultModel<List<AccountDetailDTO>>`，AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如externalId为空、externalSource为空、超过100条限制）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 2.2 根据外部账户来源查询账户信息（分页，最多返回100条）
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#accountListByExternalSource(ExternalSourceQry externalSourceQry)`|
-|**接口描述**|根据外部账户来源查询账户信息（分页，最多返回100条）|
-|**是否需要认证**|否|
-
-**请求参数（ExternalSourceQry，继承 PageQry）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|externalSource|String|是|外部来源|
-|isValid|Boolean|否|在职状态(true:在职，false:离职，不传返回所有)|
-|pageSize|Integer|是|每页展示条数（最大100条）|
-|pageIndex|Integer|是|当前页码|
-
-**响应结果（PageResultModelSupport）**
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码|
-|msg|String|响应消息|
-|data|List<AccountDetailDTO>|账户详情列表|
-|totalCount|Integer|总记录数|
-|pageIndex|Integer|当前页码|
-|pageSize|Integer|每页条数|
-
-AccountDetailDTO 字段同 1.1。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误（如外部来源为空、分页参数非法）|
-|NO_DATA_AVAILABLE|无可用数据|
-
----
-
-### 2.3 创建外部账户
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#createExternalAccount(ExternalAccountAddCmd externalAccountAddCmd)`|
-|**接口描述**|创建外部账户|
-|**是否需要认证**|是|
-
-**请求参数（ExternalAccountAddCmd）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|externalId|String|是|外部id|
-|displayName|String|是|显示名|
-|customCode|String|否|自定义编码(账户名=zhex+2位账号来源简称+4位customCode+5位随机流水号)|
-|joinCompDt|String|否|入司日期（yyyy-MM-dd）|
-|leaveCompDt|String|否|过期时间(yyyy-MM-dd,不填默认当前时间延后三个月过期)|
-|phoneNo|String|是|手机号|
-|email|String|否|邮箱|
-|faceId|String|否|人脸照片，仅对hrms系统推送账户时使用|
-|branchOrgCode|String|是|机构编码|
-|externalHead|String|是|外部负责人|
-|externalSource|String|是|外部来源|
-|externalClassification|String|否|外部业务分类编码|
-|relatedAccountId|String|否|关联账户id(双向对称)|
-
-**响应结果**
-
-返回 `String` 类型，为创建的账户id（accId）。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误|
-|PHONE_OR_EMAIL_DUPLICATE|手机号或者邮箱重复|
-|THIRD_ERROR|第三方错误|
-|UNKNOWN_SYSTEM_ERROR|未知系统异常|
-
----
-
-### 2.4 修改外部账户
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#updateExternalAccount(ExternalAccountUpdateCmd externalAccountUpdateCmd)`|
-|**接口描述**|修改外部账户信息|
-|**是否需要认证**|是|
-
-**请求参数（ExternalAccountUpdateCmd）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|accId|String|否|账户id（优先使用）|
-|externalId|String|否|外部id（已废弃，使用 accId 代替）|
-|displayName|String|否|显示名|
-|accountStartDt|String|否|入司日期（yyyy-MM-dd）|
-|accountEndDt|String|否|过期时间(yyyy-MM-dd,不填默认当前时间延后三个月过期)|
-|phoneNo|String|否|手机号|
-|email|String|否|邮箱|
-|faceId|String|否|人脸照片，仅对hrms系统推送账户时使用|
-|branchOrgCode|String|否|机构编码|
-|externalHead|String|否|外部负责人|
-|externalSource|String|是|外部来源|
-|externalClassification|String|否|外部业务分类编码|
-|relatedAccountId|String|否|关联账户id(双向对称)|
-
-**响应结果**
-
-返回 `String` 类型，为修改后的账户id（accId）。
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误|
-|NO_DATA_AVAILABLE|无可用数据|
-|PHONE_OR_EMAIL_DUPLICATE|手机号或者邮箱重复|
-|THIRD_ERROR|第三方错误|
-|UNKNOWN_SYSTEM_ERROR|未知系统异常|
-
----
-
-### 2.5 离职外部账户
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#invalidExternalAccount(ExternalAccountInvalidCmd externalAccountInvalidCmd)`|
-|**接口描述**|离职外部账户（将外部账户置为离职状态）|
-|**是否需要认证**|是|
-
-**请求参数（ExternalAccountInvalidCmd）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|accId|String|否|账户id（优先使用）|
-|externalId|String|否|外部id（已废弃，使用 accId 代替）|
-|externalSource|String|是|外部来源|
-|relatedAccountId|String|否|关联账户id(双向对称)|
-
-**响应结果**
-
-返回 `ResultModel<String>`：
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码（成功为 "0000"）|
-|msg|String|响应消息|
-|data|String|账户id（accId）|
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误|
-|NO_DATA_AVAILABLE|无可用数据|
-|THIRD_ERROR|第三方错误|
-|UNKNOWN_SYSTEM_ERROR|未知系统异常|
-
----
-
-### 2.6 返聘外部账户
-
-|   |   |
-|---|---|
-|属性|值|
-|**接口方法**|`com.aliyun.fsi.insurance.sso.api.AccountRpcFacade#rehiredExternalAccount(ExternalAccountRehiredCmd externalAccountRehiredCmd)`|
-|**接口描述**|返聘外部账户（将已离职的外部账户重新启用）|
-|**是否需要认证**|是|
-
-**请求参数（ExternalAccountRehiredCmd）**
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|accId|String|否|账户Id（优先使用）|
-|externalId|String|否|外部id（已废弃，使用 accId 代替）|
-|accountStartDt|String|是|入司日期（yyyy-MM-dd）|
-|accountEndDt|String|是|离司时间(yyyy-MM-dd)|
-|phoneNo|String|是|手机号（11位手机号格式）|
-|externalSource|String|是|外部来源|
-|relatedAccountId|String|否|关联账户id(双向对称)|
-
-**响应结果**
-
-返回 `ResultModel<String>`：
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码（成功为 "0000"）|
-|msg|String|响应消息|
-|data|String|账户id（accId）|
-
-**错误码**
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误|
-|NO_DATA_AVAILABLE|无可用数据|
-|THIRD_ERROR|第三方错误|
-|UNKNOWN_SYSTEM_ERROR|未知系统异常|
-
----
-
-## 附录
-
-### 公共分页参数 PageQry
-
-|   |   |   |   |
-|---|---|---|---|
-|参数名|类型|必填|说明|
-|pageSize|Integer|是|每页展示条数（范围1-100）|
-|pageIndex|Integer|是|当前页码|
-
-### 统一响应结构 ResultModel
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码（"0000" 表示成功）|
-|msg|String|响应消息|
-|data|T|响应数据|
-
-### 分页响应结构 PageResultModelSupport
-
-|   |   |   |
-|---|---|---|
-|参数名|类型|说明|
-|code|String|响应码（"0000" 表示成功）|
-|msg|String|响应消息|
-|data|List<T>|数据列表|
-|totalCount|Integer|总记录数|
-|pageIndex|Integer|当前页码|
-|pageSize|Integer|每页条数|
-
-### 统一错误码 ErrorCode
-
-|   |   |
-|---|---|
-|错误码|说明|
-|PARAMETER_ERROR|参数错误|
-|THIRD_ERROR|第三方错误|
-|NO_DATA_AVAILABLE|无可用数据|
-|UNKNOWN_SYSTEM_ERROR|未知系统异常|
-|PHONE_OR_EMAIL_DUPLICATE|手机号或者邮箱重复|
-
-### 接口清单汇总
-
-|     |                             |        |      |
-| --- | --------------------------- | ------ | ---- |
-| 序号  | 接口方法                        | 是否需要认证 | 分类   |
-| 1.1 | accountInfo                 | 否      | 账号查询 |
-| 1.2 | accountListByAccountIds     | 否      | 账号查询 |
-| 1.3 | accountListByBranchOrgCode  | 否      | 账号查询 |
-| 1.4 | accountListByKeyword        | 否      | 账号查询 |
-| 1.5 | accountInfoByPhoneNo        | 否      | 账号查询 |
-| 1.6 | accountInfoByDingUserId     | 否      | 账号查询 |
-| 1.7 | accountFaceImage            | 否      | 账号查询 |
-| 1.8 | accountListByAccount        | 否      | 账号查询 |
-| 1.9 | accountListByLoginTime      | 否      | 账号查询 |
-| 2.1 | accountListByExternalIds    | 否      | 外部账号 |
-| 2.2 | accountListByExternalSource | 否      | 外部账号 |
-| 2.3 | createExternalAccount       | 是      | 外部账号 |
-| 2.4 | updateExternalAccount       | 是      | 外部账号 |
-| 2.5 | invalidExternalAccount      | 是      | 外部账号 |
-| 2.6 | rehiredExternalAccount      | 是      | 外部账号 |
+|老接口|新接口|备注|
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#queryCodeInTag|com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade#queryAllRelationship|根据标签查询对应的码表集合等同于关联码只配置一个码表的情况|
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#queryCodeByTypesAndTags|com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade#queryAllRelationship||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectByCode|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryBatch||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectByParentCode|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryByParentCode||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectByType|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryByTypes||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectTreeStruct||废弃|
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectParentTreeStruct||废弃|
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectByCodeList|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryByType||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectByCodesAndType|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryByType||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectRelationListByType|com.aliyun.fsi.insurance.dict.api.RelationshipRPCFacade#queryAllRelationship||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#checkCode|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryBatch||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#checkCodes|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryBatch||
+|com.aliyun.fsi.insurance.code.facade.BasicCodeFacade#selectAllCodeInType|com.aliyun.fsi.insurance.dict.api.CodeRPCFacade#queryByType||

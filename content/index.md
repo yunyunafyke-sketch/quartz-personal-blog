@@ -1,7 +1,11 @@
 ---
-title: Home
+title: Afyke Blog
+description: 记录技术、博客搭建与个人项目
+socialDescription: 记录技术、博客搭建与个人项目
+socialImage: og-cover-dingtalk-cyberpunk.png
 publish: true
 ---
+
 <div class="home-landing">
   <picture class="home-wallpaper" aria-hidden="true">
     <source media="(max-width: 800px)" srcset="/static/images/home-spring-blossoms-mobile.avif" type="image/avif">
