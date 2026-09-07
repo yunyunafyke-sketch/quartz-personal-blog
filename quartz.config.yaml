@@ -7,7 +7,7 @@ configuration:
   analytics:
     provider: plausible
   locale: zh-CN
-  baseUrl: 47.99.178.186
+  baseUrl: blog.afyke.com
   ignorePatterns:
     - private
     - templates
