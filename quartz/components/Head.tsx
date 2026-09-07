@@ -96,13 +96,6 @@ export default (() => {
         <meta name="twitter:description" content={description} />
         <meta property="og:description" content={description} />
         <meta property="og:image:alt" content={description} />
-        {/* 首页固定封面为 1200×630，供钉钉预先确定卡片图片比例。 */}
-        {fileData.slug === "index" && fileData.frontmatter?.socialImage && (
-          <>
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
-          </>
-        )}
 
         {!usesCustomOgImage && (
           <>

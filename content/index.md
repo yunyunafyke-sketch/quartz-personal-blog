@@ -4,8 +4,8 @@ title: Afyke Blog
 # 普通页面描述与社交平台描述保持一致。
 description: 记录技术、博客搭建与个人项目
 socialDescription: 记录技术、博客搭建与个人项目
-# 钉钉卡片使用的 Open Graph 横向封面图。
-socialImage: og-cover-dingtalk-cyberpunk.png
+# 钉钉卡片左上角的彩色缩略图。
+socialImage: apple-touch-icon.png
 publish: true
 ---
 
