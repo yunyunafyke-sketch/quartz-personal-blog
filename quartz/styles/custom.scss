@@ -350,6 +350,8 @@ body .markdown-rendered img.pet-icon {
 
 // 目录使用低对比度的浅灰高亮：仅当前章节保持选中，鼠标悬浮时单独高亮。
 .toc-content.overflow > li {
+  // 比正文深灰更柔和，避免目录长时间阅读时显得过于刺眼。
+  --toc-link-color: color-mix(in srgb, var(--darkgray) 78%, var(--light));
   border-radius: 0.35rem;
   transition: background-color 0.15s ease;
 
@@ -357,7 +359,7 @@ body .markdown-rendered img.pet-icon {
     display: block;
     padding: 0.18rem 0.45rem;
     border-radius: inherit;
-    color: var(--darkgray);
+    color: var(--toc-link-color);
     opacity: 1;
     transition: background-color 0.15s ease;
   }
@@ -366,10 +368,10 @@ body .markdown-rendered img.pet-icon {
   &:has(> a:focus-visible),
   &:has(> a.toc-current) {
     // 当前章节与悬浮状态共用背景，避免出现不同颜色的高亮。
-    background: color-mix(in srgb, var(--gray) 12%, transparent);
+    background: color-mix(in srgb, var(--gray) 6%, transparent);
 
     > a {
-      color: var(--darkgray);
+      color: var(--toc-link-color);
       opacity: 1;
     }
   }
@@ -381,7 +383,7 @@ body .markdown-rendered img.pet-icon {
   // 社区组件会给已经滚过的标题保留 `in-view`；这里只统一文字样式，
   // 不使用它作为选中条件，以免多个目录项同时出现背景。
   > a.in-view {
-    color: var(--darkgray);
+    color: var(--toc-link-color);
     opacity: 1;
   }
 }
@@ -393,7 +395,7 @@ body .markdown-rendered img.pet-icon {
 
   > a {
     font-weight: 650;
-    color: var(--darkgray);
+    color: var(--toc-link-color);
     opacity: 1;
   }
 }
