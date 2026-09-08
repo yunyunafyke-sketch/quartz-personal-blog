@@ -42,7 +42,8 @@ export default (() => {
         : joinSegments(url.toString(), fileData.slug!)
 
     const usesCustomOgImage = ctx.cfg.plugins.emitters.some((e) => e.name === "CustomOgImages")
-    const ogImageDefaultPath = `https://${cfg.baseUrl}/static/og-image.png`
+    // 钉钉卡片全站统一使用彩色站点图标，不展示文章自动生成的缩略图。
+    const ogImageDefaultPath = staticAssetUrl("apple-touch-icon.png")
 
     const coreStylesheet = css[0]?.content
     const coreScript = js.find(

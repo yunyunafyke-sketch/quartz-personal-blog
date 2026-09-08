@@ -155,11 +155,8 @@ plugins:
   - source: "@quartz-community/favicon"
     enabled: true
   - source: "@quartz-community/og-image"
-    enabled: true
-    options:
-      # 钉钉等链接卡片优先读取固定尺寸的 Open Graph 分享图。
-      width: 1200
-      height: 630
+    # 全站使用统一的钉钉缩略图，不为每篇文章生成独立 OGP 图片。
+    enabled: false
   - source: "@quartz-community/cname"
     enabled: true
   - source: "@quartz-community/canvas-page"
