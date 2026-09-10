@@ -3,6 +3,10 @@ publish: true
 date: 2026-08-20
 ---
 
+![aboss-sso 系统架构图](image/aboss-sso-system-architecture.webp)
+
+[查看交互式 aboss-sso 系统架构图](../../../archify/aboss-sso-system-architecture.html)
+
 ## 一、💡 一句话理解
 
 > [!tip] 核心结论
