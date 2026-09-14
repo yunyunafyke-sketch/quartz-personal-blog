@@ -4,6 +4,22 @@ publish: true
 date: 2026-09-11
 ---
 
+## 🎨 Git 文件颜色代表什么
+
+文件颜色表示 Git 文件状态，不是代码有没有错误。以 JetBrains/PyCharm 默认配色为例：
+
+| 颜色 | Git 状态 | 含义 |
+| --- | --- | --- |
+| 红色 | Unversioned | 新文件，Git 还没有跟踪 |
+| 绿色 | Added | 新文件已经加入暂存区，准备提交 |
+| 蓝色 | Modified | 已跟踪的文件被修改了 |
+| 灰色 | Ignored | 被 `.gitignore` 忽略 |
+| 棕色/橙色 | Deleted | 已跟踪的文件被删除 |
+| 普通颜色 | Unchanged | 与最近一次提交相比没有变化 |
+
+> [!note] 颜色可能因 IDE 主题和设置不同而变化
+> 最终应以文件所在分组和 `git status` 的输出为准。
+
 ## 一、💡 一句话理解
 
 > [!tip] 核心结论
@@ -403,7 +419,111 @@ B 提交：git revert A 生成的撤销提交
 > revert：撤销已经提交的内容，并留下新的提交记录。  
 > 已经 push：revert 之后还要再次 push。
 
-#### 4.2.10 获取命令帮助
+#### 4.2.10 新增 `.gitignore` 规则后如何重新生效
+
+`.gitignore` 只会自动忽略**尚未被 Git 跟踪**的文件。规则新增后，未跟踪文件会立即按新规则处理；已经进入暂存区或已经提交过的文件，仍会继续显示在 Git 中。
+
+例如，新增下面的规则：
+
+~~~gitignore
+# 忽略 JetBrains 系列 IDE 生成的项目配置目录
+.idea/
+
+# 忽略 Python 项目的本地虚拟环境目录
+.venv/
+
+# 忽略所有以 .log 结尾的日志文件
+*.log
+~~~
+
+##### 4.2.10.1 文件已经暂存，但还没有提交
+
+如果仓库已经至少创建过一次提交，可以先将所有文件移出暂存区，再让 Git 按照新的 `.gitignore` 规则重新暂存：
+
+~~~bash
+# 将所有文件移出暂存区，但保留本地修改
+git restore --staged .
+
+# 根据新的 .gitignore 规则重新暂存当前目录下的所有改动
+git add .
+
+# 查看重新暂存后的结果，确认命中规则的文件已被忽略
+git status
+~~~
+
+`git restore --staged .` 会清空当前仓库的暂存区，但不会删除工作区中的本地文件或修改。随后执行 `git add .` 时，Git 会按照最新的 `.gitignore` 重新判断：命中忽略规则的未跟踪文件不会进入暂存区，其他新增、修改和删除则会重新暂存。
+
+如果仓库刚执行过 `git init`，还没有创建第一次提交，执行 `git restore --staged .` 可能出现：
+
+~~~text
+fatal: could not resolve HEAD
+~~~
+
+`HEAD` 通常表示当前分支最近一次提交。仓库尚无任何提交时，没有可供 `git restore --staged` 参照的版本，因此无法解析 `HEAD`。这种情况改用：
+
+~~~bash
+# 清空整个暂存区，但保留全部本地文件和修改；首次提交前也可以使用
+git reset
+
+# 按照最新的 .gitignore 规则重新暂存当前目录下的所有改动
+git add .
+
+# 检查重新暂存后的结果
+git status
+~~~
+
+这里的 `git reset` 没有使用 `--hard`，只调整暂存区，不会删除本地修改。不要写成 `git reset --hard`，否则未提交的本地修改可能丢失。
+
+##### 4.2.10.2 文件以前已经提交过
+
+已经提交过的文件属于“被 Git 跟踪”的文件，需要先从 Git 索引中移除：
+
+~~~bash
+# 从 Git 索引中递归移除 .idea/，停止跟踪但保留本地目录
+git rm -r --cached demos/hrms_account_linker/output/
+
+# 把新增或修改后的 .gitignore 放入暂存区
+git add .gitignore
+
+# 创建本地提交，记录“停止跟踪 .idea/”和忽略规则的变化
+git commit -m "配置-忽略 IDE 本地文件"
+~~~
+
+`--cached` 表示只停止 Git 跟踪，不删除工作区中的本地文件。提交并推送后，其他人拉取该提交时，这些文件会从仓库版本中移除，但他们本地由工具重新生成的同名目录仍会被忽略。
+
+> [!warning] 优先指定准确路径
+> 不建议为了“刷新全部规则”直接对整个仓库执行 `git rm -r --cached .`。它会重建整个暂存区，容易混入无关改动。已知目标时，应当只处理 `.idea/`、某个日志文件或其他确切路径。
+
+##### 4.2.10.3 检查文件命中了哪条规则
+
+~~~bash
+# 显示目标文件命中的忽略规则、规则所在文件及行号
+git check-ignore -v .idea/misc.xml
+~~~
+
+如果文件被忽略，命令会显示规则所在文件、行号、具体规则和目标文件。例如：
+
+~~~text
+.gitignore:62:.idea/    .idea/misc.xml
+~~~
+
+如果没有输出，说明该文件没有命中忽略规则，或者它已经被 Git 跟踪。可以继续用下面的命令检查它是否在索引中：
+
+~~~bash
+# 查询该文件是否已经存在于 Git 索引中
+git ls-files -- .idea/misc.xml
+~~~
+
+有输出表示文件已被跟踪；没有输出表示文件不在 Git 索引中。
+
+> [!info] 最简单的判断方法
+> 未跟踪文件：新增规则后立即生效。  
+> 已暂存且仓库已有提交：使用 `git restore --staged .` 清空暂存区，再用 `git add .` 按新规则重新暂存。  
+> 已暂存但仓库尚无首次提交：使用 `git reset` 清空暂存区，再用 `git add .` 按新规则重新暂存。  
+> 已经提交过：使用 `git rm --cached <文件>`；目录需要加 `-r`。  
+> 不确定命中了哪条规则：使用 `git check-ignore -v <路径>`。
+
+#### 4.2.11 获取命令帮助
 
 ~~~bash
 git help <命令>
@@ -491,6 +611,7 @@ git branch -d feature/update-docs
 - 分支操作：git branch、git switch、git merge
 - 远程同步：git fetch、git pull、git push
 - 撤销操作：git restore、git revert
+- 忽略文件：`.gitignore`、git check-ignore、git rm --cached
 
 记忆句：**先看 status，再用 add，然后 commit，最后按需要 push。**
 
@@ -504,4 +625,8 @@ git branch -d feature/update-docs
 - [Git 官方 git status 文档](https://git-scm.com/docs/git-status)
 - [Git 官方 git switch 文档](https://git-scm.com/docs/git-switch)
 - [Git 官方 git restore 文档](https://git-scm.com/docs/git-restore)
+- [Git 官方 git reset 文档](https://git-scm.com/docs/git-reset)
 - [Git 官方 git revert 文档](https://git-scm.com/docs/git-revert)
+- [Git 官方 gitignore 文档](https://git-scm.com/docs/gitignore)
+- [Git 官方 git check-ignore 文档](https://git-scm.com/docs/git-check-ignore)
+- [Git 官方 git rm 文档](https://git-scm.com/docs/git-rm)
