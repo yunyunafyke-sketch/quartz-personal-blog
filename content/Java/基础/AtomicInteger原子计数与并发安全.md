@@ -157,7 +157,7 @@ CountDownLatch finished = new CountDownLatch(10);
 - 用 `compareAndSet` 抢占一次性执行资格；
 - 维护简单的并发状态或库存数量。
 
-它常与 [[Java/ConcurrentHashMap并发安全与计数]] 配合：前者安全地保存“用户 ID → 计数器”，后者安全地递增某个用户的次数。
+它常与 [[ConcurrentHashMap并发安全与计数]] 配合：前者安全地保存“用户 ID → 计数器”，后者安全地递增某个用户的次数。
 
 ### 4.3 完整实践：代码、启动和验证
 

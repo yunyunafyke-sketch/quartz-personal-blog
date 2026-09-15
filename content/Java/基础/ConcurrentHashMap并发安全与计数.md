@@ -278,7 +278,7 @@ java ConcurrentCounterDemo
 - `ConcurrentHashMap` 是线程安全的键值对容器。
 - 它适合保存多个线程共享的“标识 → 对象”关系。
 - `computeIfAbsent` 适合安全地实现“没有就创建”。
-- Map 安全不等于值对象安全；`Counter` 的递增仍需 [[Java/AtomicInteger原子计数与并发安全|AtomicInteger]]、`LongAdder` 或锁。
+- Map 安全不等于值对象安全；`Counter` 的递增仍需 [[基础/AtomicInteger原子计数与并发安全|AtomicInteger]]、`LongAdder` 或锁。
 - 它不允许 `null` 键和 `null` 值。
 
 ## 六、📚 官方资料

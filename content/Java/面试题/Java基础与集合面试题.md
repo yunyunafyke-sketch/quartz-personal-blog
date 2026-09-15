@@ -201,7 +201,7 @@ flowchart LR
     第三个参数为 `true` 时，按照访问顺序维护元素，可以结合重写 `removeEldestEntry()` 实现最近最少使用淘汰。
 
 35. **ConcurrentHashMap 和 HashMap 有什么区别？**  
-    `ConcurrentHashMap` 支持并发访问，读操作通常不需要整体加锁，适合多线程环境。可继续阅读 [[Java/ConcurrentHashMap并发安全与计数]]。
+    `ConcurrentHashMap` 支持并发访问，读操作通常不需要整体加锁，适合多线程环境。可继续阅读 [[../基础/ConcurrentHashMap并发安全与计数]]。
 
 36. **ConcurrentHashMap 为什么不允许 Key 或 Value 为 null？**  
     并发场景下，`null` 可能无法区分“没有值”和“值就是 null”，容易造成判断歧义。
