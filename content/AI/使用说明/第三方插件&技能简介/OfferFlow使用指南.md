@@ -4,9 +4,36 @@ date: 2026-09-16 14:50:33
 publish: true
 ---
 
+<style>
+.markdown-rendered h2:has(+ .heading-pet-wrap) {
+  display: inline-flex;
+  width: calc(100% - 112px);
+  vertical-align: middle;
+}
+
+.markdown-rendered h2 + .heading-pet-wrap {
+  display: inline-flex;
+  width: 96px;
+  height: 96px;
+  margin: 0 0 0 12px;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.markdown-rendered .heading-pet-wrap > img.heading-pet-icon {
+  width: auto;
+  max-width: 96px;
+  max-height: 96px;
+  margin: 0;
+}
+</style>
+
 # OfferFlow 使用指南
 
-## 1. 软件简介 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.S1异色_机械方方.webp" alt="" width="96" loading="lazy">
+## 1. 软件简介
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.S1异色_机械方方.webp" alt="" width="96" loading="lazy"></div>
 
 > [!abstract]
 > OfferFlow（项目仓库名为 FuckJob）是一款本地运行的开源求职助手，支持 BOSS 直聘和猎聘，可用于岗位筛选、批量沟通、自动投递、AI 打招呼以及自动回复 HR。
@@ -32,7 +59,9 @@ publish: true
 
 ---
 
-## 2. macOS 安装包选择 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.370_霹雳迪迪.webp" alt="" width="96" loading="lazy">
+## 2. macOS 安装包选择
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.370_霹雳迪迪.webp" alt="" width="96" loading="lazy"></div>
 
 不同安装包对应不同的处理器架构：
 
@@ -52,7 +81,9 @@ publish: true
 
 ---
 
-## 3. 安装与首次打开 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.000_皇家狮鹫（崖间地的样子）.webp" alt="" width="96" loading="lazy">
+## 3. 安装与首次打开
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.000_皇家狮鹫（崖间地的样子）.webp" alt="" width="96" loading="lazy"></div>
 
 1. 双击下载的 `.dmg` 文件。
 2. 将 `OfferFlow.app` 拖入“应用程序”。
@@ -73,7 +104,9 @@ xattr -dr com.apple.quarantine /Applications/OfferFlow.app
 
 ---
 
-## 4. 初始化配置 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.004_叶冕魔力猫.webp" alt="" width="96" loading="lazy">
+## 4. 初始化配置
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.004_叶冕魔力猫.webp" alt="" width="96" loading="lazy"></div>
 
 ### 4.1 配置浏览器
 
@@ -170,7 +203,9 @@ Java工程师
 
 ---
 
-## 5. AI 打招呼配置 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.S1异色_粉耳星兔.webp" alt="" width="96" loading="lazy">
+## 5. AI 打招呼配置
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.S1异色_粉耳星兔.webp" alt="" width="96" loading="lazy"></div>
 
 > [!info]
 > AI 打招呼只负责首次主动联系 HR。本方案不让 AI 自由发挥，只让它从岗位信息中提取岗位名称，然后套用固定句式。
@@ -221,7 +256,9 @@ Java工程师
 
 ---
 
-## 6. HR 自动回复配置 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.217_火尾战士.webp" alt="" width="96" loading="lazy">
+## 6. HR 自动回复配置
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.217_火尾战士.webp" alt="" width="96" loading="lazy"></div>
 
 > [!tip]
 > 建议先开启“演练模式”验证自动回复和人工接管流程，再允许系统真实发送消息。
@@ -369,7 +406,9 @@ Java工程师
 
 ---
 
-## 7. 测试与启动 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.175_多菇丁.webp" alt="" width="96" loading="lazy">
+## 7. 测试与启动
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.175_多菇丁.webp" alt="" width="96" loading="lazy"></div>
 
 ### 7.1 演练测试
 
@@ -416,7 +455,9 @@ Java工程师
 
 ---
 
-## 8. 安全使用建议 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.278_遁鼠.webp" alt="" width="96" loading="lazy">
+## 8. 安全使用建议
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.278_遁鼠.webp" alt="" width="96" loading="lazy"></div>
 
 - 前几天优先使用演练模式，不要直接完全托管。
 - 每次调整简历、提示词或岗位规则后重新测试。
@@ -428,7 +469,9 @@ Java工程师
 
 ---
 
-## 9. 推荐的首次运行流程 <img class="pet-icon" src="OfferFlow使用指南.assets/NO.162_公平鸽.webp" alt="" width="96" loading="lazy">
+## 9. 推荐的首次运行流程
+
+<div class="heading-pet-wrap"><img class="pet-icon heading-pet-icon" src="OfferFlow使用指南.assets/NO.162_公平鸽.webp" alt="" width="96" loading="lazy"></div>
 
 ```text
 安装并打开 OfferFlow
