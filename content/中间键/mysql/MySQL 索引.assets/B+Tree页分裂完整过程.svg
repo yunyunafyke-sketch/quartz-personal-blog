@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="1120" viewBox="0 0 980 1120" role="img" aria-labelledby="title desc">
+  <title id="title">B+Tree 数据页和目录页分裂完整过程</title>
+  <desc id="desc">用四步展示数据页 C 满后插入 90，数据页 C 分裂出 D，旧目录页放不下新目录记录，目录页分裂并生成新总目录。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#667085"/>
+    </marker>
+    <style>
+      .bg { fill: #fffdf8; }
+      .panel { fill: #ffffff; stroke: #d0d5dd; stroke-width: 2; rx: 16; }
+      .title { fill: #101828; font: 700 25px -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+      .step { fill: #175cd3; font: 700 22px -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+      .text { fill: #344054; font: 18px -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+      .small { fill: #475467; font: 16px -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+      .directory { fill: #eaf2ff; stroke: #2e90fa; stroke-width: 2; rx: 10; }
+      .leaf { fill: #fff4e5; stroke: #f79009; stroke-width: 2; rx: 10; }
+      .new { fill: #ecfdf3; stroke: #12b76a; stroke-width: 3; rx: 10; }
+      .full { fill: #fff1f3; stroke: #f04438; stroke-width: 3; rx: 10; }
+      .label { fill: #101828; font: 700 17px -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+      .value { fill: #101828; font: 17px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .arrow { stroke: #667085; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #f04438; stroke-width: 2; stroke-dasharray: 8 6; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="980" height="1120"/>
+  <text class="title" x="490" y="40" text-anchor="middle">一个完整例子：为什么 B+Tree 会长高一层</text>
+  <text class="small" x="490" y="70" text-anchor="middle">为了看懂过程，假设数据页最多放 4 个数，目录页最多放 3 条目录记录</text>
+
+  <!-- Step 1 -->
+  <rect class="panel" x="30" y="95" width="920" height="210"/>
+  <text class="step" x="55" y="128">第 1 步：插入前，目录页和数据页 C 都满了</text>
+  <rect class="full" x="290" y="148" width="400" height="50"/>
+  <text class="label" x="310" y="180">目录页 M：</text>
+  <text class="value" x="410" y="180">10→A　30→B　50→C</text>
+  <text class="small" x="705" y="180">已满</text>
+
+  <rect class="leaf" x="60" y="230" width="190" height="48"/>
+  <text class="value" x="155" y="260" text-anchor="middle">A [10, 20]</text>
+  <rect class="leaf" x="275" y="230" width="190" height="48"/>
+  <text class="value" x="370" y="260" text-anchor="middle">B [30, 40]</text>
+  <rect class="full" x="490" y="230" width="260" height="48"/>
+  <text class="value" x="620" y="260" text-anchor="middle">C [50, 60, 70, 80]</text>
+  <text class="small" x="770" y="260">已满</text>
+
+  <path class="arrow" d="M380 198 L170 229"/>
+  <path class="arrow" d="M490 198 L370 229"/>
+  <path class="arrow" d="M595 198 L620 229"/>
+
+  <!-- Step 2 -->
+  <rect class="panel" x="30" y="325" width="920" height="220"/>
+  <text class="step" x="55" y="358">第 2 步：插入 90，数据页 C 放不下，所以 C 拆成 C、D 两页</text>
+  <text class="text" x="55" y="394">插入前：</text>
+  <rect class="full" x="150" y="370" width="285" height="48"/>
+  <text class="value" x="292" y="400" text-anchor="middle">C [50, 60, 70, 80]</text>
+  <text class="text" x="455" y="400">＋ 90</text>
+  <path class="arrow" d="M540 394 L600 394"/>
+
+  <text class="text" x="55" y="475">拆开后：</text>
+  <rect class="leaf" x="150" y="448" width="220" height="52"/>
+  <text class="value" x="260" y="480" text-anchor="middle">C [50, 60]</text>
+  <rect class="new" x="450" y="448" width="270" height="52"/>
+  <text class="value" x="585" y="480" text-anchor="middle">D [70, 80, 90]</text>
+  <text class="small" x="745" y="480">新页</text>
+  <path class="arrow" d="M370 474 L448 474"/>
+  <text class="small" x="490" y="525" text-anchor="middle">注意：只是 C 页拆开，不是把整张表重新分组</text>
+
+  <!-- Step 3 -->
+  <rect class="panel" x="30" y="565" width="920" height="210"/>
+  <text class="step" x="55" y="598">第 3 步：目录要新增“70→D”，但旧目录页没有位置了</text>
+  <rect class="full" x="110" y="625" width="480" height="55"/>
+  <text class="value" x="350" y="659" text-anchor="middle">10→A　30→B　50→C</text>
+  <text class="text" x="615" y="660">还想加入</text>
+  <rect class="new" x="740" y="625" width="150" height="55"/>
+  <text class="value" x="815" y="659" text-anchor="middle">70→D</text>
+  <path class="dash" d="M738 652 L595 652"/>
+  <text class="small" x="490" y="720" text-anchor="middle">目录页“满”＝剩余空间已经放不下一条“边界值＋数据页地址”</text>
+  <text class="small" x="490" y="750" text-anchor="middle">所以不是 D 找不到，而是旧目录 M 已经没有位置记住 D</text>
+
+  <!-- Step 4 -->
+  <rect class="panel" x="30" y="795" width="920" height="290"/>
+  <text class="step" x="55" y="828">第 4 步：目录页也拆开，再生成一个新的总目录</text>
+
+  <rect class="new" x="340" y="850" width="300" height="52"/>
+  <text class="label" x="490" y="882" text-anchor="middle">新总目录 R：10→M1　50→M2</text>
+
+  <rect class="directory" x="120" y="940" width="300" height="52"/>
+  <text class="value" x="270" y="972" text-anchor="middle">目录 M1：10→A　30→B</text>
+  <rect class="directory" x="560" y="940" width="300" height="52"/>
+  <text class="value" x="710" y="972" text-anchor="middle">目录 M2：50→C　70→D</text>
+
+  <path class="arrow" d="M430 902 L285 939"/>
+  <path class="arrow" d="M550 902 L695 939"/>
+
+  <rect class="leaf" x="55" y="1020" width="190" height="45"/>
+  <text class="value" x="150" y="1048" text-anchor="middle">A [10,20]</text>
+  <rect class="leaf" x="265" y="1020" width="190" height="45"/>
+  <text class="value" x="360" y="1048" text-anchor="middle">B [30,40]</text>
+  <rect class="leaf" x="525" y="1020" width="190" height="45"/>
+  <text class="value" x="620" y="1048" text-anchor="middle">C [50,60]</text>
+  <rect class="new" x="735" y="1020" width="190" height="45"/>
+  <text class="value" x="830" y="1048" text-anchor="middle">D [70,80,90]</text>
+
+  <path class="arrow" d="M230 992 L165 1019"/>
+  <path class="arrow" d="M315 992 L350 1019"/>
+  <path class="arrow" d="M665 992 L625 1019"/>
+  <path class="arrow" d="M750 992 L820 1019"/>
+
+  <text class="small" x="490" y="1102" text-anchor="middle">结果：原来是“目录 → 数据页”，现在变成“总目录 → 分目录 → 数据页”，所以 B+Tree 高了一层</text>
+</svg>
