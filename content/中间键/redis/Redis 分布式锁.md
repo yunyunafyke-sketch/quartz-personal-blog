@@ -15,6 +15,8 @@ publish: true
 
 `synchronized` 和 `ReentrantLock` 只能协调同一个 JVM 中的线程。服务部署了多个实例后，每个实例都有自己的 JVM 和锁对象，无法阻止其他实例同时处理同一份共享资源。
 
+如果对锁对象、临界区、互斥和可重入还不熟悉，可以先阅读 [[Java/基础/锁与线程同步|锁与线程同步]]。
+
 ```text
 实例 A ─┐
 实例 B ─┼─→ 共同访问订单、库存、定时任务等共享资源
@@ -22,6 +24,51 @@ publish: true
 ```
 
 分布式锁把锁状态放到 Redis，让所有实例竞争同一个 Key。成功创建 Key 的实例获得锁，其他实例创建失败。
+
+#### 2.1.1 图例：两个 Pod 怎么抢同一把锁
+
+假设两个修改请求分别进入 Pod 3 和 Pod 11，而且它们都要执行账号 `1001` 的同一段跨系统操作。两个 Pod 会向 Redis 创建**同一个锁 Key**：`lock:account:1001`。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P3 as Pod 3
+    participant R as Redis
+    participant P11 as Pod 11
+
+    P3->>R: SET lock:account:1001 pod3-token NX PX 30000
+    R-->>P3: OK，Key 创建成功，获得锁
+
+    P11->>R: SET lock:account:1001 pod11-token NX PX 30000
+    R-->>P11: nil，Key 已存在，获取失败
+
+    Note over P3: 执行账号 1001 的受保护业务
+    Note over P11: 不执行，直接返回或稍后重试
+
+    P3->>R: 校验 pod3-token 后删除 Key
+    R-->>P3: 删除成功，锁被释放
+
+    P11->>R: 再次尝试创建同一个 Key
+    R-->>P11: OK，现在获得锁
+```
+
+可以把 Redis 想成一块所有 Pod 都看得见的“占用牌”：
+
+```text
+Redis 中没有 lock:account:1001
+    → 谁先成功放上占用牌，谁获得锁
+
+Redis 中已有 lock:account:1001
+    → 说明别人正在使用，后来的 Pod 获取失败
+
+持有者完成业务并删除 lock:account:1001
+    → 占用牌被拿走，其他 Pod 才能再次竞争
+```
+
+这里最关键的是：**Pod 之间不需要直接通信，它们都通过 Redis 看到同一把锁。**`NX` 保证 Key 已存在时不能重复创建，所以同一时刻只有一个 Pod 能成功。
+
+> [!example] 对应关系
+> `lock:account:1001` 是锁的名字，表示“账号 1001 正被处理”；`pod3-token` 是本次持有者的唯一凭证；`PX 30000` 表示 30 秒后自动释放，防止 Pod 宕机后锁一直存在。
 
 ### 2.2 常见使用场景
 
