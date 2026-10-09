@@ -37,6 +37,8 @@ date: 2026-08-20
 
 HashMap 会先根据 Key 的 `hashCode()` 计算哈希值，再定位数组下标；如果多个 Key 定位到同一个位置，就通过链表或红黑树保存冲突元素；最终使用 `equals()` 判断是否是同一个 Key。
 
+更完整的原理、源码细节和专项面试题可继续阅读 [[../基础/HashMap]]。
+
 ```mermaid
 flowchart LR
     A[Key] --> B[hashCode]
