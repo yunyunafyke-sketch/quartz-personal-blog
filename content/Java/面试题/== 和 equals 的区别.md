@@ -1,0 +1,422 @@
+---
+publish: true
+date: 2026-10-11
+---
+
+## 一、💡 核心区别
+
+> [!tip] 一句话记忆
+> `==` 看是不是同一个对象，`equals()` 看两个对象是否符合类定义的“相等”规则。
+
+| 比较方式 | 基本类型 | 引用类型 |
+|---|---|---|
+| `==` | 比较数值 | 比较是不是同一个对象 |
+| `equals()` | 不能直接使用 | 根据类中定义的规则比较 |
+
+## 二、⚙️ 简单示例
+
+### 2.1 基本类型
+
+```java
+int a = 10;
+int b = 10;
+
+System.out.println(a == b); // true，数值相同
+```
+
+### 2.2 对象类型
+
+```java
+String a = new String("Java");
+String b = new String("Java");
+
+System.out.println(a == b);      // false，不是同一个对象
+System.out.println(a.equals(b)); // true，字符串内容相同
+```
+
+可以把它理解为：
+
+- `==` 问：这是同一个人吗？
+- `equals()` 问：这两个人的信息是否符合“相同”的标准？
+
+## 三、🧭 容易出错的地方
+
+### 3.1 `equals()` 不一定比较内容
+
+`equals()` 的比较规则由类决定。
+
+如果自定义类没有重写 `equals()`，它会继承 `Object.equals()`，默认效果和 `==` 一样，仍然比较是不是同一个对象。
+
+所以更准确的说法是：
+
+> `equals()` 通常用来比较内容，但最终要看这个类是否重写了它。
+
+### 3.2 `hashCode()` 是什么
+
+`hashCode()` 是 `Object` 类定义的方法，每个 Java 对象都可以调用它。它会返回一个 `int` 整数，这个整数叫作**哈希码**。
+
+可以先把哈希码理解成：
+
+> [!tip] 白话理解
+> `hashCode()` 是对象的“快速分组编号”。`HashMap` 和 `HashSet` 先根据这个编号缩小查找范围，再用 `equals()` 确认是不是真正相等的对象。
+
+`hashCode()` 有两个容易混淆的点：
+
+- 它不是必须唯一的对象 ID；不同对象可以有相同的哈希码，这叫作**哈希冲突**。
+- 不要把它简单理解成对象的内存地址；Java 官方契约只规定它的行为，没有规定必须返回内存地址。
+
+#### 3.2.1 哈希冲突是什么
+
+**哈希冲突（Hash Collision）**是指：两个不同的对象，通过 `hashCode()` 计算后得到了相同的哈希码。
+
+例如，Java 中的字符串 `"Aa"` 和 `"BB"` 内容不同，但哈希码相同：
+
+```java
+String a = "Aa";
+String b = "BB";
+
+System.out.println(a.equals(b));                  // false，内容不同
+System.out.println(a.hashCode());                 // 2112
+System.out.println(b.hashCode());                 // 2112
+System.out.println(a.hashCode() == b.hashCode()); // true
+```
+
+这就是：
+
+```text
+"Aa" ──hashCode()──→ 2112
+"BB" ──hashCode()──→ 2112
+```
+
+为什么哈希码不能保证唯一？因为 `hashCode()` 只能返回有限范围的 `int` 整数，而 Java 可以创建的对象数量远远更多。对象足够多时，不同对象就可能拿到同一个哈希码。
+
+`HashMap` 遇到哈希冲突时，不会立即认为两个 Key 相等，而是继续使用 `equals()` 确认：
+
+```java
+System.out.println(a.equals(b)); // false
+```
+
+因为 `equals()` 返回 `false`，两个 Key 会被作为两条不同的数据保存：
+
+```java
+Map<String, Integer> map = new HashMap<>();
+map.put("Aa", 100);
+map.put("BB", 200);
+
+System.out.println(map.get("Aa")); // 100
+System.out.println(map.get("BB")); // 200
+```
+
+> [!tip] 哈希冲突不等于数据覆盖
+> `hashCode()` 相同只表示“分到了同一组”。`HashMap` 还会使用 `equals()` 进一步确认。只有 `equals()` 也返回 `true` 时，才会被当成同一个 Key。
+
+### 3.3 HashMap 为什么同时需要 `hashCode()` 和 `equals()`
+
+假设需要从 `HashMap` 中查找一个 Key，可以把查找过程简化成两步：
+
+```text
+第一步：调用 key.hashCode()，计算应该去哪个桶里找
+                        ↓
+第二步：在该桶内使用 equals()，确认具体是哪个 Key
+```
+
+两个方法的分工是：
+
+| 方法 | 作用 | 类比 |
+| --- | --- | --- |
+| `hashCode()` | 快速确定查找范围 | 先确定快递在哪一个货架 |
+| `equals()` | 在该范围内判断对象是否真正相等 | 再根据收件人信息确认具体包裹 |
+
+只使用 `equals()` 逐个比较所有 Key 也能查找，但数据很多时会很慢。`hashCode()` 负责快速缩小范围，`equals()` 负责处理哈希冲突并最终确认。可结合 [[../基础/HashMap]] 理解完整过程。
+
+### 3.4 为什么重写 `equals()` 也要重写 `hashCode()`
+
+Java 官方规定了一条重要契约：
+
+> [!warning] 必须遵守的契约
+> 如果 `a.equals(b)` 返回 `true`，那么 `a.hashCode()` 和 `b.hashCode()` 必须返回相同的整数。
+
+假设我们认为学号相同的学生就是同一个学生：
+
+```java
+Student a = new Student("1001", "小明");
+Student b = new Student("1001", "小明");
+```
+
+`a` 和 `b` 是两个不同的对象，但按照业务规则，`a.equals(b)` 应该为 `true`。
+
+如果只重写 `equals()`，没有重写 `hashCode()`，它们可能得到不同的哈希码：
+
+```text
+a ──hashCode──→ 1 号查找范围
+b ──hashCode──→ 8 号查找范围
+```
+
+`HashMap` 查找 `b` 时可能会去 8 号范围，而之前使用 `a` 存入的数据在 1 号范围。它们根本没有机会进一步调用 `equals()` 比较，因此可能出现：
+
+- `HashMap.get(b)` 找不到使用 `a` 存入的数据；
+- `HashSet` 同时保存两个业务上相等的对象。
+
+所以，只要修改了“什么叫对象相等”的规则，就必须同时修改“相等对象应该分到哪一类”的规则。
+
+#### 3.4.1 面试回答
+
+**标准回答：**
+
+> Java 规定：如果两个对象通过 `equals()` 判断相等，那么它们的 `hashCode()` 必须相同。
+>
+> 因为 `HashMap` 和 `HashSet` 会先根据 `hashCode()` 确定查找范围，只有进入同一范围后，才会通过 `equals()` 判断对象是否真正相等。
+>
+> 如果只重写 `equals()`，两个逻辑上相等的对象可能拥有不同的哈希码，被分到不同位置，导致 `HashMap` 查找失败，或者 `HashSet` 保存重复元素。所以修改对象的相等规则时，也要使用相同的业务字段重写 `hashCode()`。
+
+**精简背诵版：**
+
+> `equals()` 决定两个对象是否相等，`hashCode()` 决定对象在哈希容器中的查找位置。相等对象必须拥有相同的哈希码，否则 `HashMap` 和 `HashSet` 可能无法正确识别它们。
+
+**如果面试官追问“Java 是否强制”：**
+
+> 编译器不会强制同时重写，但只重写 `equals()` 会破坏 `Object` 规定的契约。当对象作为 `HashMap` 的 Key 或放入 `HashSet` 时，就可能出现问题。对象仅作为 `HashMap` 的 Value 时不一定立即出错，但工程上仍应遵守契约，同时重写两个方法。
+
+> [!tip] 最后补充一句
+> `equals()` 相等，`hashCode()` 必须相同；`hashCode()` 相同，`equals()` 不一定相等，因为可能发生哈希冲突。
+
+### 3.5 正确的重写方式
+
+`equals()` 和 `hashCode()` 应该使用同一组业务字段。下面的例子使用 `studentNo` 判断学生是否相等：
+
+```java
+import java.util.Objects;
+
+public class Student {
+    private final String studentNo;
+    private final String name;
+
+    public Student(String studentNo, String name) {
+        this.studentNo = studentNo;
+        this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        // 两个引用指向同一个对象时，一定相等。
+        if (this == obj) {
+            return true;
+        }
+
+        // null 或运行时类型不同时，不相等。
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        Student other = (Student) obj;
+
+        // 业务规则：学号相同，就认为是同一个学生。
+        return Objects.equals(studentNo, other.studentNo);
+    }
+
+    @Override
+    public int hashCode() {
+        // 使用与 equals 相同的 studentNo 计算哈希码。
+        return Objects.hash(studentNo);
+    }
+}
+```
+
+#### 3.5.1 调用 `a.equals(b)` 时，栈和堆里有什么
+
+先使用两个学号内容相同、姓名不同的对象：
+
+```java
+Student a = new Student(new String("1001"), "小明");
+Student b = new Student(new String("1001"), "小红");
+
+boolean result = a.equals(b);
+```
+
+> [!info] 示例说明
+> 这里故意使用两次 `new String("1001")`，用来证明两个学号字符串即使不是同一个对象，只要内容相同，`Objects.equals()` 仍会返回 `true`。实际代码中不需要主动 `new String()`。
+
+创建完成后，可以把它们的引用关系简化为：
+
+```text
+当前线程的栈                                      堆
+
+┌─ main 方法的栈帧 ─────────────────┐         ┌─ Student 对象 A ────────────┐
+│ a：保存对象 A 的引用 ────────────────┼──────→ │ studentNo ──→ String 对象 1："1001" │
+│ b：保存对象 B 的引用 ────────────────┼──┐    │ name      ──→ String 对象："小明"   │
+│ result：等待 equals 的返回值         │  │    └─────────────────────────────┘
+└──────────────────────────────────────┘  │
+                                            │    ┌─ Student 对象 B ────────────┐
+                                            └───→ │ studentNo ──→ String 对象 2："1001" │
+                                                   │ name      ──→ String 对象："小红"   │
+                                                   └─────────────────────────────┘
+```
+
+这幅图中最需要注意的是：
+
+- 栈帧中的 `a` 和 `b` 保存的是**引用**；
+- 两个 `Student` 对象位于堆中；
+- `studentNo` 和 `name` 是 `Student` 对象的实例字段，它们保存的也是对应 `String` 对象的引用。
+
+> [!info] 关于栈和堆的图
+> 这是用于理解引用关系的简化 JVM 模型。JIT 编译器在实际运行时可能做逃逸分析等优化，但不改变这段 Java 代码的语义。
+
+#### 3.5.2 进入 `equals()` 方法后的栈帧
+
+执行：
+
+```java
+a.equals(b);
+```
+
+可以把它理解为：
+
+```text
+使用对象 a 调用 equals，所以 this 指向对象 A
+把 b 作为参数传入，所以 obj 指向对象 B
+```
+
+JVM 会为这次 `equals()` 调用创建新的方法栈帧。执行到 `Student other = (Student) obj;` 后，引用关系可以简化为：
+
+```text
+当前线程的栈                                      堆
+
+┌─ equals 方法的栈帧 ────────────────┐
+│ this  ──────────────────────────────────┼──────→ Student 对象 A
+│ obj    ──┐                                  │
+│ other  ──┼──────────────────────────────────┼──────→ Student 对象 B
+│          └─ obj 和 other 指向同一对象       │
+└───────────────────────────────────────┘
+
+┌─ main 方法的栈帧 ──────────────────┐
+│ a      ──────────────────────────────────┼──────→ Student 对象 A
+│ b      ──────────────────────────────────┼──────→ Student 对象 B
+│ result ── 等待 equals 返回                    │
+└───────────────────────────────────────┘
+```
+
+`Student other = (Student) obj;` **没有创建新对象**。它只是把 `obj` 中的引用复制给局部变量 `other`，所以 `obj`、`other` 和 `b` 都指向堆中的对象 B。
+
+#### 3.5.3 `equals()` 为什么最后返回 `true`
+
+现在按顺序执行 `equals()` 中的每一段代码。
+
+**第一步：比较是否为同一个对象**
+
+```java
+if (this == obj) {
+    return true;
+}
+```
+
+`this` 指向对象 A，`obj` 指向对象 B，所以：
+
+```text
+this == obj → false
+```
+
+这里只是说它们不是同一个 `new` 出来的对象，不代表业务上一定不相等，所以继续往下判断。
+
+**第二步：排除 `null` 和类型不同的情况**
+
+```java
+if (obj == null || getClass() != obj.getClass()) {
+    return false;
+}
+```
+
+`obj` 指向对象 B，不是 `null`；A 和 B 的运行时类型都是 `Student`，所以这个条件也是 `false`，继续执行。
+
+**第三步：转换类型，复制引用**
+
+```java
+Student other = (Student) obj;
+```
+
+此时 `other` 和 `obj` 都指向对象 B。
+
+**第四步：比较两个对象的学号**
+
+```java
+return Objects.equals(studentNo, other.studentNo);
+```
+
+这里没写 `this.studentNo`，但在实例方法中，`studentNo` 就是 `this.studentNo`。因此实际比较的是：
+
+```java
+Objects.equals(this.studentNo, other.studentNo);
+```
+
+对应到堆中的对象：
+
+```text
+this.studentNo  ──→ String 对象 1："1001"
+other.studentNo ──→ String 对象 2："1001"
+```
+
+两个 `String` 对象不是同一对象，但 `String.equals()` 会比较字符串内容。它们的内容都是 `"1001"`，所以：
+
+```text
+Objects.equals(this.studentNo, other.studentNo)
+→ "1001".equals("1001")
+→ true
+```
+
+最后，`equals()` 把 `true` 返回给 `main` 方法，存入 `result`：
+
+```text
+result = true
+```
+
+姓名 `name` 一个是“小明”，一个是“小红”，但这段 `equals()` 没有比较 `name`，因此姓名不会影响本次结果。这就是“由类自己定义什么叫相等”。
+
+对于这个类：
+
+```java
+Student a = new Student("1001", "小明");
+Student b = new Student("1001", "小明");
+
+System.out.println(a.equals(b));                 // true
+System.out.println(a.hashCode() == b.hashCode()); // true
+```
+
+> [!tip] 关系要单向记忆
+> - `equals()` 相等 → `hashCode()` 必须相同。
+> - `hashCode()` 相同 → `equals()` 不一定相等，因为可能发生哈希冲突。
+
+### 3.6 注意空指针
+
+下面的代码会抛出 `NullPointerException`：
+
+```java
+String name = null;
+name.equals("Java");
+```
+
+可以使用 `Objects.equals()`：
+
+```java
+import java.util.Objects;
+
+String name = null;
+System.out.println(Objects.equals(name, "Java")); // false
+```
+
+## 四、🚀 面试回答
+
+> 对基本类型，`==` 比较数值；对引用类型，`==` 比较两个引用是否指向同一个对象。`equals()` 是对象的方法，比较规则可以被子类重写。没有重写时，默认效果和引用类型的 `==` 相同；例如 `String` 重写了 `equals()`，所以比较的是字符串内容。重写 `equals()` 时通常也要重写 `hashCode()`。
+
+## 五、📌 快速回顾
+
+- 基本类型的 `==`：比较值。
+- 引用类型的 `==`：比较是不是同一个对象。
+- `equals()`：比较规则由类决定。
+- 自定义类没有重写 `equals()`：默认仍然比较对象身份。
+- 重写 `equals()`：通常也要重写 `hashCode()`。
+- 对象可能为 `null`：可以使用 `Objects.equals()`。
+
+## 六、🔗 官方资料
+
+- [Java 语言规范：Equality Operators](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.21)
+- [Java API：Object.equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object))
+- [Java SE 25 API：Object.hashCode](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode())
