@@ -236,6 +236,8 @@ public ToolCallingController(ChatClient chatClient) {
 > [!tip] 记忆句
 > Spring 看构造参数类型找 Bean；字段只负责保存对象，`build()` 只负责创建新对象。
 
+理解 Bean 如何被创建和注入后，可以继续阅读 [[Spring Bean 生命周期]]，了解依赖注入完成后的初始化、代理加工与销毁顺序。
+
 ## 八、📚 官方资料
 
 - [Spring Framework：使用 `@Autowired`](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired.html)

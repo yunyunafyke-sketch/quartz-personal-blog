@@ -1,0 +1,372 @@
+---
+title: volatile
+date: 2026-10-10 17:33:55
+publish: true
+---
+
+## 一、💡 一句话理解
+
+> [!tip] 核心结论
+> Java 的 `volatile` 用来修饰会被多个线程共享的变量。它主要保证**可见性**和**有序性**，但不提供互斥，也不能把 `count++` 这样的复合操作变成原子操作。
+
+可以先记住一句话：
+
+> **保证看得见，约束执行顺序，但不负责让线程排队。**
+
+## 二、🧭 理论：它是什么
+
+### 2.1 从“通知后台线程停止”说起
+
+假设程序里有一个工作线程不断处理任务，主线程负责通知它停止：
+
+```java
+private static boolean running = true;
+```
+
+工作线程反复读取 `running`，主线程在需要停止时执行：
+
+```java
+running = false;
+```
+
+如果没有正确的线程同步，Java 内存模型不保证工作线程能够按照预期观察到这次修改。把变量声明为 `volatile`：
+
+```java
+private static volatile boolean running = true;
+```
+
+主线程写入 `false` 后，工作线程后续读取这个变量时，就能按照 Java 内存模型的规则观察到该写入。
+
+### 2.2 场景与真实技术对象的对应关系
+
+| 场景角色 | 真实技术对象 |
+| --- | --- |
+| 后台工作人员 | 工作线程 |
+| 管理员 | 主线程 |
+| 停止通知牌 | `volatile boolean running` |
+| 管理员更换通知牌 | 对 `volatile` 变量进行写操作 |
+| 工作人员查看通知牌 | 对 `volatile` 变量进行读操作 |
+
+> [!info] 类比边界
+> “通知牌”只用于帮助理解线程之间的可见性。`volatile` 并不会让多个线程排队，也不能保护由多步操作组成的业务流程。
+
+### 2.3 volatile 适合什么变量
+
+`volatile` 适合表示简单、独立的共享状态，例如：
+
+- 是否继续运行；
+- 配置是否已经加载；
+- 当前配置对象的引用；
+- 某项只需要整体替换的状态快照。
+
+如果变量的新值依赖旧值，或者多个字段必须一起保持一致，就不能只依赖 `volatile`。
+
+## 三、⚙️ 理论：它是怎么工作的
+
+### 3.1 可见性：其他线程能够观察到写入
+
+对一个 `volatile` 变量进行写入后，其他线程后续读取同一个变量时，能够按照 Java 内存模型规定的同步顺序观察到该写入。
+
+```text
+主线程：running = false
+                  ↓
+工作线程：读取 running，观察到 false
+```
+
+这解决的是“一个线程已经改了，另一个线程能不能正确看见”的问题。
+
+> [!warning] 不要只背“强制读写主内存”
+> 这种说法适合粗略记忆，但不够准确。正式理解应以 Java 内存模型的 `happens-before` 和 `synchronizes-with` 规则为准，而不是把 JVM 简化成“线程缓存和主内存之间每次强制刷新”。
+
+### 3.2 有序性：建立 happens-before 关系
+
+Java 语言规范规定：
+
+> 对某个 `volatile` 字段的写入，happens-before 后续对同一个字段的读取。
+
+`happens-before` 可以先理解为：前面的操作结果必须对后面的操作可见，并且满足 Java 内存模型规定的先后约束。
+
+例如：
+
+```java
+private static int data;
+private static volatile boolean ready;
+
+// 线程 A
+data = 100;
+ready = true;
+
+// 线程 B
+if (ready) {
+    System.out.println(data);
+}
+```
+
+当线程 B 读取到 `ready == true` 时，它也能够观察到线程 A 在写入 `ready` 之前对 `data` 的写入。这种用法通常称为**安全发布状态**。
+
+### 3.3 单次读写具有原子性
+
+Oracle Java 并发教程指出，对 `volatile` 变量的单次读取和单次写入是原子操作，包括 `long` 和 `double`。
+
+例如下面的单次赋值是原子的：
+
+```java
+private static volatile long version;
+
+version = 10L;
+```
+
+但是，单次读写原子不等于所有使用这个变量的表达式都原子。
+
+### 3.4 为什么 volatile 不能保证 count++ 安全
+
+```java
+private static volatile int count = 0;
+
+count++;
+```
+
+`count++` 实际包含三个步骤：
+
+```text
+读取 count → 计算 count + 1 → 把新值写回 count
+```
+
+假设初始值是 `0`：
+
+| 时刻 | 线程 A | 线程 B | 最终变量 |
+| --- | --- | --- | --- |
+| 1 | 读取到 `0` | 读取到 `0` | `0` |
+| 2 | 计算得到 `1` | 计算得到 `1` | `0` |
+| 3 | 写入 `1` | 写入 `1` | `1` |
+
+两个线程明明都执行了一次加一，结果却只是 `1`。`volatile` 保证它们能看到共享值，但没有把三步操作合成一个不可分割的整体。
+
+这种并发计数应该使用 [[AtomicInteger]]：
+
+```java
+private static final AtomicInteger COUNT = new AtomicInteger(0);
+
+// incrementAndGet：原子地加一，并返回加一后的值。
+int newValue = COUNT.incrementAndGet();
+```
+
+### 3.5 volatile、原子类和锁的区别
+
+| 工具 | 可见性 | 单变量原子更新 | 多步业务互斥 | 是否可能阻塞 |
+| --- | --- | --- | --- | --- |
+| `volatile` | 可以 | 仅单次读写 | 不可以 | 通常不会 |
+| `AtomicInteger` 等原子类 | 可以 | 可以 | 一般不可以 | 通常不会 |
+| `synchronized` / `Lock` | 可以 | 可以 | 可以 | 可能会 |
+
+当多个字段必须一起保持一致，或者存在“先判断再修改”的组合逻辑时，通常应使用 [[锁与线程同步]]，而不是只添加 `volatile`。
+
+## 四、🚀 实践：从准备到验证
+
+### 4.1 前置准备
+
+准备 JDK 8 或更高版本即可，不需要第三方依赖。
+
+检查 Java 环境：
+
+```bash
+java -version
+javac -version
+```
+
+### 4.2 可以拿来干什么
+
+#### 4.2.1 通知工作线程停止
+
+用途：一个线程负责执行后台任务，另一个线程只负责修改停止状态。
+
+前置条件：
+
+- 状态只有 `true` 和 `false`；
+- 工作线程只读取状态；
+- 主线程只需要发布停止通知；
+- 不需要把多个业务字段作为一个整体修改。
+
+核心代码：
+
+```java
+// volatile：保证停止信号能够被其他线程正确观察。
+private static volatile boolean running = true;
+
+while (running) {
+    // 执行后台任务
+}
+```
+
+输入是主线程写入的 `false`，处理过程是工作线程反复读取 `running`，结果是工作线程退出循环。
+
+#### 4.2.2 发布已经准备好的数据
+
+用途：线程 A 先准备数据，最后修改 `volatile` 状态；线程 B 看到状态后再使用数据。
+
+```java
+private static String config;
+private static volatile boolean ready;
+
+static void loadConfig() {
+    // 先准备普通数据。
+    config = "production";
+
+    // 最后发布 ready，建立 volatile 写入语义。
+    ready = true;
+}
+
+static void useConfig() {
+    // 读取 ready；只有观察到 true 后才使用已经发布的数据。
+    if (ready) {
+        System.out.println(config);
+    }
+}
+```
+
+这里真正承担发布边界的是对 `ready` 的写入和读取。不要在写入 `ready = true` 后继续修改本次需要发布的数据。
+
+### 4.3 完整实践：代码、启动和验证
+
+创建文件 `VolatileDemo.java`：
+
+```java
+public class VolatileDemo {
+
+    /*
+     * volatile：主线程修改 running 后，
+     * 工作线程能够按照 Java 内存模型的规则观察到新值。
+     */
+    private static volatile boolean running = true;
+
+    public static void main(String[] args) throws InterruptedException {
+        Thread worker = new Thread(() -> {
+            System.out.println("工作线程开始运行");
+
+            /*
+             * 每次循环都会读取 volatile 变量 running。
+             * 当主线程把它修改为 false 后，循环结束。
+             */
+            while (running) {
+                // 模拟持续运行的后台任务。
+            }
+
+            System.out.println("工作线程收到停止信号");
+        }, "worker");
+
+        // start：启动工作线程，让它执行上面的任务。
+        worker.start();
+
+        // sleep：让工作线程先运行一秒，再发送停止通知。
+        Thread.sleep(1000);
+
+        System.out.println("主线程发送停止信号");
+
+        // 写入 volatile 变量，向工作线程发布停止状态。
+        running = false;
+
+        /*
+         * join：等待工作线程真正结束。
+         * 工作线程结束前，主线程不会继续打印“程序结束”。
+         */
+        worker.join();
+
+        System.out.println("程序结束");
+    }
+}
+```
+
+编译：
+
+```bash
+javac VolatileDemo.java
+```
+
+运行：
+
+```bash
+java VolatileDemo
+```
+
+预期结果：
+
+```text
+工作线程开始运行
+主线程发送停止信号
+工作线程收到停止信号
+程序结束
+```
+
+> [!warning] 去掉 volatile 后不一定每次都能复现错误
+> 某次测试仍然正常退出，不代表代码已经线程安全。线程调度、JIT 编译和运行环境都会影响现象；正确性应依据 Java 内存模型的保证，而不能依赖“我运行几次都没出问题”。
+
+#### 4.3.1 常见问题排查
+
+**`javac: command not found`**
+
+说明没有安装 JDK，或者 JDK 的 `bin` 目录没有加入环境变量。先执行 `java -version` 和 `javac -version` 检查。
+
+**程序一直占用较高 CPU**
+
+示例为了突出 `volatile`，使用了空循环不断读取变量，因此会持续占用 CPU。真实项目通常会使用阻塞队列、中断、等待通知或线程池关闭机制，而不是长期空转。
+
+**把 `running` 改成普通 boolean，程序仍然退出**
+
+这是允许出现的现象，但不构成正确性证明。没有 `volatile` 或其他同步机制时，Java 内存模型不保证程序始终按这个结果运行。
+
+## 五、🎤 面试时怎么流利地说
+
+### 5.1 回答路线
+
+```text
+volatile 是什么
+    ↓
+解决可见性和有序性问题
+    ↓
+volatile 写 happens-before 后续读取
+    ↓
+不提供互斥，不保证复合操作原子性
+    ↓
+状态标记用 volatile，计数用原子类，组合状态用锁
+```
+
+### 5.2 30 秒标准回答
+
+`volatile` 是 Java 提供的一种轻量级线程同步机制，主要保证共享变量的可见性，并通过 happens-before 规则提供有序性。一个线程写入 `volatile` 变量后，后续读取同一个变量的线程能够观察到该写入以及写入前的相关操作。但是 `volatile` 不提供互斥，也不能保证 `count++` 这种读、改、写复合操作的原子性。因此状态开关可以使用 `volatile`，并发计数应使用 `AtomicInteger`，多个变量需要保持一致时通常使用锁。
+
+### 5.3 1—2 分钟展开回答
+
+多个线程访问普通共享变量时，可能出现可见性和指令重排序问题。`volatile` 会让对该变量的读写成为 Java 内存模型中的同步动作。规范规定，对某个 `volatile` 字段的写入 happens-before 后续对同一个字段的读取，因此读取线程不仅能观察到这个字段的写入，也能观察到写入线程在此之前完成的相关操作。
+
+不过，`volatile` 只适合独立状态的读写，不会像锁一样让线程互斥。例如 `count++` 包含读取、加一和写回三个步骤；即使 `count` 是 `volatile`，多个线程仍可能读取相同旧值并覆盖更新。此时应使用 `AtomicInteger.incrementAndGet()`。如果一次业务操作要同时检查和修改多个变量，则一般使用 `synchronized`、`Lock` 或更高层并发工具。
+
+### 5.4 高频追问与短答
+
+#### 5.4.1 volatile 能保证原子性吗
+
+它只能保证变量单次读取和单次写入的原子性，不能保证 `count++`、检查后更新等复合操作的原子性。复合更新通常使用原子类或锁。
+
+#### 5.4.2 volatile 和 synchronized 有什么区别
+
+`volatile` 主要提供可见性和有序性，不提供互斥，线程通常不会因为它而阻塞。`synchronized` 同时提供互斥和内存可见性，适合保护临界区以及多个状态组成的不变量。
+
+#### 5.4.3 为什么不建议只说“volatile 强制读写主内存”
+
+因为这是简化后的硬件类比，容易误导人把 Java 内存模型理解成固定的缓存刷新流程。更准确的回答是：`volatile` 读写是同步动作，并通过 `synchronizes-with` 和 `happens-before` 规则提供可见性与顺序保证。
+
+## 六、📌 总结
+
+- `volatile` 主要保证共享变量的可见性和有序性。
+- 对一个 `volatile` 字段的写入 happens-before 后续对同一字段的读取。
+- 它不提供互斥，也不能让 `count++` 变成原子操作。
+- 简单状态开关可以用 `volatile`，单变量并发计数使用原子类，组合状态通常使用锁。
+- 判断并发代码是否正确，应依据 Java 内存模型，而不是依赖偶然的测试结果。
+
+记忆句：**一写多读状态用 volatile，并发修改计数用原子类，组合状态用锁。**
+
+## 七、📚 官方资料
+
+- [Java Language Specification SE 25：Threads and Locks](https://docs.oracle.com/javase/specs/jls/se25/jls25.pdf)
+- [Oracle Java Tutorials：Atomic Access](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomic.html)
+- [Oracle Java Tutorials：Synchronization](https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html)
+

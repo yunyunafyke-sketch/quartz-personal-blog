@@ -560,7 +560,7 @@ EXPLAIN    = 查看 MySQL 准备怎么执行 SQL
 
 > 索引通过有序的 B+Tree 减少数据扫描；InnoDB 二级索引查完整行可能需要回表，覆盖索引可以避免回表；联合索引要注意最左前缀，最后用 `EXPLAIN` 验证实际执行计划。
 
-相关笔记：[[MySQL 事务]]、[[MySQL 隔离级别与锁]]
+相关笔记：[[MySQL 事务]]、[[MySQL 隔离级别与锁]]、[[中间键/es/Elasticsearch 入门|Elasticsearch 入门]]
 
 ## 七、🔗 官方资料
 

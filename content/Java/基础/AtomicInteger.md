@@ -1,0 +1,452 @@
+---
+title: AtomicInteger
+date: 2026-08-23
+publish: true
+---
+
+## 一、💡 一句话理解
+
+> [!tip] 核心结论
+> `Integer` 适合表示一个普通整数值，本身不可变；`AtomicInteger` 适合在**同一个 JVM 的多个线程之间**共享并修改一个整数，它提供线程安全的原子加减和比较更新操作。
+
+先记住一句话：**只保存数值，用 `Integer`；多线程共同改一个计数器，考虑 `AtomicInteger`。**
+
+## 二、🧭 理论：它是什么
+
+### 2.1 从接口访问计数说起
+
+假设一个接口被多个线程同时处理，每完成一次请求就执行一次加一：
+
+```java
+private Integer requestCount = 0;
+
+public void recordRequest() {
+    requestCount++;
+}
+```
+
+代码看起来只有一行，但 `requestCount++` 实际上包含：
+
+```text
+读取旧值 → 拆箱成 int → 加 1 → 装箱成新的 Integer → 写回变量
+```
+
+如果线程 A 和线程 B 同时读到 `0`，它们都可能计算出 `1`，然后先后写回 `1`。明明来了两次请求，结果却只记录了一次，这叫**丢失更新**。
+
+换成 `AtomicInteger`：
+
+```java
+private final AtomicInteger requestCount = new AtomicInteger(0);
+
+public void recordRequest() {
+    // incrementAndGet：原子地加 1，并返回加一后的新值。
+    requestCount.incrementAndGet();
+}
+```
+
+多个线程仍然可以同时调用 `recordRequest()`，但每次加一都会作为一个不可拆分的原子操作完成。
+
+### 2.2 场景与真实对象的对应关系
+
+| 场景角色 | 真实技术对象 |
+| --- | --- |
+| 同时到达的多个请求 | 并发执行的多个线程 |
+| 接口访问次数 | 多线程共享的整数状态 |
+| 普通记账本 | `Integer` 变量或普通 `int` 变量 |
+| 自动计数器 | `AtomicInteger` |
+
+> [!info] 类比边界
+> “自动计数器”只说明一次数值更新不会被其他线程插入。它不代表一个完整业务流程天然安全，也不能跨多个 JVM、Pod 或服务器共享状态。
+
+### 2.3 AtomicInteger 与 Integer 的核心区别
+
+| 对比项 | `Integer` | `AtomicInteger` |
+| --- | --- | --- |
+| 定位 | `int` 的包装类 | 可被原子更新的 `int` 容器 |
+| 可变性 | 不可变，值变了就是换成另一个对象 | 可变，内部数值可以更新 |
+| 并发更新 | 没有提供原子自增；`count++` 不安全 | 提供 `incrementAndGet()`、`compareAndSet()` 等原子方法 |
+| 读取与写入 | 普通对象引用的读取、重新赋值 | `get()`、`set()` 具有对应的内存可见性语义 |
+| 相等比较 | 按整数值实现 `equals()` | 没有把自己设计成普通数值对象，不能依赖 `equals()` 比较内部数值 |
+| 常见用途 | 集合元素、方法参数、可空整数、普通业务值 | 单 JVM 内的并发计数、序号和简单状态更新 |
+| 能否作为 Map 的键 | 可以，但键应保持稳定 | 不建议；它是可变对象，官方也明确说明不适合作为哈希表键 |
+| 能否互相替换 | 不能 | 不能；官方文档明确指出它不是 `Integer` 的通用替代品 |
+
+例如，下面两个 `AtomicInteger` 虽然内部都是 `1`，但不要把它们当成两个值相等的 `Integer`：
+
+```java
+AtomicInteger first = new AtomicInteger(1);
+AtomicInteger second = new AtomicInteger(1);
+
+System.out.println(first.equals(second)); // false
+System.out.println(first.get() == second.get()); // true
+```
+
+需要比较内部数值时，应先调用 `get()` 取出 `int` 再比较。
+
+### 2.4 Integer 不可变，为什么还会线程不安全
+
+`Integer` 对象不可变，意思是一个已经创建出来的 `Integer(1)` 不会在原地变成 `Integer(2)`。但这不等于共享变量的复合操作安全。
+
+```java
+Integer count = 0;
+count++;
+```
+
+这里不是修改原来的 `Integer` 对象，而是读取旧对象、计算新值、创建或取得新的 `Integer` 对象，再让变量指向它。多个线程仍然可能在这组步骤之间互相覆盖。
+
+同样，把变量声明为 `volatile Integer` 也只能获得 [[volatile]] 提供的可见性和有序性，不能把整个 `count++` 变成原子操作。
+
+## 三、⚙️ 理论：它是怎么工作的
+
+### 3.1 为什么 AtomicInteger 是线程安全的
+
+先给结论：`AtomicInteger` 的线程安全来自两层保障，缺一不可。
+
+| 保障 | 解决的问题 | 只靠它是否足够 |
+| --- | --- | --- |
+| `volatile` 读写语义 | 一个线程更新后，其他线程能够看见最新值 | 不够，它不能单独保证 `value++` 这种复合操作的原子性 |
+| JVM 提供的原子读改写操作 | 把“读取旧值并加一再写回”作为一个不可分割的整体 | 这是并发加一不丢失的关键 |
+
+OpenJDK 源码中的核心字段是：
+
+```java
+// OpenJDK AtomicInteger 源码中的核心字段。
+// volatile：保证线程之间的可见性，并提供相应的内存有序性。
+private volatile int value;
+```
+
+但请特别注意：**只有 `volatile int value` 还不够。** 如果源码仍然写成 `value++`，多个线程照样可能同时读到同一个旧值。
+
+`AtomicInteger` 真正关键的地方，是 `incrementAndGet()` 没有直接执行普通的 `value++`。当前 OpenJDK 源码的核心逻辑是：
+
+```java
+public final int incrementAndGet() {
+    // getAndAddInt：由 JVM 提供的原子“取旧值并加一”操作。
+    // 它返回旧值，所以最后再加 1，得到更新后的新值。
+    return U.getAndAddInt(this, VALUE, 1) + 1;
+}
+```
+
+这里的 `getAndAddInt` 是原子读—改—写操作。JVM 会通过处理器支持的原子指令或具有同等保证的实现完成它。无论底层具体采用哪条机器指令，对 Java 程序都必须表现为：**这次取值和加一是一个不可分割的整体。**
+
+所以完整因果链是：
+
+```text
+volatile / volatile 访问语义
+        ↓
+保证一个线程写入的新值能被其他线程正确观察
+        +
+getAndAdd、compareAndSet 等原子读改写操作
+        ↓
+保证多个线程竞争更新时，只有互不覆盖的更新能够生效
+        =
+单个 AtomicInteger 原子方法具有线程安全性
+```
+
+> [!tip] 最重要的区分
+> `volatile` 主要解决“看不看得见”；原子读改写操作解决“会不会同时改乱”。`AtomicInteger` 同时具备这两部分，所以单次原子更新既可见，又不会丢失。
+
+### 3.2 两个线程同时加一时到底发生了什么
+
+为了看清竞争过程，可以把原子加一理解成下面这个 CAS 重试模型。它用于解释原理，不是对当前 OpenJDK `incrementAndGet()` 源码的逐行复制：
+
+```java
+int incrementAndGetInPrinciple() {
+    while (true) {
+        // 读取当前可见值。
+        int oldValue = get();
+        int newValue = oldValue + 1;
+
+        // compareAndSet：只有当前值仍等于 oldValue，才原子地写入 newValue。
+        // 如果其他线程已经改过，返回 false，重新读取并计算。
+        if (compareAndSet(oldValue, newValue)) {
+            return newValue;
+        }
+    }
+}
+```
+
+假设初始值是 `0`，线程 A 和线程 B 同时加一：
+
+| 时刻 | 线程 A | 线程 B | AtomicInteger 当前值 |
+| --- | --- | --- | --- |
+| 1 | 读取到 `0`，准备改成 `1` | 读取到 `0`，也准备改成 `1` | `0` |
+| 2 | CAS：当前值仍是 `0`，成功写入 `1` | 等待执行 CAS | `1` |
+| 3 | 更新完成 | CAS：期望是 `0`，但实际已是 `1`，失败 | `1` |
+| 4 | — | 重新读取 `1`，准备改成 `2` | `1` |
+| 5 | — | CAS 成功写入 `2` | `2` |
+
+最终结果是 `2`，关键就在第 3 步：线程 B **不能拿着已经过期的旧值 `0` 覆盖线程 A 的结果**。它必须发现竞争失败，再基于最新值重试。
+
+普通 `Integer count++` 没有“写入前再次确认旧值是否仍然有效”这一步，所以两个线程都可能把各自算出的 `1` 写回去，造成丢失更新。
+
+### 3.3 CAS 为什么能做到不可分割
+
+CAS（Compare-And-Set，比较并设置）不是用普通 Java 代码把“比较”和“赋值”拼成两句：
+
+```java
+// 这只是普通代码，不是真正的 CAS，并不安全。
+if (value == expectedValue) {
+    value = newValue;
+}
+```
+
+真正的 `compareAndSet(expectedValue, newValue)` 由 JVM 的底层原子访问能力实现。“比较当前值”和“条件成立时写入新值”对其他线程表现为一个整体，其他线程不能插进二者中间。
+
+这意味着同一时刻有多个线程用相同旧值竞争时，最多只有一个线程能成功。失败线程不会覆盖成功线程的结果，而是收到 `false`；需要时可以重新读取最新值并重试。
+
+> [!info] 没有显式加锁，不等于没有并发控制
+> `AtomicInteger` 通常不使用 `synchronized` 把线程阻塞在互斥锁上，而是依赖原子指令和失败重试协调竞争。这通常称为无锁（lock-free）更新，但竞争非常激烈时仍可能发生多次重试。
+
+### 3.4 原子操作是什么
+
+“原子”不表示速度一定更快，而是表示某次操作对其他线程来说不可拆开：要么还没完成，要么已经完成，不会暴露中间状态。
+
+```text
+普通 count++：读取 → 计算 → 写回
+原子自增：     [读取、计算、写回作为一个整体完成]
+```
+
+Oracle 将 `java.util.concurrent.atomic` 描述为支持“单个变量上的无锁线程安全编程”的工具包。这里的重点有两个：
+
+- 它处理的是**单个变量**；
+- 它提供读—改—写的原子方法，而不是让任意多行代码自动获得线程安全。
+
+### 3.5 常用方法与返回值
+
+| 方法 | 做什么 | 返回什么 |
+| --- | --- | --- |
+| `get()` | 读取当前值 | 当前值 |
+| `set(10)` | 把当前值设为 `10` | 无返回值 |
+| `incrementAndGet()` | 先加一 | 新值 |
+| `getAndIncrement()` | 先取值，再加一 | 旧值 |
+| `addAndGet(5)` | 加五 | 新值 |
+| `getAndAdd(5)` | 先取值，再加五 | 旧值 |
+| `compareAndSet(3, 4)` | 当前值为 `3` 时才改为 `4` | 是否更新成功 |
+
+容易记混的两组方法，只看方法名中的先后顺序：
+
+```text
+increment And Get：先 increment，再 get，所以返回新值
+get And Increment：先 get，再 increment，所以返回旧值
+```
+
+### 3.6 线程安全的边界
+
+单次原子方法是线程安全的：
+
+```java
+requestCount.incrementAndGet();
+```
+
+但把多个原子方法拼起来，不会自动组成一个更大的原子操作：
+
+```java
+// 错误示例：get 和 set 分别是原子的，但两步合起来不是原子的。
+if (requestCount.get() < 100) {
+    requestCount.set(requestCount.get() + 1);
+}
+```
+
+两个线程可能同时通过条件判断，再分别写入。若要表达“满足条件时才更新”，应根据业务使用 `compareAndSet()` 重试、加锁，或使用事务等更完整的协调机制。
+
+> [!warning] 使用边界
+> `AtomicInteger` 只保证当前 JVM 内、单个整数的原子操作。它不能直接解决多 Pod 分布式计数，也不能保证“检查库存、扣库存、创建订单”这类跨多个状态的业务事务。
+
+## 四、🚀 实践：从准备到验证
+
+### 4.1 前置准备
+
+- JDK 8 或更高版本；本文 API 说明参考 Java SE 25。
+- `AtomicInteger` 自 JDK 1.5 起提供，无需引入第三方依赖。
+- 示例使用 `CountDownLatch` 让主线程等待全部任务结束，它只负责协调演示流程，不负责保证计数安全。
+
+### 4.2 可以拿来干什么
+
+#### 4.2.1 并发计数
+
+适合统计单个 JVM 内正在处理的请求数、成功次数或重试次数：
+
+```java
+AtomicInteger successCount = new AtomicInteger(0);
+
+// 每个工作线程在任务成功后调用一次。
+int latest = successCount.incrementAndGet();
+System.out.println("当前成功次数：" + latest);
+```
+
+输入是一次“任务成功”事件，处理过程是原子加一，输出是加一后的最新计数。
+
+#### 4.2.2 生成进程内递增序号
+
+```java
+AtomicInteger sequence = new AtomicInteger(1000);
+
+// getAndIncrement：返回当前序号，然后为下一次调用加一。
+int currentId = sequence.getAndIncrement();
+System.out.println(currentId); // 1000
+```
+
+这只能生成当前 JVM 内的递增序号。应用重启、水平扩容或存在多个 Pod 时，不能单独用它生成全局唯一业务编号。
+
+#### 4.2.3 抢占一次性执行资格
+
+```java
+AtomicInteger state = new AtomicInteger(0); // 0 表示未执行，1 表示已抢占
+
+// 只有一个线程能把 0 成功改成 1。
+if (state.compareAndSet(0, 1)) {
+    System.out.println("当前线程获得执行资格");
+}
+```
+
+这种写法适合非常简单的进程内状态切换。若执行失败后需要恢复、重试或保证持久化，还要补充对应的业务设计。
+
+它也常与 [[ConcurrentHashMap]] 配合：`ConcurrentHashMap` 安全保存“用户 ID → 计数器”，`AtomicInteger` 负责安全修改某个用户的计数值。
+
+### 4.3 完整实践：对比 Integer 与 AtomicInteger
+
+新建 `AtomicIntegerDemo.java`。程序让 10 个线程各执行 10,000 次加一，理论总数为 100,000。
+
+```java
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class AtomicIntegerDemo {
+
+    // Integer 是不可变包装类；这里的 ++ 会经历拆箱、计算、装箱和重新赋值。
+    // 多个线程共享执行时，这组步骤不是原子操作，可能丢失更新。
+    private Integer normalCount = 0;
+
+    // AtomicInteger 是可原子更新的整数容器。
+    private final AtomicInteger atomicCount = new AtomicInteger(0);
+
+    public void increaseBoth() {
+        normalCount++;
+
+        // incrementAndGet：原子加一，并返回更新后的值。
+        atomicCount.incrementAndGet();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        AtomicIntegerDemo demo = new AtomicIntegerDemo();
+
+        int threadCount = 10;
+        int incrementsPerThread = 10_000;
+
+        // 所有工作线程先等待 start，便于制造更明显的并发竞争。
+        CountDownLatch start = new CountDownLatch(1);
+
+        // 每个工作线程结束时减一；main 线程等它减到 0 后再打印结果。
+        CountDownLatch finished = new CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            Thread worker = new Thread(() -> {
+                try {
+                    // await：等待 main 线程发出开始信号。
+                    start.await();
+
+                    for (int j = 0; j < incrementsPerThread; j++) {
+                        demo.increaseBoth();
+                    }
+                } catch (InterruptedException e) {
+                    // 恢复中断标记，让上层代码仍能知道当前线程被中断过。
+                    Thread.currentThread().interrupt();
+                } finally {
+                    // countDown：无论任务正常结束还是被中断，都报告本线程已结束。
+                    finished.countDown();
+                }
+            });
+            worker.start();
+        }
+
+        // 把 start 从 1 减到 0，放行所有工作线程。
+        start.countDown();
+
+        // 等待所有工作线程结束，避免过早读取中间结果。
+        finished.await();
+
+        int expected = threadCount * incrementsPerThread;
+        System.out.println("预期结果：" + expected);
+        System.out.println("Integer 结果：" + demo.normalCount);
+        System.out.println("AtomicInteger 结果：" + demo.atomicCount.get());
+    }
+}
+```
+
+在文件所在目录编译并运行：
+
+```bash
+javac AtomicIntegerDemo.java
+java AtomicIntegerDemo
+```
+
+一次可能的输出：
+
+```text
+预期结果：100000
+Integer 结果：96327
+AtomicInteger 结果：100000
+```
+
+- `Integer` 结果通常小于预期，因为并发的 `++` 可能互相覆盖；它也可能偶然得到 100,000，这不代表写法安全。
+- `AtomicInteger` 的每次 `incrementAndGet()` 都是原子更新，因此最终得到 100,000。
+
+> [!info] 常见排查
+> 如果两者偶然都输出 100,000，可以多运行几次或增大线程数。这类并发错误取决于线程交错时机，不保证每次复现。
+
+## 五、🎤 面试时怎么流利地说
+
+### 5.1 回答路线
+
+按这条路线回答即可：
+
+```text
+它是什么 → 解决什么问题 → 原子方法与 CAS → 和 Integer 的区别 → 使用边界
+```
+
+### 5.2 30 秒标准回答
+
+`Integer` 是 `int` 的不可变包装类，适合表示普通整数值，但对共享变量执行 `++` 时会经历读、改、写，多线程下可能丢失更新。`AtomicInteger` 的内部值具有 `volatile` 访问语义，保证线程之间的可见性；它又通过 `getAndAdd`、CAS 等原子读改写操作避免并发更新互相覆盖。因此它适合单 JVM 内的简单并发计数，但只能保证单个变量的一次原子操作，不能代替锁、事务或分布式计数方案。
+
+### 5.3 1—2 分钟展开回答
+
+`Integer` 和 `AtomicInteger` 虽然都能表示整数，但定位不同。`Integer` 是不可变的值对象，支持值比较、装箱拆箱和作为集合元素；`Integer count++` 并不是修改原对象，而是拆箱、加一、装箱并重新赋值，这个复合过程在多线程下不安全。
+
+`AtomicInteger` 内部维护一个具有 `volatile` 语义的 `int` 值，因此一个线程完成的写入能够被其他线程正确观察。但 `volatile` 本身不能让 `++` 变成原子操作，真正防止丢失更新的是 JVM 提供的原子读改写能力。当前 OpenJDK 的 `incrementAndGet` 会调用原子的 `getAndAddInt`；从 CAS 模型看，只有旧值仍然没有变化时更新才能成功，竞争失败的线程会基于新值重试。这样，两个线程即使都读到 `0`，也不能都用 `1` 覆盖结果，最终会依次得到 `1` 和 `2`。
+
+它的边界也很重要：多个原子方法拼起来不一定仍然原子；涉及多个字段的一致性时通常需要锁或事务；多个 JVM 或 Pod 之间也不能共享同一个 `AtomicInteger`，此时要使用数据库、Redis 或专门的分布式方案。
+
+### 5.4 高频追问与短答
+
+**`volatile Integer` 能解决 `count++` 的线程安全吗？**
+
+不能。`volatile` 主要保证可见性和一定的有序性，而 `count++` 是多步复合操作，多个线程仍可能读取同一个旧值并覆盖结果。
+
+**`incrementAndGet()` 和 `getAndIncrement()` 有什么区别？**
+
+两者都会原子加一。前者返回加一后的新值，后者返回加一前的旧值。
+
+**AtomicInteger 能代替 synchronized 吗？**
+
+只能在单个变量的简单原子更新场景中替代部分加锁需求。若要同时维护多个变量或保护一段业务逻辑，仍可能需要锁、事务或其他同步机制。
+
+## 六、📌 总结
+
+- `Integer` 是不可变的普通整数包装类；`AtomicInteger` 是可原子更新的并发工具。
+- `Integer count++` 和 `int count++` 都是读—改—写复合操作，多线程共享时可能丢失更新。
+- `AtomicInteger` 的 `volatile` 访问语义保证可见性，原子读改写操作保证并发更新不会互相覆盖。
+- `incrementAndGet()` 底层使用 JVM 的原子加法能力；用 CAS 模型理解时，竞争失败的线程会读取新值再重试。
+- `get()` 和 `set()` 各自安全，不代表把多个调用组合起来后仍然原子。
+- `AtomicInteger` 只解决单 JVM 内单个整数的并发更新，不能代替业务事务或分布式协调。
+
+记忆句：**普通数值用 Integer，共享计数用 AtomicInteger；单步更新它能管，多步业务另想办法。**
+
+## 七、📚 官方资料
+
+- [Java SE 25：AtomicInteger API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html)
+- [Java SE 25：Integer API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html)
+- [Java SE 25：java.util.concurrent.atomic 包说明](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
+- [Java SE 25：VarHandle 原子访问与内存语义](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)
+- [Oracle Java Tutorial：Atomic Variables（教程基于 JDK 8）](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomicvars.html)
+- [OpenJDK：AtomicInteger 源码](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/concurrent/atomic/AtomicInteger.java)
