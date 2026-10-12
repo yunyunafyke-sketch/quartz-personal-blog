@@ -17,6 +17,7 @@ publish: true
 | --- | --- | --- |
 | `list.add("2")` | 修改原来的集合对象 | 能看到 |
 | `list = new ArrayList<>()` | 只修改方法内部那份地址 | 看不到 |
+| `list = null` | 只把方法内部那份地址清空 | 看不到 |
 
 记忆口诀：
 
@@ -321,76 +322,144 @@ System.out.println(myList); // [1]
 
 ---
 
-## 六、🚀 完整实践：把两种情况放在一起运行
+## 六、🚫 为什么 `list = null` 后，外面还能继续 `add`
 
-### 6.1 前置准备
+### 6.1 `null` 改的是形参自己的引用值
 
-安装任意常用版本的 JDK 即可。示例不需要第三方依赖。
-
-### 6.2 完整代码
-
-将下面代码保存为 `ArrayListReferenceDemo.java`：
+第三道题的方法是：
 
 ```java
-import java.util.ArrayList;
-import java.util.List;
-
-public class ArrayListReferenceDemo {
-
-    public static void main(String[] args) {
-        // ---------- 情况一：修改同一个对象 ----------
-        List<String> firstList = new ArrayList<>();
-        firstList.add("1");
-
-        // 调用方法时，把 firstList 中保存的引用值复制给参数 list。
-        addElement(firstList);
-
-        // addElement 修改的是 firstList 指向的对象，所以这里能看到 "2"。
-        System.out.println("修改对象后：" + firstList);
-
-        // ---------- 情况二：给参数重新赋值 ----------
-        List<String> secondList = new ArrayList<>();
-        secondList.add("1");
-
-        // replaceList 只能给它自己的参数副本重新赋值。
-        replaceList(secondList);
-
-        // secondList 的指向没有变化，所以这里仍然只有 "1"。
-        System.out.println("重新赋值后：" + secondList);
-    }
-
-    private static void addElement(List<String> list) {
-        // list 与调用方变量暂时指向同一个集合对象。
-        // add 修改的是这个共同对象中的内容。
-        list.add("2");
-    }
-
-    private static void replaceList(List<String> list) {
-        // new ArrayList 创建一个新对象。
-        // 重新赋值只改变当前方法中 list 这个参数副本的指向。
-        list = new ArrayList<>();
-
-        // 此时修改的是新集合，不是调用方原来的集合。
-        list.add("2");
-    }
+private static void test(List<String> list) {
+    list = null;
 }
 ```
 
-### 6.3 运行与验证
+刚进入方法时，`main.list` 和 `test.list` 都指向箱子 A。执行 `list = null` 后，只是把 `test.list` 这张“门牌号”清空：
 
-```bash
-javac -encoding UTF-8 ArrayListReferenceDemo.java
-java ArrayListReferenceDemo
+```mermaid
+flowchart LR
+    A[main.list] -->|仍然保存地址 A| C[箱子 A<br/>元素：1]
+    B[test.list] -->|改成| D[null]
 ```
 
-预期输出：
+`main.list` 没有变，仍然能找到原集合，所以方法返回后执行：
+
+```java
+list.add("2");
+```
+
+不会出现空指针异常，最终打印 `[1, 2]`。
+
+### 6.2 哪些写法才会出现空指针异常
+
+如果在 `test` 方法里把形参设为 `null` 后，马上通过它调用方法，就会出现 `NullPointerException`：
+
+```java
+private static void test(List<String> list) {
+    list = null;
+    list.add("2"); // NullPointerException
+}
+```
+
+如果直接把 `main` 方法自己的引用设为 `null`，下一次调用 `add` 同样会报错：
+
+```java
+list = null;
+list.add("2"); // NullPointerException
+```
+
+> [!warning] `list = null` 不等于清空集合
+> `list = null` 是让引用不再指向对象；`list.clear()` 才是清空这个引用所指向集合中的元素。后者修改了共享对象，所以调用方能够看到。
+
+---
+
+## 七、🚀 完整实践：运行三道面试原题
+
+### 7.1 前置准备
+
+安装任意常用版本的 JDK 即可。示例不需要第三方依赖。
+
+### 7.2 三道题的答案
+
+| 题目 | `test` 方法里的操作 | 最终输出 |
+| --- | --- | --- |
+| 第一题 | `list.add("2")` | `[1, 2]` |
+| 第二题 | 重新 `new`，再加入 `"3"` | `[1, 2]` |
+| 第三题 | `list = null` | `[1, 2]` |
+
+三道题输出相同，但原因不完全相同：
+
+- 第一题的 `"2"` 是在 `test` 方法中加入原集合的；
+- 第二题中的新集合和 `"3"` 只存在于 `test` 方法里，方法结束后调用方仍使用原集合，再由 `main` 加入 `"2"`；
+- 第三题只把方法里的引用副本设为 `null`，调用方仍能找到原集合，再加入 `"2"`。
+
+### 7.3 第一题原题
+
+```java
+public static void main(String[] args) {
+    List<String> list = new ArrayList<>();
+    list.add("1");
+    test(list);
+    System.out.println(list);
+}
+
+public static void test(List<String> list) {
+    list.add("2");
+}
+```
+
+输出：
 
 ```text
-修改对象后：[1, 2]
-重新赋值后：[1]
+[1, 2]
 ```
 
-### 6.4 如果就是想让外面换成新集合怎么办
+### 7.4 第二题原题
+
+```java
+public static void main(String[] args) {
+    List<String> list = new ArrayList<>();
+    list.add("1");
+    test(list);
+    list.add("2");
+    System.out.println(list);
+}
+
+public static void test(List<String> list) {
+    list = new ArrayList<>();
+    list.add("3");
+}
+```
+
+输出：
+
+```text
+[1, 2]
+```
+
+### 7.5 第三题原题
+
+```java
+public static void main(String[] args) {
+    List<String> list = new ArrayList<>();
+    list.add("1");
+    test(list);
+    list.add("2");
+    System.out.println(list);
+}
+
+public static void test(List<String> list) {
+    list = null;
+}
+```
+
+输出：
+
+```text
+[1, 2]
+```
+
+### 7.6 如果就是想让外面换成新集合怎么办
 
 把新集合返回，再让调用方主动接收：
 
@@ -413,13 +482,13 @@ public static void main(String[] args) {
 
 ---
 
-## 七、🎤 面试时怎么说
+## 八、🎤 面试时怎么说
 
-### 7.1 30 秒回答
+### 8.1 30 秒回答
 
-> Java 只有值传递。基本类型传递的是数值的副本，引用类型传递的是引用值的副本。调用方法后，形参和实参是两个不同变量，但它们一开始指向同一个对象，所以通过形参调用 `add` 会修改同一个集合，调用方能看到。给形参重新 `new` 并赋值，只会改变形参副本的指向，不会改变调用方变量的指向。
+> Java 只有值传递。基本类型传递的是数值的副本，引用类型传递的是引用值的副本。调用方法后，形参和实参是两个不同变量，但它们一开始指向同一个对象，所以通过形参调用 `add` 会修改同一个集合，调用方能看到。给形参重新 `new` 或赋值为 `null`，都只会改变形参副本的指向，不会改变调用方变量的指向。
 
-### 7.2 面试官追问：Java 是引用传递吗
+### 8.2 面试官追问：Java 是引用传递吗
 
 不是。传入对象时，确实传了一个引用值，但传递方式仍然是值传递，因为方法拿到的是这个引用值的**副本**。
 
@@ -427,7 +496,7 @@ public static void main(String[] args) {
 
 > 如果方法给形参重新赋值，却不能改变调用方变量的指向，那就不是真正的引用传递。
 
-### 7.3 面试官追问：`static` 会影响结果吗
+### 8.3 面试官追问：`static` 会影响结果吗
 
 不会。
 
@@ -435,7 +504,7 @@ public static void main(String[] args) {
 
 ---
 
-## 八、📌 快速回顾
+## 九、📌 快速回顾
 
 - 参数：方法用来接收外部数据的局部变量。
 - 参数传递：调用方法时，把实参中的值复制给形参。
@@ -444,6 +513,7 @@ public static void main(String[] args) {
 - Java 只有值传递；对象参数复制的是引用值。
 - `list.add(...)` 修改对象，调用方能看到。
 - `list = new ArrayList<>()` 修改形参自己的指向，调用方看不到。
+- `list = null` 同样只修改形参自己的引用值，调用方仍指向原对象。
 
 最后只背这一句也可以：
 
@@ -451,7 +521,7 @@ public static void main(String[] args) {
 
 相关知识：[[../基础/ArrayList 与 LinkedList 的区别和扩容机制]]。
 
-## 九、🔗 官方资料
+## 十、🔗 官方资料
 
 - [Oracle Java Tutorial：Passing Information to a Method or a Constructor](https://docs.oracle.com/javase/tutorial/java/javaOO/arguments.html)
 - [Java Language Specification：Types, Values, and Variables](https://docs.oracle.com/javase/specs/jls/se26/html/jls-4.html)

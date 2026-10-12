@@ -1,0 +1,484 @@
+---
+publish: true
+date: 2026-10-12
+---
+
+## 一、💡 一句话理解
+
+> [!tip] 核心结论
+> `final` 表示“确定之后不允许再改变”：修饰变量时不能再次赋值，修饰方法时不能被子类重写，修饰类时不能被继承。
+
+面试时先回答这一句，再说明：`final` 引用不能改变指向，但它指向的对象仍然可能发生变化。
+
+## 二、🧭 理论：它是什么
+
+### 2.1 final 可以修饰什么
+
+`final` 最常用于变量、方法和类：
+
+```java
+final int age = 18;          // final 变量：只能赋值一次
+
+class Parent {
+    final void show() {      // final 方法：不能被子类重写
+    }
+}
+
+final class User {           // final 类：不能被继承
+}
+```
+
+| 修饰对象 | 限制的变化 | 仍然允许什么 |
+| --- | --- | --- |
+| 变量 | 不能再次赋值 | 引用指向的可变对象仍可修改内容 |
+| 方法 | 不能被子类重写或隐藏 | 可以被调用，也可以重载 |
+| 类 | 不能有子类 | 可以创建对象、实现接口 |
+
+### 2.2 final 和 static 有什么区别
+
+`final` 与 [[static]] 解决的是两个不同问题：
+
+| 关键字 | 核心含义 | 回答的问题 |
+| --- | --- | --- |
+| `final` | 限制后续变化 | 还能不能重新赋值、重写或继承 |
+| `static` | 成员属于类 | 成员属于类还是属于对象 |
+| `static final` | 类共享，并且只能赋值一次 | 是否全类共享且引用或值保持不变 |
+
+```java
+class Config {
+    // 属于 Config 类，并且不能再次赋值。
+    static final int MAX_RETRY_TIMES = 3;
+
+    // 每个 Config 对象各有一份，但每份都只能赋值一次。
+    final String environment;
+
+    Config(String environment) {
+        this.environment = environment;
+    }
+}
+```
+
+## 三、⚙️ 理论：面试常问什么
+
+### 3.1 final 变量真的完全不能赋值吗
+
+更准确的说法是：`final` 变量**只能成功赋值一次**。
+
+声明时没有初始化的 `final` 变量称为 **blank final（空白 final）**。它可以稍后赋值，但编译器必须能够确定它只被赋值一次。
+
+```java
+class User {
+    final String id;
+
+    User(String id) {
+        // id 在声明时没有初始化，可以在构造方法中完成唯一一次赋值。
+        this.id = id;
+    }
+}
+```
+
+局部变量也可以先声明、后赋值：
+
+```java
+final int result;
+
+if (System.currentTimeMillis() > 0) {
+    result = 1;
+} else {
+    result = -1;
+}
+
+// 两条分支只会执行一条，因此 result 最终只被赋值一次。
+System.out.println(result);
+```
+
+这种检查叫**明确赋值（definite assignment）**：编译器会根据控制流程判断变量在使用前是否一定有值，以及赋值前是否确定尚未赋值。
+
+### 3.2 final 修饰基本类型和引用类型有什么区别
+
+`final` 限制的是变量中保存的值不能替换。
+
+对于基本类型，变量直接保存数据，因此数值不能再改变：
+
+```java
+final int score = 100;
+
+// 编译错误：不能再次赋值。
+// score = 90;
+```
+
+对于引用类型，变量保存的是对象引用，因此不能让它重新指向另一个对象，但原对象的内容仍可能改变：
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+final List<String> names = new ArrayList<>();
+
+// 可以修改原 List 内部的数据。
+names.add("小明");
+
+// 编译错误：不能让 names 指向另一个 List。
+// names = new ArrayList<>();
+```
+
+> [!warning] final 引用不等于不可变对象
+> `final` 锁定的是引用，不会自动锁定对象内部状态。对象能否改变，由对象自身的设计决定。
+
+### 3.3 final 成员变量可以在哪里初始化
+
+实例 `final` 字段常见的初始化位置有两个：
+
+1. 声明字段时直接赋值；
+2. 在每个构造方法中完成赋值。
+
+```java
+class Order {
+    // 声明时直接初始化。
+    final String type = "普通订单";
+
+    // 由构造方法根据参数初始化。
+    final long orderId;
+
+    Order(long orderId) {
+        this.orderId = orderId;
+    }
+}
+```
+
+如果某条构造路径没有完成初始化，或者可能重复赋值，编译器就会报错。
+
+`static final` 字段则可以在声明时或静态代码块中完成初始化：
+
+```java
+class Config {
+    static final int PORT;
+
+    static {
+        // 类初始化时完成唯一一次赋值。
+        PORT = 8080;
+    }
+}
+```
+
+### 3.4 final 方法可以被重载吗
+
+可以。`final` 禁止的是子类**重写（override）**或隐藏该方法，不禁止在同一个类中使用不同参数列表进行**重载（overload）**。
+
+```java
+class Printer {
+    final void print(String text) {
+        System.out.println(text);
+    }
+
+    // 方法名相同、参数列表不同，这是重载，不是重写。
+    final void print(int number) {
+        System.out.println(number);
+    }
+}
+```
+
+子类仍然可以继承并调用父类的 `final` 方法，只是不能提供一个同签名的新实现。
+
+### 3.5 final 类有什么特点
+
+`final` 类不能被继承，所以它的方法不会被子类重写。
+
+```java
+final class Token {
+}
+
+// 编译错误：不能继承 final 类。
+// class SpecialToken extends Token {
+// }
+```
+
+`final` 类并不表示对象一定不可变。类中的普通字段仍然可以变化：
+
+```java
+final class Counter {
+    int value;
+
+    void increment() {
+        value++;
+    }
+}
+```
+
+另外，`final` 类不能同时声明为 `abstract`：`abstract` 希望子类补全实现，而 `final` 又禁止产生子类，两者互相矛盾。
+
+### 3.6 final 变量一定是常量吗
+
+不一定。Java 语言规范中的 **constant variable（常量变量）** 条件更严格：
+
+1. 必须是 `final` 变量；
+2. 类型必须是基本类型或 `String`；
+3. 必须使用常量表达式初始化。
+
+```java
+// 是编译期常量。
+static final int MAX_SIZE = 100;
+static final String APP_NAME = "Demo";
+
+// 不是编译期常量：初始化表达式需要在运行时调用方法。
+static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+
+// 不是 Java 语言规范所说的常量变量：类型不是基本类型或 String。
+static final Integer BOXED_SIZE = 100;
+```
+
+因此，日常代码里常把 `static final` 字段统称为“常量”，但面试追问编译期常量时，需要使用上面的严格定义。
+
+### 3.7 final 能保证对象不可变吗
+
+不能。设计不可变对象通常还需要：
+
+- 类不允许被随意继承；
+- 字段不在构造完成后重新赋值；
+- 不提供修改内部状态的方法；
+- 对可变对象进行防御性复制，避免内部数据被外部引用修改。
+
+下面的类虽然字段是 `final`，但仍然不是不可变对象：
+
+```java
+import java.util.List;
+
+final class Team {
+    final List<String> members;
+
+    Team(List<String> members) {
+        // 直接保存外部传入的可变 List，外部仍然可以修改它。
+        this.members = members;
+    }
+}
+```
+
+可以使用不可修改副本改进：
+
+```java
+import java.util.List;
+
+final class Team {
+    private final List<String> members;
+
+    Team(List<String> members) {
+        // 创建不可修改副本，不再与调用者共享原 List。
+        this.members = List.copyOf(members);
+    }
+
+    List<String> getMembers() {
+        // List.copyOf 返回的对象不可通过 add、remove 等方式修改。
+        return members;
+    }
+}
+```
+
+### 3.8 final 能保证线程安全吗
+
+不能简单回答“能”。
+
+Java 内存模型为正确构造的 `final` 字段提供了特殊的可见性保证：如果对象没有在构造完成前泄漏，其他线程看到该对象时，可以看到构造方法为 `final` 字段写入的正确值。
+
+但 `final` 不提供通用的原子性和互斥，也不会让可变对象自动变得线程安全：
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+class SharedData {
+    // list 引用不会改变，但 ArrayList 本身仍然不是线程安全的。
+    final List<String> list = new ArrayList<>();
+}
+```
+
+因此要区分两件事：
+
+- `final` 字段的构造后可见性；
+- 对象后续发生并发读写时的线程安全。
+
+后者仍可能需要不可变对象、锁、原子类或线程安全集合。
+
+### 3.9 final、finally 和 finalize 有什么区别
+
+三者名字相似，但没有直接关系：
+
+| 名称 | 类型 | 主要用途 |
+| --- | --- | --- |
+| `final` | 关键字 | 限制变量再次赋值、方法重写和类继承 |
+| `finally` | 异常处理语法 | 在 `try` 执行结束后运行清理逻辑 |
+| `finalize()` | `Object` 的旧方法 | 曾用于对象回收前处理，现已废弃，不应依赖 |
+
+资源释放优先使用 `try-with-resources`，不要依赖 `finalize()`。
+
+## 四、🚀 实践：把面试题跑一遍
+
+### 4.1 前置准备
+
+只需要 JDK 17 或更高版本，不需要第三方依赖：
+
+```bash
+java -version
+javac -version
+```
+
+### 4.2 这个例子验证什么
+
+下面的完整程序验证五个面试高频问题：
+
+1. `final` 基本类型只能赋值一次；
+2. `final` 引用不能改变指向，但对象内容可以改变；
+3. 空白 `final` 字段可以在构造方法中初始化；
+4. `final` 方法可以重载，也可以由子类继承调用；
+5. `final` 类可以正常创建对象，只是不能被继承。
+
+### 4.3 完整实践：FinalInterviewDemo.java
+
+创建 `FinalInterviewDemo.java`：
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class FinalInterviewDemo {
+
+    public static void main(String[] args) {
+        // final 基本类型变量完成赋值后，值不能再次改变。
+        final int maxRetryTimes = 3;
+        System.out.println("最大重试次数：" + maxRetryTimes);
+
+        // final 只锁定 names 保存的引用，不会冻结 ArrayList 对象。
+        final List<String> names = new ArrayList<>();
+        names.add("小明");
+        names.add("小红");
+        System.out.println("名单：" + names);
+
+        // 空白 final 字段 id 由构造方法完成唯一一次赋值。
+        User user = new User(1001L);
+        System.out.println("用户编号：" + user.id);
+
+        // Child 继承了父类的 final 方法，可以正常调用。
+        Child child = new Child();
+        child.print("继承的 final 方法");
+
+        // final 方法仍然可以重载。
+        child.print(100);
+
+        // final 类可以正常实例化和使用。
+        Token token = new Token("abc123");
+        System.out.println("令牌：" + token.value);
+
+        // 以下代码均无法通过编译，因此保留为注释：
+        // maxRetryTimes = 5;             // final 基本类型不能再次赋值
+        // names = new ArrayList<>();      // final 引用不能指向新对象
+    }
+
+    static class User {
+        // 声明时暂不赋值，属于空白 final 字段。
+        final long id;
+
+        User(long id) {
+            // 每个 User 对象的 id 都在构造时完成唯一一次赋值。
+            this.id = id;
+        }
+    }
+
+    static class Parent {
+        final void print(String text) {
+            System.out.println(text);
+        }
+
+        // 参数列表不同，因此这是重载。
+        final void print(int number) {
+            System.out.println("重载结果：" + number);
+        }
+    }
+
+    static class Child extends Parent {
+        // 如果声明下面的方法，会因重写 final 方法而编译失败：
+        // void print(String text) {
+        // }
+    }
+
+    static final class Token {
+        final String value;
+
+        Token(String value) {
+            this.value = value;
+        }
+    }
+
+    // final 类不能被继承，下面的声明无法通过编译：
+    // static class SpecialToken extends Token {
+    // }
+}
+```
+
+编译并运行：
+
+```bash
+javac FinalInterviewDemo.java
+java FinalInterviewDemo
+```
+
+预期输出：
+
+```text
+最大重试次数：3
+名单：[小明, 小红]
+用户编号：1001
+继承的 final 方法
+重载结果：100
+令牌：abc123
+```
+
+结果说明：
+
+- `maxRetryTimes` 赋值后不能改变；
+- `names` 始终指向同一个列表，但列表中可以新增元素；
+- `User.id` 在构造方法中完成唯一一次赋值；
+- 子类可以调用继承的 `final` 方法，方法也仍然可以重载；
+- `Token` 可以实例化，但不能被继承。
+
+### 4.4 高频报错：final 字段没有完成初始化
+
+```java
+class User {
+    final String id;
+
+    User() {
+        // 编译错误：构造方法结束前没有为 id 赋值。
+    }
+}
+```
+
+修复方式是在声明处赋值，或者保证每一个构造方法都为该字段赋值一次：
+
+```java
+class User {
+    final String id;
+
+    User(String id) {
+        this.id = id;
+    }
+}
+```
+
+## 五、📌 总结
+
+- `final` 变量只能赋值一次，而不是“声明后绝对不能赋值”。
+- `final` 引用不能改变指向，但对象内部状态仍然可能改变。
+- `final` 方法不能被重写或隐藏，但可以被继承、调用和重载。
+- `final` 类不能被继承，但不一定是不可变类。
+- `static final` 不一定是编译期常量，需同时满足类型和常量表达式条件。
+- `final` 字段有特殊的构造后可见性语义，但 `final` 不等于线程安全。
+
+面试记忆句：**变量只能赋一次，方法不能被重写，类不能被继承；引用不能换对象，对象内容仍可变。**
+
+## 六、📚 官方资料
+
+本文依据 Java SE 25 语言规范整理，示例可在 JDK 17 或更高版本运行：
+
+- [Java Language Specification 25：final Variables](https://docs.oracle.com/javase/specs/jls/se25/html/jls-4.html#jls-4.12.4)
+- [Java Language Specification 25：final Classes](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.1.1.2)
+- [Java Language Specification 25：final Methods](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.3.3)
+- [Java Language Specification 25：Semantics of final Fields](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)
