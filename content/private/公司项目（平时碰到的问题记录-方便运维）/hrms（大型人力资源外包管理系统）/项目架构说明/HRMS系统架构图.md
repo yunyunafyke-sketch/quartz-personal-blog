@@ -6,7 +6,7 @@ publish: true
 
 ![HRMS 系统主架构图](image/hrms-system-architecture.webp)
 
-[打开交互版架构图](../../../archify/hrms-system-architecture.html)
+[打开交互版架构图](../../../../archify/hrms-system-architecture.html)
 
 ## 一、💡 一句话理解
 

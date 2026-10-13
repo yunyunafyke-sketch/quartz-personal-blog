@@ -124,64 +124,166 @@ myList（门牌号） ─────> ArrayList 对象（箱子 A）
 
 ### 2.4 什么是值传递
 
-值传递的意思不是“只能传普通数字”，而是：
+> [!tip] 先说人话
+> 值传递就是：**给方法一份复印件，不把原件交给它。**
 
-> 调用方法时，把变量中保存的值**复制一份**，交给方法参数。
+这里的“值”，就是变量盒子里面当前装着的内容。
 
-先用 `int` 看一个完整例子。`changeAge` 不是 Java 自带的方法，它就在同一个类中，由我们自己定义：
+```text
+变量 age
+┌─────────┐
+│   18    │  ← 18 就是 age 当前保存的值
+└─────────┘
+```
+
+下面分四步看。为了避免两个变量都叫 `age`，方法里的参数故意叫 `copiedAge`。
+
+#### 2.4.1 第一步：先定义一个方法
+
+```java
+// 这是我们自己定义的方法，不是 Java 自带的方法。
+// copiedAge 是这个方法自己的参数变量。
+private static void changeAge(int copiedAge) {
+    copiedAge = 100;
+}
+```
+
+这段代码只是在告诉 Java：
+
+> 以后有人调用 `changeAge` 时，请接收一个整数，把它放进参数 `copiedAge`。
+
+现在还没有调用方法，也没有任何数字被传进去。
+
+#### 2.4.2 第二步：main 创建自己的变量
+
+```java
+int age = 18;
+```
+
+此时只有一个变量：
+
+```text
+main 方法的 age
+┌─────────┐
+│   18    │
+└─────────┘
+```
+
+#### 2.4.3 第三步：调用方法
+
+```java
+changeAge(age);
+```
+
+这行代码可以拆成两部分看：
+
+| 部分 | 意思 |
+| --- | --- |
+| `changeAge` | 找到我们前面定义的 `changeAge` 方法 |
+| `(age)` | 把 `age` 当前保存的值传给这个方法 |
+
+执行这一行的一瞬间，Java 不会把 `main` 的 `age` 原件交出去，而是做一次复制：
+
+```text
+main.age                         changeAge.copiedAge
+┌─────────┐       复制 18       ┌─────────┐
+│   18    │  ────────────────>  │   18    │
+└─────────┘                     └─────────┘
+ 原来的变量                       新创建的参数变量
+```
+
+现在有两个互相独立的变量。它们刚开始都装着 `18`，但不是同一个盒子。
+
+这一步就是**值传递**：把值 `18` 复制一份，放进参数 `copiedAge`。
+
+#### 2.4.4 第四步：方法修改自己的参数
+
+进入方法后执行：
+
+```java
+copiedAge = 100;
+```
+
+变化如下：
+
+```text
+main.age                         changeAge.copiedAge
+┌─────────┐                     ┌─────────┐
+│   18    │                     │   100   │
+└─────────┘                     └─────────┘
+ 没有变化                         只改了复印件
+```
+
+所以方法结束后，`main` 中的 `age` 仍然是 `18`。
+
+#### 2.4.5 把完整代码连起来
 
 ```java
 public class AgeDemo {
 
-    // ① 定义 changeAge 方法。
-    // 它接收一个 int，方法内部把自己的 age 改成 100。
-    private static void changeAge(int age) {
-        age = 100;
-        System.out.println("方法里面的 age：" + age); // 100
+    // ① 先定义方法：copiedAge 是方法自己的变量。
+    private static void changeAge(int copiedAge) {
+        // ④ 这里只会修改 copiedAge，不会修改 main 中的 age。
+        copiedAge = 100;
+        System.out.println("方法里面：" + copiedAge); // 100
     }
 
     public static void main(String[] args) {
-        // ② 创建 main 方法自己的变量 age，值是 18。
+        // ② main 创建自己的变量 age。
         int age = 18;
 
-        // ③ 调用上面定义的 changeAge 方法。
-        // 执行这一行时，Java 把数字 18 复制一份，交给 changeAge 的参数 age。
+        // ③ 调用方法：把数值 18 复制给参数 copiedAge。
         changeAge(age);
 
-        // ④ changeAge 改的是它自己的副本，不是 main 中的 age。
-        System.out.println("main 里面的 age：" + age); // 18
+        // ⑤ main 自己的 age 没有被修改。
+        System.out.println("main 里面：" + age); // 18
     }
 }
 ```
 
-这段程序有两个都叫 `age` 的变量：
+程序执行顺序是：
+
+```mermaid
+flowchart TD
+    A[main 创建 age = 18] --> B[调用 changeAge age]
+    B --> C[复制数值 18 给 copiedAge]
+    C --> D[方法把 copiedAge 改成 100]
+    D --> E[方法结束，copiedAge 消失]
+    E --> F[main 的 age 仍然是 18]
+```
+
+#### 2.4.6 换成 ArrayList，规则仍然一样
+
+Java 始终复制“变量盒子里保存的值”：
+
+| 变量类型 | 盒子里保存的值 | 调用方法时复制什么 |
+| --- | --- | --- |
+| `int age` | 数字 `18` | 复制数字 `18` |
+| `List<String> myList` | 找到集合对象的引用值 | 复制引用值 |
+
+所以传入 `ArrayList` 时，不是复制整个集合。假设 `myList` 保存的是“箱子 A 的门牌号”，Java 复制的是这张门牌号：
 
 ```text
-main.age = 18
-    │
-    │ 调用 changeAge(age)，复制数字 18
-    ▼
-changeAge.age = 18  →  在方法内改成 100
-
-方法结束后：main.age 仍然是 18
+main.myList                      change.list
+┌─────────────┐   复制引用值     ┌─────────────┐
+│ 箱子 A 地址   │ ──────────────>│ 箱子 A 地址 │
+└─────────────┘                └─────────────┘
+       │                               │
+       └───────────┬───────────────────┘
+                   ▼
+             同一个 ArrayList 对象
 ```
 
-它们名字相同，但属于不同的方法，就像两个房间里各有一个同名的盒子，并不是同一个变量。
+这就是为什么：
 
-再看 `ArrayList`。前面已经定义过 `change(List<String> list)` 方法，所以这里调用它：
+- 两个引用变量不是同一个变量；
+- 但它们能找到同一个集合对象；
+- 通过任何一个引用调用 `add`，改到的都是这个共同对象。
 
-```java
-List<String> myList = new ArrayList<>();
-
-// 调用我们自己定义的 change 方法。
-// 这次复制的不是整个集合，而是“箱子 A 的门牌号”。
-change(myList);
-```
-
-> [!warning] 最容易说错的地方
-> 不是把整个 `ArrayList` 复制了一份，也不是把外面的 `myList` 变量直接交给方法。
+> [!warning] 不要把两句话混在一起
+> **传递方式**：Java 始终是值传递，也就是复制变量中的值。
 >
-> Java 复制的只是 `myList` 里面保存的引用值。
+> **复制的内容**：基本类型复制数字等普通值；引用类型复制引用值。
 
 ### 2.5 那“引用传递”是什么
 
