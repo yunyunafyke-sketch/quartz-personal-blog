@@ -898,6 +898,50 @@ WHERE id = 1001
   AND stock > 0;
 ```
 
+先补一个容易被教程跳过的前提：**只要执行 `UPDATE`，就已经是在告诉 InnoDB“我要修改匹配的数据”。** 修改共享数据时，InnoDB 必须防止另一个事务同时修改同一份数据，因此存储引擎会在执行过程中自动申请相应的排他锁，不需要再额外写 `FOR UPDATE`。
+
+```text
+普通 SELECT
+→ 只想查看
+→ 在常用隔离级别下通常使用 MVCC，不主动加排他锁
+
+SELECT ... FOR UPDATE
+→ 虽然是 SELECT，但明确表示“查完准备修改”
+→ 主动申请排他锁
+
+UPDATE
+→ 语句本身已经表示“现在就要修改”
+→ InnoDB 自动申请排他锁
+```
+
+这里的“自动”不是数据库无缘无故猜测，而是 `UPDATE` 语句本身已经表达了写意图。可以把排他锁理解成 InnoDB 执行写操作时自带的交通管制：当前事务修改期间，其他事务不能同时取得冲突的写锁。
+
+如果这条 `UPDATE` 位于显式事务中，锁通常持有到 `COMMIT` 或 `ROLLBACK`；如果使用自动提交，这条语句本身就是一个事务，执行并提交后锁随即释放。
+
+`id` 是主键时，这条 SQL 能通过唯一索引精确定位记录，通常锁住目标索引记录。锁并不总是只覆盖一行；如果条件没有合适索引或使用范围查询，InnoDB 可能扫描并锁定更多索引记录或范围。
+
+这里说的“原子”，是指**检查条件和修改库存都包含在同一条 `UPDATE` 中，由 InnoDB 围绕同一份当前数据完成**：
+
+```text
+判断 stock > 0
+→ 对符合条件的当前记录执行 stock = stock - 1
+→ 成功或失败后返回影响行数
+```
+
+应用没有先把库存读到内存，再隔一段时间把计算结果写回，因此不存在“判断已经通过，但真正更新前被另一个请求抢先修改”的应用层空档。
+
+假设库存只剩 `1`，请求 A 和请求 B 同时执行这条 SQL：
+
+| 时间 | 请求 A | 请求 B |
+| --- | --- | --- |
+| ① | 找到商品记录，获得排他锁 | 也要修改同一记录，只能等待 |
+| ② | 在当前值 `1` 上判断 `stock > 0`，扣成 `0` | 继续等待 |
+| ③ | 提交并释放锁 | 被唤醒 |
+| ④ |  | 基于最新值 `0` 重新判断条件，`stock > 0` 不成立 |
+| ⑤ | 影响行数为 `1` | 影响行数为 `0` |
+
+因此不会出现两个请求都拿着旧值 `1`，各自在应用里算出 `0`，然后都报告扣减成功。这里仍然使用了锁；“原子更新”不是无锁，而是**数据库把条件判断、当前值计算和写入放在同一条不可拆开的更新语句中协调执行**。
+
 执行后检查影响行数：
 
 | 影响行数 | 业务含义 |
@@ -906,6 +950,9 @@ WHERE id = 1001
 | `0` | 商品不存在或库存已经不足 |
 
 InnoDB 会对实际修改的索引记录加排他锁。先拿到锁的请求完成修改；另一个请求等待后会基于最新库存重新判断条件，不会凭旧的 `stock = 1` 再扣一次。
+
+> [!warning] 原子到什么范围
+> 这只能保证这一条库存更新语句自身的并发安全，不代表“扣库存、创建订单、写流水”等多条 SQL 自动成为一个整体。多条操作要么一起成功、要么一起失败，仍然需要放进同一个事务，并正确处理提交与回滚。
 
 #### 6.1.2 复杂判断：先锁定，再处理
 
@@ -1242,6 +1289,7 @@ Next-Key Lock  = 记录锁 + 间隙锁
 - [MySQL 8.4：InnoDB Multi-Versioning](https://dev.mysql.com/doc/refman/8.4/en/innodb-multi-versioning.html)
 - [MySQL 8.4：Consistent Nonlocking Reads](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html)
 - [MySQL 8.4：InnoDB Locking](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html)
+- [MySQL 8.4：Locks Set by Different SQL Statements in InnoDB](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)
 - [MySQL 8.4：Locking Reads](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html)
 - [MySQL 8.4：Phantom Rows](https://dev.mysql.com/doc/refman/8.4/en/innodb-next-key-locking.html)
 - [MySQL 8.4：Deadlocks in InnoDB](https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks.html)
