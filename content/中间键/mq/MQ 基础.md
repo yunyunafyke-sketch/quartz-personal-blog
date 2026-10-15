@@ -658,5 +658,5 @@ public Action consume(Message message, ConsumeContext context) {
 ## 八、📚 相关笔记
 
 - [[MQ 丢消息、重复消费|MQ 丢消息、重复消费]]
-- [[../../公司项目（平时碰到的问题记录-方便运维）/sso（账号中心-单点登录）/项目架构说明/aboss-sso项目架构]]
+- [[../../private/公司项目（平时碰到的问题记录-方便运维）/sso（账号中心-单点登录）/项目架构说明/aboss-sso项目架构]]
 - [[../../private/对外接口文档/账号中心/账户变更对外广播消息文档]]
