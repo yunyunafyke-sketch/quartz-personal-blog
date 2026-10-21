@@ -315,6 +315,7 @@ body .markdown-rendered img.pet-icon {
 // 尺寸切换按钮固定放在流程图右上方，避免遮挡图中内容。
 .mermaid-size-viewer__controls {
   display: flex;
+  gap: 0.4rem;
   justify-content: flex-end;
   margin-bottom: 0.4rem;
 }
@@ -357,6 +358,15 @@ body .markdown-rendered img.pet-icon {
   height: auto;
   max-width: 100%;
   margin: 0 auto;
+}
+
+// 默认同时适应正文宽度和窗口高度，长流程图也能先看到全貌。
+body .mermaid-size-viewer:not(.is-original-size) .mermaid-size-viewer__viewport img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 75dvh !important;
+  object-fit: contain;
 }
 
 // 原始尺寸模式限制可视区域高度，并通过横向、纵向滚动查看完整流程图。
