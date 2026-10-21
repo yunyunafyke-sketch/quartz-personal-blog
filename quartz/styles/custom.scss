@@ -1932,6 +1932,7 @@ body #quartz-body .outline-collapsed > .toc-outline-toggle svg {
   transform: rotate(-90deg);
 }
 
-body #quartz-body .toc-outline-toggle {
-  color: var(--secondary);
+body #quartz-body .toc-outline-toggle,
+body #quartz-body .explorer-content .folder-container > .folder-icon {
+  color: var(--navigation-text, var(--gray)) !important;
 }
