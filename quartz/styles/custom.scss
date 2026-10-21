@@ -1891,3 +1891,21 @@ body #quartz-body .explorer-content .folder-container > .folder-icon {
     margin-top: 0;
   }
 }
+
+// Folder links have their own theme hover fill; paint only the enclosing row.
+body:not([data-slug="index"]) #quartz-body .explorer-content {
+  --nav-item-background-hover: var(--navigation-highlight);
+  --nav-item-background-active: var(--navigation-highlight);
+}
+
+body:not([data-slug="index"])
+  #quartz-body
+  .explorer-content
+  .folder-container
+  :is(a, button, .folder-title) {
+  background: transparent !important;
+}
+
+body:not([data-slug="index"]) #quartz-body .explorer-content .folder-container:has(a.active) {
+  background: var(--navigation-highlight) !important;
+}
