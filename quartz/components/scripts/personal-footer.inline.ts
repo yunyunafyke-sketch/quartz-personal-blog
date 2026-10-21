@@ -3,8 +3,66 @@ const footerModalOpenClass = "personal-footer-modal-open"
 // 每次 Quartz 无刷新切页时，先移除旧文章留下的目录监听器。
 let teardownCurrentToc: (() => void) | undefined
 
+// Keep the flat TOC links compatible with Quartz while adding outline controls.
+function setupTocOutline() {
+  // The layout toolbar owns whole-sidebar folding; keep this label static.
+  document.querySelectorAll<HTMLButtonElement>("button.toc-header").forEach((header) => {
+    const label = document.createElement("div")
+    label.className = "toc-header toc-heading"
+    const heading = header.querySelector("h3")
+    if (heading) label.append(heading)
+    else label.textContent = "目录"
+    header.nextElementSibling?.classList.remove("collapsed")
+    header.closest(".toc")?.classList.remove("collapsed")
+    header.replaceWith(label)
+  })
+  document.querySelectorAll<HTMLElement>(".toc-content").forEach((list) => {
+    const rows = [...list.querySelectorAll<HTMLElement>(":scope > li")]
+    const depth = (row: HTMLElement) =>
+      Number([...row.classList].find((name) => /^depth-\d+$/.test(name))?.split("-")[1] ?? 0)
+    const update = () => {
+      const collapsed: number[] = []
+      for (const row of rows) {
+        const level = depth(row)
+        while (collapsed.length && collapsed[collapsed.length - 1] >= level) collapsed.pop()
+        row.hidden = collapsed.length > 0
+        if (row.classList.contains("outline-collapsed")) collapsed.push(level)
+      }
+    }
+    rows.forEach((row, index) => {
+      if (row.dataset.outlineReady) return
+      row.dataset.outlineReady = "true"
+      const level = depth(row)
+      row.style.setProperty("--outline-depth", String(level))
+      for (let ancestor = 0; ancestor < level; ancestor++) {
+        const guide = document.createElement("span")
+        guide.className = "toc-outline-guide"
+        guide.style.left = `${ancestor * 0.9 + 0.45}rem`
+        guide.setAttribute("aria-hidden", "true")
+        row.append(guide)
+      }
+      if (!rows[index + 1] || depth(rows[index + 1]) <= level) return
+      const button = document.createElement("button")
+      button.type = "button"
+      button.className = "toc-outline-toggle"
+      button.setAttribute("aria-expanded", "true")
+      const title = row.querySelector("a")?.textContent ?? ""
+      button.setAttribute("aria-label", `折叠 ${title}`)
+      button.addEventListener("click", () => {
+        const collapsed = row.classList.toggle("outline-collapsed")
+        button.setAttribute("aria-expanded", String(!collapsed))
+        button.setAttribute("aria-label", `${collapsed ? "展开" : "折叠"} ${title}`)
+        update()
+      })
+      row.prepend(button)
+    })
+    update()
+  })
+}
+
 function setupCurrentToc() {
   teardownCurrentToc?.()
+  setupTocOutline()
 
   const links = [...document.querySelectorAll<HTMLAnchorElement>(".toc-content > li > a[data-for]")]
   const entries = links
