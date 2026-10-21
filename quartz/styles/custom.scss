@@ -1680,7 +1680,7 @@ body[data-slug="index"] .home-title-match {
 }
 
 // Obsidian-style heading outline: quiet labels, branch guides and fold arrows.
-body #quartz-body .toc-content.overflow > li {
+body #quartz-body .toc-content.overflow > li[class*="depth-"] {
   position: relative;
   margin: 0;
   padding: 0 !important;
@@ -1692,10 +1692,10 @@ body #quartz-body .toc-content.overflow > li[hidden] {
 }
 
 body #quartz-body .toc-content.overflow > li > a {
-  padding: 0.24rem 0.4rem 0.24rem calc(var(--outline-depth, 0) * 0.9rem + 1.35rem);
+  padding: 0.18rem 0.35rem 0.18rem calc(var(--outline-depth, 0) * 0.75rem + 0.95rem) !important;
   font-size: 0.8rem;
   font-weight: 400;
-  line-height: 1.65;
+  line-height: 1.6;
   color: var(--toc-link-color);
 }
 
@@ -1717,12 +1717,12 @@ body #quartz-body .explorer-content .folder-outer > ul {
 
 body #quartz-body .toc-outline-toggle {
   position: absolute;
-  top: 0.3rem;
-  left: calc(var(--outline-depth, 0) * 0.9rem);
+  top: 0.25rem;
+  left: calc(var(--outline-depth, 0) * 0.75rem);
   display: grid;
   place-items: center;
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 0.85rem;
+  height: 1.1rem;
   padding: 0;
   border: 0;
   border-radius: 0.2rem;
@@ -1788,4 +1788,106 @@ body #quartz-body .explorer-content .folder-container > div > :is(button, a) {
 body #quartz-body .explorer-content .folder-container:hover,
 body #quartz-body .explorer-content .folder-container:focus-within {
   background: color-mix(in srgb, var(--gray) 8%, transparent);
+}
+
+// Navigation and article share the same page background in both themes.
+html[saved-theme] body:not([data-slug="index"]) .page > div#quartz-body div.sidebar.left,
+html[saved-theme] body:not([data-slug="index"]) .page > div#quartz-body div.sidebar.right {
+  background: var(--background-primary, var(--light)) !important;
+}
+
+// The theme paints the explorer content separately from its sidebar.
+html[saved-theme]
+  body:not([data-slug="index"])
+  #quartz-body
+  .sidebar.left
+  .explorer
+  .explorer-content {
+  background: transparent !important;
+}
+
+// Shared navigation colors for the file tree and heading outline.
+body:not([data-slug="index"]) #quartz-body {
+  --navigation-text: color-mix(in srgb, var(--darkgray) 72%, var(--light));
+  --navigation-highlight: color-mix(in srgb, var(--gray) 6%, transparent);
+}
+
+body:not([data-slug="index"]) #quartz-body .explorer-content :is(a, button, .folder-title),
+body:not([data-slug="index"]) #quartz-body .toc-content.overflow > li > a {
+  color: var(--navigation-text) !important;
+  opacity: 1 !important;
+}
+
+body:not([data-slug="index"])
+  #quartz-body
+  .explorer-content
+  ul.explorer-ul
+  li
+  > a:is(.active, :hover, :focus-visible),
+body:not([data-slug="index"])
+  #quartz-body
+  .explorer-content
+  .folder-container:is(:hover, :focus-within),
+body:not([data-slug="index"])
+  #quartz-body
+  .toc-content.overflow
+  > li:is(:hover, :has(> a:focus-visible), :has(> a.toc-current)) {
+  background: var(--navigation-highlight) !important;
+}
+
+// Match the file tree rhythm and indentation to the heading outline.
+body #quartz-body .explorer-content .folder-outer > ul {
+  margin-left: 0.35rem;
+  padding-left: calc(0.75rem - 1px);
+}
+
+body #quartz-body .explorer-content .folder-container {
+  padding: 0.18rem 0;
+}
+
+body #quartz-body .explorer-content .folder-container > .folder-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.1rem;
+}
+
+body #quartz-body .explorer-content .folder-container :is(a, button, .folder-title),
+body #quartz-body .explorer-content ul.explorer-ul li > a {
+  font-size: 0.8rem !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+body #quartz-body .explorer-content ul.explorer-ul li > a {
+  padding-top: 0.18rem;
+  padding-bottom: 0.18rem;
+}
+
+// Keep navigation labels and chevrons the same size on both sides.
+body #quartz-body .sidebar .explorer-content :is(a, button, .folder-title),
+body #quartz-body .sidebar .toc-content.overflow > li > a {
+  font-size: 0.8rem !important;
+  line-height: 1.6 !important;
+}
+
+body #quartz-body .explorer-content .folder-container > .folder-icon {
+  box-sizing: border-box;
+  width: 0.85rem !important;
+  height: 0.85rem !important;
+  padding: 0.15rem;
+  stroke-width: 1.8;
+}
+
+// The sidebar contents are self-explanatory; omit their desktop headings.
+@media all and (min-width: 801px) {
+  body #quartz-body .sidebar .explorer .desktop-explorer,
+  body #quartz-body .sidebar .toc > .toc-heading,
+  body #quartz-body .sidebar .toc > .toc-header {
+    display: none !important;
+  }
+
+  body #quartz-body .sidebar .toc-content.overflow,
+  body #quartz-body .sidebar .explorer-content {
+    margin-top: 0;
+  }
 }

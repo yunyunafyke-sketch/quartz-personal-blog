@@ -37,7 +37,7 @@ function setupTocOutline() {
       for (let ancestor = 0; ancestor < level; ancestor++) {
         const guide = document.createElement("span")
         guide.className = "toc-outline-guide"
-        guide.style.left = `${ancestor * 0.9 + 0.45}rem`
+        guide.style.left = `${ancestor * 0.75 + 0.35}rem`
         guide.setAttribute("aria-hidden", "true")
         row.append(guide)
       }
