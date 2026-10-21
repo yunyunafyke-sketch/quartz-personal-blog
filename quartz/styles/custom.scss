@@ -1909,3 +1909,29 @@ body:not([data-slug="index"])
 body:not([data-slug="index"]) #quartz-body .explorer-content .folder-container:has(a.active) {
   background: var(--navigation-highlight) !important;
 }
+
+// Use the explorer's SVG geometry and stroke for the heading chevrons too.
+body #quartz-body .toc-outline-toggle::after {
+  content: none;
+}
+
+body #quartz-body .toc-outline-toggle svg {
+  box-sizing: border-box;
+  width: 0.85rem;
+  height: 0.85rem;
+  padding: 0.15rem;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body #quartz-body .outline-collapsed > .toc-outline-toggle svg {
+  transform: rotate(-90deg);
+}
+
+body #quartz-body .toc-outline-toggle {
+  color: var(--secondary);
+}

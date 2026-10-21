@@ -45,6 +45,13 @@ function setupTocOutline() {
       const button = document.createElement("button")
       button.type = "button"
       button.className = "toc-outline-toggle"
+      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+      arrow.setAttribute("viewBox", "5 8 14 8")
+      arrow.setAttribute("aria-hidden", "true")
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "polyline")
+      line.setAttribute("points", "6 9 12 15 18 9")
+      arrow.append(line)
+      button.append(arrow)
       button.setAttribute("aria-expanded", "true")
       const title = row.querySelector("a")?.textContent ?? ""
       button.setAttribute("aria-label", `折叠 ${title}`)
