@@ -1936,3 +1936,13 @@ body #quartz-body .toc-outline-toggle,
 body #quartz-body .explorer-content .folder-container > .folder-icon {
   color: var(--navigation-text, var(--gray)) !important;
 }
+
+// Slightly smaller reading text, matching the supplied note preview.
+body:not([data-slug="index"]) #quartz-body > .center > article {
+  --font-text-size: 15px;
+  font-size: 15px;
+}
+
+body:not([data-slug="index"]) #quartz-body > .center > article :is(p, li, td, th, .callout-title) {
+  font-size: 15px !important;
+}
