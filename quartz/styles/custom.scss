@@ -399,9 +399,15 @@ body .mermaid-size-viewer:not(.is-original-size) .mermaid-size-viewer__viewport 
   // Let the TOC occupy the remaining sidebar height without clipping its list.
   flex: 1 1 0 !important;
   min-height: 0;
+  min-width: 0;
+  overflow-x: hidden !important;
 }
 
 .toc-content.overflow {
+  // Include padding in the list width so it cannot overflow the TOC wrapper.
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
   flex: 1 1 auto;
   min-height: 0;
   max-height: none !important;
