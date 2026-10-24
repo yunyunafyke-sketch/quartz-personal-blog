@@ -405,6 +405,7 @@ body .mermaid-size-viewer:not(.is-original-size) .mermaid-size-viewer__viewport 
   flex: 1 1 auto;
   min-height: 0;
   max-height: none !important;
+  overflow-x: hidden !important;
   overflow-y: scroll !important;
   scrollbar-color: var(--gray) transparent;
   scrollbar-gutter: stable;
