@@ -30,7 +30,8 @@ export function buildDirectoryTree(allFiles: QuartzPluginData[]) {
       !category ||
       category === "tags" ||
       pageSlug === "index" ||
-      pageSlug.endsWith("/index") ||
+      // Keep authored folder landing pages searchable; skip empty generated indexes.
+      (pageSlug.endsWith("/index") && !page.text?.trim()) ||
       page.unlisted === true ||
       !page.frontmatter?.title
     ) {
