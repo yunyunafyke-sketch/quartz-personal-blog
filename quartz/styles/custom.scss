@@ -62,13 +62,21 @@ body:not([data-slug="index"])
   height: 24px;
 }
 
-// 悬停和大图模式提供视觉反馈，键盘操作时显示焦点轮廓。
-.image-size-toggle:hover,
+// 选中效果只跟随实际大图状态，避免触屏点击后残留悬停高亮。
 .image-size-toggle[aria-pressed="true"] {
   color: var(--secondary);
   background: var(--highlight);
 }
 
+// 仅支持精确指针和悬停的设备启用鼠标反馈，手机关闭后立即恢复默认颜色。
+@media (hover: hover) and (pointer: fine) {
+  .image-size-toggle:hover {
+    color: var(--secondary);
+    background: var(--highlight);
+  }
+}
+
+// 键盘操作保留清晰的焦点轮廓。
 .image-size-toggle:focus-visible {
   outline: 2px solid var(--secondary);
   outline-offset: 2px;
