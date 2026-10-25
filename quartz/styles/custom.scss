@@ -2,6 +2,65 @@
 
 // put your custom CSS here!
 
+// 文章图片默认等比居中，最高占视口的 70%；排除首页背景和装饰性宠物图标。
+body:not([data-slug="index"]) article img:not(.pet-icon) {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 70vh;
+  // 支持动态视口的浏览器使用当前可见高度，vh 为旧浏览器提供回退。
+  max-height: 70dvh;
+  margin: 1rem auto;
+  object-fit: contain;
+}
+
+// 大图模式解除高度限制，仍保留正文宽度上限，避免横向溢出。
+body.article-images-original:not([data-slug="index"]) article img:not(.pet-icon) {
+  max-height: none;
+}
+
+// 工具栏中固定按钮占位，避免被搜索框压缩，并与相邻控件垂直居中。
+.image-size-toggle-slot {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+// 沿用主题图标的 24px 尺寸和颜色变量，兼容亮色、暗色主题。
+.image-size-toggle {
+  display: inline-block;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--quartz-icon-color, var(--darkgray));
+  cursor: pointer;
+}
+
+// SVG 填满按钮，消除行内图形基线造成的高度偏差。
+.image-size-toggle svg {
+  position: absolute;
+  inset: 0;
+  width: 24px;
+  height: 24px;
+}
+
+// 悬停和大图模式提供视觉反馈，键盘操作时显示焦点轮廓。
+.image-size-toggle:hover,
+.image-size-toggle[aria-pressed="true"] {
+  color: var(--secondary);
+  background: var(--highlight);
+}
+
+.image-size-toggle:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
 // Desktop notes can be arranged like Obsidian: both sidebars resize by their
 // divider and may be folded away, leaving the article all available space.
 @media all and (min-width: 1200px) {

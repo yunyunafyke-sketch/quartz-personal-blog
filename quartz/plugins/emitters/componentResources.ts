@@ -15,6 +15,9 @@ import clipboardScript from "../../components/scripts/clipboard.inline"
 // Mermaid 流程图原始尺寸切换脚本。
 // @ts-ignore
 import mermaidSizeToggleScript from "../../components/scripts/mermaid-size-toggle.inline"
+// 图片尺寸切换脚本由构建流程作为字符串打包。
+// @ts-ignore
+import imageSizeToggleScript from "../../components/scripts/image-size-toggle.inline"
 import baseStyles from "../../styles/base.scss"
 import customStyles from "../../styles/custom.scss"
 import clipboardStyle from "../../components/styles/clipboard.scss"
@@ -103,6 +106,8 @@ function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentReso
   componentResources.css.push(clipboardStyle)
   // 页面 DOM 就绪后再识别流程图并挂载尺寸切换按钮。
   componentResources.afterDOMLoaded.push(mermaidSizeToggleScript)
+  // DOM 就绪后挂载图片开关，不阻塞页面内容渲染。
+  componentResources.afterDOMLoaded.push(imageSizeToggleScript)
 
   // popovers
   if (cfg.enablePopovers) {
