@@ -61,6 +61,32 @@ body.article-images-original:not([data-slug="index"]) article img:not(.pet-icon)
   outline-offset: 2px;
 }
 
+// 手机端让宽表格在自身容器内横向滚动，避免列被挤窄后逐字换行。
+@media all and ($mobile) {
+  body article .table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  body article .table-container > table {
+    width: max-content;
+    max-width: none;
+    margin: 1rem 0;
+    table-layout: auto;
+  }
+
+  // 短字段保持紧凑，长说明最多约 20 个汉字宽，兼顾阅读和滑动距离。
+  body article .table-container > table :is(th, td) {
+    min-width: 4rem;
+    max-width: 20rem;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 // Desktop notes can be arranged like Obsidian: both sidebars resize by their
 // divider and may be folded away, leaving the article all available space.
 @media all and (min-width: 1200px) {
