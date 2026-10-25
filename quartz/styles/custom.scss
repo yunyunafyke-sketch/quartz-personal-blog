@@ -26,6 +26,19 @@ body.article-images-original:not([data-slug="index"]) article img:not(.pet-icon)
   align-self: center;
 }
 
+// 工具栏图标外层统一使用 Flex 居中，避免手机浏览器的行内基线和行高差异。
+// 同时处理三个按钮，不能只将新图标在桌面端看起来对齐。
+body:not([data-slug="index"])
+  .sidebar.left
+  .flex-component
+  > :is(.image-size-toggle-slot, :has(> .darkmode), :has(> .readermode)) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  line-height: 0;
+}
+
 // 沿用主题图标的 24px 尺寸和颜色变量，兼容亮色、暗色主题。
 .image-size-toggle {
   display: inline-block;
