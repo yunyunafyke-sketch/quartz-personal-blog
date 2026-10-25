@@ -102,6 +102,11 @@ body:not([data-slug="index"])
 
 // Desktop notes can be arranged like Obsidian: both sidebars resize by their
 // divider and may be folded away, leaving the article all available space.
+// 侧栏折叠按钮仅适用于桌面布局；手机和平板隐藏整组控件及其占位。
+#quartz-body .layout-controls {
+  display: none;
+}
+
 @media all and (min-width: 1200px) {
   div#quartz-root.page {
     width: 100%;
@@ -280,6 +285,7 @@ body:not([data-slug="index"])
   }
 
   #quartz-body .layout-controls {
+    display: block;
     position: fixed;
     top: 0;
     left: 0;
