@@ -6,18 +6,9 @@ description: 记录技术、博客搭建与个人项目
 socialDescription: 记录技术、博客搭建与个人项目
 # 钉钉卡片左上角的彩色缩略图。
 socialImage: apple-touch-icon.png
+# 首页首屏文案，在这里修改即可。
+heroTitle: "把想法写下来，\n把问题弄明白。"
+heroDescription: 记录开发实践、工具探索与个人项目。把遇到的问题写下来，让零散的经验慢慢连接，成为下一次出发的起点。
 publish: true
 ---
 
-<div class="home-landing">
-  <picture class="home-wallpaper" aria-hidden="true">
-    <source media="(max-width: 800px)" srcset="/static/images/home-spring-blossoms-mobile.avif" type="image/avif">
-    <source media="(max-width: 800px)" srcset="/static/images/home-spring-blossoms-mobile.webp" type="image/webp">
-    <source srcset="/static/images/home-spring-blossoms.avif" type="image/avif">
-    <img src="/static/images/home-spring-blossoms.webp" alt="" loading="eager" decoding="async" fetchpriority="high">
-  </picture>
-  <span class="home-brand" aria-hidden="true">Afyke Blog</span>
-</div>
-<section class="home-library" aria-label="文章目录">
-  <div class="home-library-list" data-home-library></div>
-</section>

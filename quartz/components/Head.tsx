@@ -58,24 +58,6 @@ export default (() => {
         {coreScript && coreScript.contentType === "external" && (
           <link rel="preload" href={coreScript.src} as="script" />
         )}
-        {fileData.slug === "index" && (
-          <>
-            <link
-              rel="preload"
-              href={joinSegments(baseDir, "static/images/home-spring-blossoms.avif")}
-              as="image"
-              type="image/avif"
-              media="(min-width: 801px)"
-            />
-            <link
-              rel="preload"
-              href={joinSegments(baseDir, "static/images/home-spring-blossoms-mobile.avif")}
-              as="image"
-              type="image/avif"
-              media="(max-width: 800px)"
-            />
-          </>
-        )}
         {cfg.theme.cdnCaching && cfg.theme.fontOrigin === "googleFonts" && (
           <>
             <link rel="preconnect" href="https://fonts.googleapis.com" />
