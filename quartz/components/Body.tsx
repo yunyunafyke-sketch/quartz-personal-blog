@@ -72,6 +72,12 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
           <a href="#home-intro">关于</a>
         </nav>
       </header>
+      <div class="editorial-blog-bar">
+        <a href="#home-intro">Blog</a>
+        <a href="#home-articles">
+          浏览文章 <span aria-hidden="true">›</span>
+        </a>
+      </div>
       <main class="editorial-main">
         <section id="home-intro" class="stripe-stage">
           {/* 彩带外框保持斜向直边，内部通过 SVG 曲线变形制造交错流动感。 */}
@@ -272,7 +278,7 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
                   { id: "ribbon-soft-cyan", duration: "6.5s", values: "12;1;22;4;12" },
                 ].map(({ id, duration, values }) => (
                   <filter id={id} x="-20%" y="-50%" width="140%" height="200%">
-                    <feGaussianBlur stdDeviation="12">
+                    <feGaussianBlur stdDeviation="12" result="soft-color">
                       <animate
                         attributeName="stdDeviation"
                         values={values}
@@ -360,23 +366,17 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
                 开始阅读 <span aria-hidden="true">→</span>
               </a>
             </div>
-            <div class="stripe-visual" aria-label={`已收录 ${pages.length} 篇文章`}>
-              <div class="stripe-type-pattern" aria-hidden="true">
-                BUILD
-                <br />
-                LEARN
-                <br />
-                SHARE
-              </div>
-              <span class="stripe-visual-brand">afyke /</span>
-              <div class="stripe-visual-bottom">
-                <strong>
-                  {pages.length}
-                  <span>篇</span>
-                </strong>
-                <p>在实践中探索，在记录中生长。</p>
-                <span>CODE · NOTES · IDEAS</span>
-              </div>
+            {/* 首屏照片使用压缩后的 WebP，按容器等比裁切，优先加载。 */}
+            <div class="stripe-visual stripe-visual-photo">
+              <img
+                src="./static/images/home-forest.webp"
+                alt="仰望秋日森林，橙色树冠与青蓝色天空交织"
+                width="1400"
+                height="738"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+              />
             </div>
           </div>
         </section>

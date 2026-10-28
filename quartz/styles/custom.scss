@@ -2800,7 +2800,11 @@ body[data-slug="index"] .sidebar.left :is(.search-button, .darkmode) svg {
   color: var(--cover-text) !important;
 }
 body[data-slug="index"] .sidebar.left :is(.search-button, .darkmode) svg,
-body[data-slug="index"] .sidebar.left :is(.search-button, .darkmode) svg :is(path, circle, line, polyline) {
+body[data-slug="index"]
+  .sidebar.left
+  :is(.search-button, .darkmode)
+  svg
+  :is(path, circle, line, polyline) {
   stroke: var(--cover-text) !important;
   stroke-opacity: 1;
   opacity: 1;
@@ -2815,4 +2819,173 @@ body[data-slug="index"] .sidebar.left .search-button svg :is(path, circle) {
   fill: none !important;
   stroke: var(--cover-text) !important;
   stroke-width: 1.25px !important;
+}
+
+// 参考封面：等宽双栏卡片、浅灰蓝背景、淡网格与数字海报。
+body[data-slug="index"] .home-editorial {
+  .stripe-stage {
+    padding-top: 80px;
+    padding-bottom: 105px;
+  }
+  .stripe-card {
+    padding: 16px;
+    border-radius: 9px;
+    grid-template-columns: 1fr 1fr;
+    box-shadow: 0 35px 55px -15px #17223838;
+  }
+  .stripe-copy {
+    padding: 22px 38px 22px 26px;
+  }
+  .stripe-copy h1 {
+    font-size: clamp(30px, 3vw, 40px);
+    line-height: 1.3;
+    letter-spacing: -1px;
+    font-weight: 700;
+  }
+  .stripe-description {
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 440px;
+  }
+  .stripe-visual {
+    min-height: 490px;
+    background: linear-gradient(155deg, #ff9c08, #ff5b20 65%, #fa5b99);
+    border-radius: 4px;
+  }
+  .stripe-type-pattern {
+    top: -50px;
+    left: -18px;
+    font:
+      800 clamp(120px, 14vw, 220px)/0.93 Arial,
+      sans-serif;
+    letter-spacing: -12px;
+    transform: none;
+    color: #ffd35e44;
+  }
+  .stripe-visual-bottom {
+    left: auto;
+    right: 28px;
+    bottom: 32px;
+    text-align: left;
+  }
+  .stripe-visual-bottom strong {
+    font-family: Arial, sans-serif;
+    font-size: 82px;
+  }
+  .stripe-visual-bottom > span {
+    display: none;
+  }
+}
+@media (max-width: 800px) {
+  body[data-slug="index"] .home-editorial {
+    .stripe-stage {
+      padding-top: 24px;
+      padding-bottom: 64px;
+    }
+    .stripe-card {
+      grid-template-columns: 1fr;
+      padding: 12px;
+    }
+    .stripe-copy {
+      padding: 18px 12px 26px;
+    }
+    .stripe-visual {
+      min-height: 320px;
+    }
+    .stripe-description {
+      font-size: 16px;
+    }
+    .stripe-type-pattern {
+      font-size: 160px;
+    }
+  }
+}
+
+// 顶栏与首屏采用同一内容轴线，替换旧头像与胶囊导航。
+body[data-slug="index"] .home-editorial {
+  .editorial-header {
+    box-sizing: border-box;
+    max-width: 1184px;
+    min-height: 78px;
+    margin: 0 auto;
+    padding: 18px 32px;
+    border-bottom: 1px dashed var(--cover-line);
+    gap: 36px;
+  }
+  .editorial-brand {
+    font-size: 27px;
+    color: #142b45;
+    letter-spacing: -1px;
+  }
+  .editorial-brand > .editorial-avatar,
+  .editorial-subtitle {
+    display: none;
+  }
+  .editorial-header nav {
+    position: static;
+    transform: none;
+    margin-right: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    gap: 30px;
+  }
+  .editorial-header nav a {
+    font-size: 14px;
+    color: #142b45;
+    font-weight: 600;
+  }
+  .editorial-blog-bar {
+    box-sizing: border-box;
+    max-width: 1184px;
+    margin: 0 auto;
+    padding: 18px 32px 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .editorial-main {
+    margin-top: 0;
+  }
+}
+:root[saved-theme="dark"] body[data-slug="index"] .home-editorial {
+  .editorial-brand,
+  .editorial-header nav a {
+    color: #e8efff;
+  }
+}
+@media (max-width: 800px) {
+  body[data-slug="index"] .home-editorial {
+    .editorial-header {
+      padding: 20px 22px;
+      padding-right: 130px;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .editorial-header nav {
+      gap: 20px;
+    }
+    .editorial-blog-bar {
+      padding: 16px 22px 0;
+      font-size: 14px;
+    }
+  }
+}
+
+// 首屏照片填满原海报区域，不变形；独立规则避免影响文章图片。
+body[data-slug="index"] .home-editorial .stripe-visual-photo {
+  position: relative;
+  background: #123f47;
+}
+body[data-slug="index"] .home-editorial .stripe-visual-photo > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: cover;
+  object-position: center;
 }
