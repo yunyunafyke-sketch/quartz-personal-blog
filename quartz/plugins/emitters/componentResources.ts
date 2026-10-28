@@ -6,6 +6,9 @@ import { QuartzEmitterPlugin } from "../types"
 import spaRouterScript from "../../components/scripts/spa.inline"
 // @ts-ignore
 import popoverScript from "../../components/scripts/popover.inline"
+// 首页分页作为全局资源加载，Body 不在插件组件注册表中。
+// @ts-ignore
+import homePaginationScript from "../../components/scripts/home-pagination.inline"
 // @ts-ignore
 import homeSearchScript from "../../components/scripts/home-search.inline"
 // @ts-ignore
@@ -100,6 +103,7 @@ function addGlobalPageResources(ctx: BuildCtx, componentResources: ComponentReso
   // The homepage directory search is a global page resource rather than a
   // registered component so it is present in both static builds and dev mode.
   componentResources.afterDOMLoaded.push(homeSearchScript)
+  componentResources.afterDOMLoaded.push(homePaginationScript)
   componentResources.afterDOMLoaded.push(desktopLayoutScript)
   // 使用本地复制脚本，为普通 HTTP 页面提供传统剪贴板降级能力。
   componentResources.afterDOMLoaded.push(clipboardScript)

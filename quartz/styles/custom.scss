@@ -2094,8 +2094,7 @@ body[data-slug="index"] .home-editorial {
     text-decoration: none;
   }
   a:hover {
-    text-decoration: underline;
-    text-underline-offset: 5px;
+    text-decoration: none;
   }
   a:focus-visible {
     outline: 2px solid var(--cover-blue);
@@ -2239,7 +2238,7 @@ body[data-slug="index"] .home-editorial {
 }
 .editorial-row {
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) 18px;
+  grid-template-columns: 110px minmax(0, 1fr);
   gap: 14px;
   align-items: baseline;
   border-top: 1px solid var(--cover-line);
@@ -2353,7 +2352,7 @@ body[data-slug="index"] .sidebar.left .flex-component > *:has(.darkmode) {
     display: none;
   }
   .editorial-row {
-    grid-template-columns: 74px minmax(0, 1fr) 14px;
+    grid-template-columns: 74px minmax(0, 1fr);
     gap: 10px;
   }
 }
@@ -2619,4 +2618,201 @@ body[data-slug="index"] .home-editorial .stripe-copy h1 {
 }
 :root[saved-theme="dark"] body[data-slug="index"] .home-editorial .stripe-copy h1 {
   color: #e8efff;
+}
+
+// 全站禁用链接悬浮下划线，覆盖主题和组件中的同类样式。
+body a:hover,
+body a:hover * {
+  text-decoration: none !important;
+}
+
+// 首页文章区域按参考页统一排版：蓝色轻字重标题、紧凑分类与舒展的文章行距。
+body[data-slug="index"] .home-editorial {
+  .editorial-featured,
+  .editorial-columns {
+    font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    letter-spacing: normal;
+  }
+  .editorial-featured h2,
+  .editorial-columns h2 {
+    color: #2d50c8;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
+  }
+  .editorial-card h3 {
+    color: #345ce3;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.45;
+    margin: 10px 0 0;
+  }
+  .editorial-columns {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 34px;
+    margin-top: 40px;
+  }
+  .editorial-row {
+    padding: 25px 20px;
+    gap: 14px;
+    border-radius: 0;
+    border-top: 1px solid var(--cover-line);
+  }
+  .editorial-row h3 {
+    color: #345ce3;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .editorial-row > span {
+    color: #505d7c;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  .editorial-topics {
+    gap: 8px;
+  }
+  .editorial-topics a {
+    color: #363b45;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 4px 10px 4px 5px;
+    gap: 7px;
+  }
+  .editorial-topics span {
+    order: -1;
+    display: grid;
+    place-items: center;
+    min-width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #cfdbf7;
+    color: #39475e;
+    font-size: 13px;
+    font-weight: 400;
+  }
+}
+:root[saved-theme="dark"] body[data-slug="index"] .home-editorial {
+  .editorial-featured h2,
+  .editorial-columns h2,
+  .editorial-card h3,
+  .editorial-row h3 {
+    color: var(--cover-blue);
+  }
+  .editorial-row > span,
+  .editorial-topics a {
+    color: var(--cover-text);
+  }
+}
+@media (max-width: 800px) {
+  body[data-slug="index"] .home-editorial {
+    .editorial-columns {
+      grid-template-columns: 1fr;
+    }
+    .editorial-row {
+      padding: 20px 0;
+    }
+    .editorial-row h3,
+    .editorial-card h3 {
+      font-size: 18px;
+    }
+  }
+}
+
+// 文章标题右侧的分类标签：浅黄色圆角底、蓝色小字，长标题换行时自然跟随。
+body[data-slug="index"] .home-editorial .editorial-row .editorial-category-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 7px;
+  background: #ffffa3;
+  color: #345ce3;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+// 分页样式：当前页蓝底，其他页浅底；hidden 必须覆盖文章行的 grid 布局。
+body[data-slug="index"] .editorial-row[hidden] {
+  display: none !important;
+}
+.editorial-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 30px;
+  button {
+    border: 0;
+    border-radius: 10px;
+    background: #f5f7fc;
+    color: #252525;
+    font: inherit;
+    font-size: 17px;
+    min-width: 42px;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  button[aria-current="page"] {
+    background: #2d50cd;
+    color: white;
+  }
+  button:disabled {
+    background: transparent;
+    opacity: 0.45;
+    cursor: default;
+  }
+  button:focus-visible {
+    outline: 2px solid var(--cover-blue);
+    outline-offset: 3px;
+  }
+}
+
+// 搜索与主题切换共用图标颜色，保持整组工具按钮的视觉一致。
+body[data-slug="index"] .sidebar.left .search-button {
+  color: var(--cover-text);
+}
+body[data-slug="index"] .sidebar.left .search-button svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--cover-text);
+  opacity: 1;
+}
+body[data-slug="index"] .sidebar.left .search-button svg :is(path, circle, line) {
+  stroke: var(--cover-text) !important;
+  stroke-opacity: 1;
+}
+
+// 首页工具栏的搜索与主题图标共用颜色，避免各组件的默认描边产生色差。
+body[data-slug="index"] .sidebar.left :is(.search-button, .darkmode),
+body[data-slug="index"] .sidebar.left :is(.search-button, .darkmode) svg {
+  color: var(--cover-text) !important;
+}
+body[data-slug="index"] .sidebar.left :is(.search-button, .darkmode) svg,
+body[data-slug="index"] .sidebar.left :is(.search-button, .darkmode) svg :is(path, circle, line, polyline) {
+  stroke: var(--cover-text) !important;
+  stroke-opacity: 1;
+  opacity: 1;
+}
+
+// 主题图标使用填充路径，搜索图标使用描边，分别设置才能真正统一颜色。
+body[data-slug="index"] .sidebar.left .darkmode svg path {
+  fill: var(--cover-text) !important;
+  stroke: none !important;
+}
+body[data-slug="index"] .sidebar.left .search-button svg :is(path, circle) {
+  fill: none !important;
+  stroke: var(--cover-text) !important;
+  stroke-width: 1.25px !important;
 }

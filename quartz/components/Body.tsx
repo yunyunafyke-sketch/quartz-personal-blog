@@ -36,11 +36,26 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
   const pages = flatten(tree).sort(
     (a, b) => Number(b.dates?.modified ?? 0) - Number(a.dates?.modified ?? 0),
   )
-  // 优先挑选 Quartz、Java、Git 各一篇作为入口，不足三篇时由其他文章补齐。
-  const featured = ["Quartz", "Java", "Git"]
-    .map((keyword) => pages.find((page) => page.frontmatter?.title?.includes(keyword)))
-    .filter((page, index, items) => page && items.indexOf(page) === index)
-  const selected = [...featured, ...pages.filter((page) => !featured.includes(page))].slice(0, 3)
+  // 精选区域固定为三个分类入口，目录地址从真实文章 slug 提取，兼容大小写转换。
+  const selected = [
+    {
+      title: "臭名昭著aTrust隔离计划",
+      keyword: "atrust",
+      cover: "aTrust",
+      label: "NETWORK & SECURITY",
+    },
+    {
+      title: "基于Quartz搭建的个人博客",
+      keyword: "quartz",
+      cover: "Quartz",
+      label: "BUILD & CREATE",
+    },
+    { title: "Java", keyword: "java", cover: "Java", label: "LEARN & EXPLORE" },
+  ].map((category) => {
+    const node = tree.find((item) => item.name.toLowerCase().includes(category.keyword))
+    const page = node ? flatten([node])[0] : undefined
+    return { ...category, slug: page ? `${page.slug!.split("/")[0]}/index` : "index" }
+  })
   const href = (slug: string) => resolveRelative(fileData.slug!, slug as FullSlug)
   return (
     <div class="home-editorial">
@@ -367,37 +382,66 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
         </section>
         {/* 首屏下方沿用简洁的精选卡片、最近更新与分类布局。 */}
         <section class="editorial-featured" aria-labelledby="featured-title">
-          <h2 id="featured-title">从这里开始</h2>
+          <h2 id="featured-title">Featured articles</h2>
           <div class="editorial-cards">
-            {selected.map((page, index) => (
-              <a class="editorial-card internal" href={href(page!.slug!)}>
+            {selected.map((category, index) => (
+              <a class="editorial-card internal" href={href(category.slug)}>
                 <div class={`editorial-art editorial-art-${index}`} aria-hidden="true">
-                  <span class="editorial-art-label">
-                    {["BUILD & CREATE", "LEARN & EXPLORE", "TOOLS & WORKFLOW"][index]}
-                  </span>
-                  <strong>{["{ }", "Java", "git /"][index]}</strong>
+                  <span class="editorial-art-label">{category.label}</span>
+                  <strong>{category.cover}</strong>
                   <span class="editorial-art-line">AFYKE / NOTES 0{index + 1}</span>
                 </div>
-                <h3>{page!.frontmatter!.title}</h3>
+                <h3>{category.title}</h3>
               </a>
             ))}
           </div>
         </section>
         <div class="editorial-columns">
           <section id="home-articles">
-            <h2>最近更新</h2>
+            <h2>All articles</h2>
             <div class="editorial-articles">
-              {pages.slice(0, 18).map((page) => (
-                <a class="editorial-row internal" href={href(page.slug!)}>
-                  <span>{page.slug!.split("/")[0]}</span>
-                  <h3>{page.frontmatter!.title}</h3>
-                  <span aria-hidden="true">↗</span>
+              {pages.map((page, index) => (
+                <a class="editorial-row internal" href={href(page.slug!)} hidden={index >= 18}>
+                  {/* 与列表排序一致，显示文章修改日期，按北京时间格式化。 */}
+                  <span>
+                    {page.dates?.modified
+                      ? new Intl.DateTimeFormat("sv-SE", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          timeZone: "Asia/Shanghai",
+                        }).format(page.dates.modified)
+                      : "—"}
+                  </span>
+                  <h3>
+                    {page.frontmatter!.title}
+                    {/* 分类随文章目录生成，标签跟在标题后，不单独添加跳转。 */}
+                    <span class="editorial-category-badge">{page.slug!.split("/")[0]}</span>
+                  </h3>
                 </a>
               ))}
             </div>
+            {/* 全部文章按每页 18 篇切换，按钮由文章总数生成。 */}
+            <nav class="editorial-pagination" aria-label="文章分页" data-current-page="1">
+              <button type="button" data-page-step="-1" disabled>
+                Previous
+              </button>
+              {Array.from({ length: Math.ceil(pages.length / 18) }, (_, index) => (
+                <button
+                  type="button"
+                  data-page={index + 1}
+                  aria-current={index === 0 ? "page" : undefined}
+                >
+                  {index + 1}
+                </button>
+              ))}
+              <button type="button" data-page-step="1" disabled={pages.length <= 18}>
+                Next
+              </button>
+            </nav>
           </section>
           <aside id="home-topics">
-            <h2>内容分类</h2>
+            <h2>Popular tags</h2>
             <div class="editorial-topics">
               {tree.map((node) => (
                 <a
