@@ -2122,7 +2122,7 @@ body[data-slug="index"] #quartz-body .editorial-footer-companions {
 body[data-slug="index"] .sidebar.left .flex-component > *:has(.search) {
   top: 25px;
   left: auto;
-  right: 76px;
+  right: 24px;
   width: 40px !important;
 }
 body[data-slug="index"] .sidebar.left .search {
@@ -2354,11 +2354,58 @@ body[data-slug="index"] .editorial-row[hidden] {
   display: none !important;
 }
 .editorial-pagination {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 30px;
+  .editorial-pagination-pages {
+    display: contents;
+  }
+  .editorial-pagination-ellipsis {
+    min-width: 30px;
+    color: var(--cover-text);
+    text-align: center;
+  }
+  .editorial-pagination-jump-slot {
+    display: inline-flex;
+    align-items: center;
+  }
+  .editorial-pagination-jump-slot:has(form:not([hidden])) > button {
+    display: none;
+  }
+  .editorial-pagination-jump {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: max-content;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--cover-text);
+    font-size: 14px;
+    input {
+      box-sizing: border-box;
+      width: 72px;
+      padding: 8px;
+      border: 1px solid var(--cover-line);
+      border-radius: 8px;
+      background: var(--cover-bg);
+      color: var(--cover-text);
+      font: inherit;
+    }
+    button {
+      font-size: 14px;
+    }
+  }
+  .editorial-pagination-jump[hidden] {
+    display: none;
+  }
   button {
     border: 0;
     border-radius: 10px;
@@ -2557,14 +2604,16 @@ body[data-slug="index"] {
     color: #526477;
   }
   .afyke-home-avatar {
-    display: grid;
-    place-items: center;
+    display: block;
     flex-shrink: 0;
     width: clamp(44px, 3.7vw, 70px);
     height: clamp(44px, 3.7vw, 70px);
     border-radius: 50%;
-    color: #fff;
-    background: linear-gradient(135deg, #cadbd2, #859685);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    object-fit: cover;
+    box-shadow: none;
   }
   .afyke-home-description {
     font-size: clamp(16px, 1.45vw, 28px);
@@ -2772,4 +2821,9 @@ body[data-slug="index"] .home-editorial {
       max-width: none;
     }
   }
+}
+
+// 首页仅保留搜索入口，文章页继续提供主题切换。
+body[data-slug="index"] .sidebar.left .flex-component > *:has(.darkmode) {
+  display: none !important;
 }

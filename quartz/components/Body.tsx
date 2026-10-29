@@ -1,4 +1,5 @@
 import { FullSlug, resolveRelative } from "../util/path"
+import { paginationItems } from "../util/pagination"
 import { buildDirectoryTree, compareDirectoryPages, DirectoryTreeNode } from "../util/directory"
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
@@ -90,9 +91,14 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
                   {String(fileData.frontmatter?.heroTitle ?? "把想法写下来，\n把问题弄明白。")}
                 </h1>
                 <div class="afyke-home-author">
-                  <span class="afyke-home-avatar" aria-hidden="true">
-                    A
-                  </span>
+                  <img
+                    class="afyke-home-avatar"
+                    src={href("static/images/afyke-avatar.webp")}
+                    alt="Afyke 的头像"
+                    width="192"
+                    height="192"
+                    decoding="async"
+                  />
                   <div>
                     <strong>Afyke</strong>
                     <span>开发者 / 持续学习者</span>
@@ -174,15 +180,46 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
               <button type="button" data-page-step="-1" disabled>
                 Previous
               </button>
-              {Array.from({ length: Math.ceil(pages.length / 18) }, (_, index) => (
-                <button
-                  type="button"
-                  data-page={index + 1}
-                  aria-current={index === 0 ? "page" : undefined}
-                >
-                  {index + 1}
-                </button>
-              ))}
+              <span class="editorial-pagination-pages">
+                {paginationItems(Math.ceil(pages.length / 18)).map((page) =>
+                  page === "ellipsis" ? (
+                    <span class="editorial-pagination-jump-slot">
+                      <button
+                        type="button"
+                        class="editorial-pagination-ellipsis"
+                        data-page-jump
+                        aria-label="输入页码跳转"
+                        aria-expanded="false"
+                        aria-controls="home-page-jump"
+                      >
+                        …
+                      </button>
+                      <form id="home-page-jump" class="editorial-pagination-jump" hidden>
+                        <input
+                          id="home-page-number"
+                          name="page"
+                          type="number"
+                          min="1"
+                          max={Math.ceil(pages.length / 18)}
+                          step="1"
+                          required
+                          placeholder="页码"
+                          aria-label={`输入页码，1 至 ${Math.ceil(pages.length / 18)} 页`}
+                        />
+                        <button type="submit">跳转</button>
+                      </form>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      data-page={page}
+                      aria-current={page === 1 ? "page" : undefined}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+              </span>
               <button type="button" data-page-step="1" disabled={pages.length <= 18}>
                 Next
               </button>
@@ -201,11 +238,6 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
                 </a>
               ))}
             </div>
-            <p class="editorial-aside-note">
-              把遇到的问题写下来，
-              <br />
-              让零散的经验慢慢连接。
-            </p>
           </aside>
         </div>
       </main>
