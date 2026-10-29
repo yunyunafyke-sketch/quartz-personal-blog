@@ -302,8 +302,7 @@ body:not([data-slug="index"])
     height: 2.75rem;
     box-sizing: border-box;
     border-bottom: 1px solid color-mix(in srgb, var(--lightgray) 72%, transparent);
-    background: color-mix(in srgb, var(--light) 92%, transparent);
-    backdrop-filter: blur(12px) saturate(1.1);
+    background: var(--background-primary, var(--light));
     pointer-events: none;
   }
 
