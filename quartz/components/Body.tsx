@@ -208,11 +208,108 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
             </p>
           </aside>
         </div>
-        <footer class="editorial-footer">
-          <span>Afyke Blog</span>
-          <span>保持好奇，持续记录。</span>
-        </footer>
       </main>
+      <footer class="editorial-footer" aria-label="博客订阅与交流">
+        <div class="editorial-footer-resources">
+          <div class="editorial-footer-resources-grid">
+            <section class="editorial-footer-rss" aria-labelledby="footer-rss-title">
+              <h2 id="footer-rss-title">订阅 Afyke Blog</h2>
+              <p>
+                保持好奇，持续记录。
+                <br />
+                通过 RSS 订阅，在你喜欢的阅读器里接收新文章。
+              </p>
+              <a class="editorial-footer-rss-button" href={href("index.xml")}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <circle cx="5" cy="19" r="1" fill="currentColor" />
+                  <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16" />
+                </svg>
+                订阅博客 <span aria-hidden="true">›</span>
+              </a>
+              <small>无需邮箱，随时阅读每一次新的记录。</small>
+            </section>
+            <section class="editorial-footer-resource" aria-labelledby="footer-projects-title">
+              <svg class="editorial-footer-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                <rect x="21" y="3" width="23" height="41" rx="2" fill="#80e6f5" />
+                <path d="m5 18 25-6v32H5z" fill="#8270ff" />
+                <path d="M21 14v30h9V12z" fill="#635bff" />
+                <path
+                  d="M28 9h4m4 0h3M28 17h4m4 0h3m-3 8h3m-3 8h3M11 24h4m5 0h4m-13 8h4m5 0h4"
+                  stroke="white"
+                  stroke-width="4"
+                />
+              </svg>
+              <h3 id="footer-projects-title">在代码里，继续探索。</h3>
+              <p>开发实践、工具折腾与个人项目，让想法一步步变成现实。</p>
+              <a
+                href="https://github.com/yunyunafyke-sketch"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                逛逛 GitHub <span aria-hidden="true">›</span>
+              </a>
+            </section>
+            <section class="editorial-footer-resource" aria-labelledby="footer-feedback-title">
+              <svg class="editorial-footer-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                <path
+                  d="M36 19c0 9-7 16-16 16-3 0-6-1-8-2L3 36l3-9a16 16 0 1 1 30-8Z"
+                  fill="#80e6f5"
+                />
+                <path d="M47 29c0 3-1 6-3 9l3 8-9-3a16 16 0 1 1 9-14Z" fill="#8270ff" />
+                <path d="M30 14c4 3 6 7 6 11-3 2-6 3-10 3-1-6 0-10 4-14Z" fill="#635bff" />
+                <path
+                  d="M29 24a4 4 0 1 1 6 3c-2 1-3 2-3 4"
+                  stroke="white"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="36" r="1.6" fill="white" />
+              </svg>
+              <h3 id="footer-feedback-title">有想法，或发现了问题？</h3>
+              <p>欢迎分享你的建议和思考，一起把这里变得更好。</p>
+              <a
+                href="https://github.com/yunyunafyke-sketch/quartz-personal-blog/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                聊聊反馈 <span aria-hidden="true">›</span>
+              </a>
+            </section>
+          </div>
+        </div>
+        <div class="editorial-footer-companions">
+          <div class="editorial-footer-pets" role="group" aria-label="宠物伙伴">
+            {[
+              ["shuilanlan", "水蓝蓝"],
+              ["huohua", "火花"],
+              ["miaomiao", "喵喵"],
+              ["dimo", "迪莫"],
+              ["daermaodou", "大耳帽兜"],
+              ["late", "拉特"],
+            ].map(([image, name]) => (
+              <img
+                src={href(`static/images/pets/${image}.webp`)}
+                alt={name}
+                title={name}
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
+              />
+            ))}
+          </div>
+          <div class="editorial-footer-credits">
+            <span>© {new Date().getFullYear()} Afyke</span>
+            <a href="mailto:yunyunafyke@gmail.com">yunyunafyke@gmail.com</a>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
