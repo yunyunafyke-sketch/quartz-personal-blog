@@ -1,0 +1,500 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AGE-T WebGL 彩带</title>
+<style>
+:root{--p0:#ff781e;--p1:#f73c64;--p2:#b93cb4;--p3:#4b46dc;--p4:#1e8cf5}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff}
+canvas{display:block;width:100%;height:100%;cursor:grab}
+canvas.dragging{cursor:grabbing}
+.check{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin:8px 0}.check input{accent-color:#111827}
+#status{position:fixed;left:14px;bottom:12px;padding:7px 10px;border-radius:8px;font:10px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(255,255,255,.72);backdrop-filter:blur(10px);color:#333;z-index:5;white-space:pre-wrap;pointer-events:none}
+#ui{position:fixed;right:14px;top:14px;width:285px;max-height:calc(100vh - 28px);overflow:auto;padding:14px;border-radius:14px;background:rgba(255,255,255,.86);backdrop-filter:blur(18px);box-shadow:0 12px 40px rgba(0,0,0,.12);font:12px/1.25 Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#1f2937;z-index:10}
+#ui h1{font-size:13px;margin:0 0 3px;font-weight:700;letter-spacing:.01em}
+#ui .sub{font-size:10px;color:#6b7280;margin-bottom:12px}
+.section{border-top:1px solid rgba(0,0,0,.08);padding-top:11px;margin-top:11px}
+.section:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.sectionTitle{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;margin-bottom:8px}
+.row{display:grid;grid-template-columns:1fr 86px;gap:8px;align-items:center;margin:8px 0}
+.row label{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.row b{font:10px ui-monospace,SFMono-Regular,Menlo,monospace;color:#6b7280;font-weight:500}
+input[type=range]{width:100%;accent-color:#111827}
+input[type=color]{width:40px;height:24px;padding:0;border:0;background:none}
+.rangeRow{grid-template-columns:1fr 100px}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+button{border:0;border-radius:8px;padding:8px 9px;background:#111827;color:#fff;font-size:11px;cursor:pointer}
+button.secondary{background:#eef0f3;color:#111827}
+.help{font-size:10px;color:#6b7280;margin-top:8px;line-height:1.4}
+@media (max-width:760px){#ui{left:10px;right:10px;top:10px;width:auto;max-height:46vh}.row{grid-template-columns:1fr 110px}}
+#ui.hidden{display:none}
+#uiDot{position:fixed;right:12px;top:12px;width:9px;height:9px;border-radius:50%;background:#e11;box-shadow:0 0 0 2px rgba(255,255,255,.95),0 2px 8px rgba(0,0,0,.2);z-index:20;display:none;cursor:pointer}
+#uiDot.show{display:block}
+
+/* Palette framed demo */
+#demoWrap{position:fixed;left:auto;right:330px;top:120px;width:245px;z-index:30;margin:0;padding:3px;border-radius:15px;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+#demoWrap.dragging{cursor:grabbing;user-select:none}
+#demoHandle{cursor:grab}
+#demoGradient{padding:3px;border-radius:12px;background:linear-gradient(90deg,var(--p0),var(--p1),var(--p2),var(--p3),var(--p4));}
+#demoInner{border:2px solid #fff;border-radius:9px;background:#fff;padding:12px 13px;min-height:86px;box-sizing:border-box;box-shadow:inset 0 0 0 1px rgba(17,24,39,.05)}
+#demoInner .demoEyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#8b93a1;margin-bottom:7px}
+#demoInner .demoTitle{font-size:16px;line-height:1.05;font-weight:750;letter-spacing:-.02em;color:#111827;margin-bottom:6px}
+#demoInner .demoText{font-size:10px;line-height:1.45;color:#68707e;max-width:210px}
+#demoInner .demoMockLine{height:5px;border-radius:999px;background:linear-gradient(90deg,var(--p0),var(--p2),var(--p4));margin-top:10px;opacity:.9}
+</style><style>#ui,#uiDot,#demoWrap,#status{display:none!important}#ribbonControls{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:12px 18px;border:1px solid #e1e6ee;border-radius:28px;background:#ffffffed;font:13px system-ui;color:#526477;z-index:100;white-space:nowrap}#ribbonControls input{width:130px;accent-color:#635bff}#ribbonControls button{background:none;color:#635bff;padding:0 0 0 12px;border-left:1px solid #dce3eb;border-radius:0;font:inherit}#ribbonControls output{min-width:32px}#c{touch-action:none} </style><style>html,body{background:transparent}#ribbonControls{display:none!important}</style></head>
+<body><!-- Local adaptation of AGE-T/Stripe-webgl-effect, stripe_self_contained_animated_v36_defaults_from_shot.html. Original shader, geometry and rendering retained. -->
+<div id="ribbonControls"><label for="ribbonHeight">彩带高度</label><input id="ribbonHeight" type="range" min="20" max="150" value="37" step="1"><output id="ribbonHeightValue">70%</output><button id="ribbonPause">暂停动画</button></div><canvas id="c"></canvas>
+<div id="status">starting…</div>
+<div id="ui">
+  <h1>Ribbon controls</h1>
+  <div class="sub">Stripe inspired WebGL2 ribbon</div>
+
+  <div class="section">
+    <div class="sectionTitle">Animation</div>
+    <div class="row rangeRow"><label>Speed <b id="speedVal"></b></label><input id="speed" type="range" min="0" max="60" step="0.25" value="2.75"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectionTitle">Twist</div>
+    <div class="row"><label>Twist X <b id="twxVal"></b></label><input id="twx" type="range" min="-2.5" max="2.5" step="0.01" value="-0.36"></div>
+    <div class="row"><label>Twist Y <b id="twyVal"></b></label><input id="twy" type="range" min="-2.5" max="2.5" step="0.01" value="0.43"></div>
+    <div class="row"><label>Twist Z <b id="twzVal"></b></label><input id="twz" type="range" min="-2.5" max="2.5" step="0.01" value="-2"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectionTitle">Displacement</div>
+    <div class="row"><label>Amount <b id="dispVal"></b></label><input id="disp" type="range" min="-20" max="20" step="0.01"></div>
+    <div class="row"><label>Frequency X <b id="dfxVal"></b></label><input id="dfx" type="range" min="0" max="0.03" step="0.0001"></div>
+    <div class="row"><label>Frequency Z <b id="dfzVal"></b></label><input id="dfz" type="range" min="0" max="0.05" step="0.0001"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectionTitle">3D tilt</div>
+    <div class="row"><label>Tilt X <b id="txVal"></b></label><input id="tx" type="range" min="-1.5" max="1.5" step="0.01" value="0.87"></div>
+    <div class="row"><label>Tilt Y <b id="tyVal"></b></label><input id="ty" type="range" min="-1.5" max="1.5" step="0.01" value="-0.005"></div>
+    <div class="row"><label>Tilt Z <b id="tzVal"></b></label><input id="tz" type="range" min="-1.5" max="1.5" step="0.01" value="0"></div>
+    <div class="help">Drag the ribbon with the mouse to tilt it in 3D. Wheel changes Z rotation.</div>
+  </div>
+
+  <div class="section">
+    <div class="sectionTitle">Scale</div>
+    <div class="row"><label>Scale X <b id="sxVal"></b></label><input id="sx" type="range" min="2" max="14" step="0.01"></div>
+    <div class="row"><label>Scale Y <b id="syVal"></b></label><input id="sy" type="range" min="2" max="14" step="0.01"></div>
+    <div class="row"><label>Scale Z <b id="szVal"></b></label><input id="sz" type="range" min="2" max="14" step="0.01"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectionTitle">Palette</div>
+    <div class="row"><label>1</label><input id="c0" type="color" value="#ff781e"></div>
+    <div class="row"><label>2</label><input id="c1" type="color" value="#f73c64"></div>
+    <div class="row"><label>3</label><input id="c2" type="color" value="#b93cb4"></div>
+    <div class="row"><label>4</label><input id="c3" type="color" value="#4b46dc"></div>
+    <div class="row"><label>5</label><input id="c4" type="color" value="#1e8cf5"></div>
+  </div>
+
+  <div class="section">
+    <div class="sectionTitle">Focal / Depth of Field</div>
+    <div class="check"><span>Depth debug</span><input id="depthDebug" type="checkbox"></div>
+    <div class="check"><span>Enabled</span><input id="focalEnabled" type="checkbox" ></div>
+    <div class="row"><label>Focus depth <b id="focusYVal"></b></label><input id="focusY" type="range" min="0" max="100" step="0.5" value="33"></div>
+    <div class="row"><label>Focus range <b id="focusSizeVal"></b></label><input id="focusSize" type="range" min="0" max="100" step="1" value="11"></div>
+    <div class="row"><label>Blur amount <b id="blurAmountVal"></b></label><input id="blurAmount" type="range" min="0" max="100" step="1" value="10"></div>
+    <div class="help">Focus depth sets the focal plane. Focus range sets how wide the sharp zone is. 0% = very narrow, 100% = the whole depth range stays in focus.</div>
+  </div>
+  <div class="buttons"><button id="reset">Reset</button><button id="pause" class="secondary">Pause</button></div>
+
+  <div class="buttons"><button id="hideUi" class="secondary">Hide all UI</button></div>
+</div>
+  <div id="demoWrap">
+    <div id="demoGradient">
+      <div id="demoInner" data-demo-drag>
+        <div class="demoEyebrow">Demo window</div>
+        <div class="demoTitle">A small framed panel</div>
+        <div class="demoText">Mock content with the current ribbon palette wrapped in a layered white and gradient frame.</div>
+        <div class="demoMockLine"></div>
+      </div>
+    </div>
+  </div>
+
+<div id="uiDot" title="Show UI"></div><script>
+const canvas=document.getElementById('c'), status=document.getElementById('status');
+const gl=canvas.getContext('webgl2',{antialias:true,alpha:true,powerPreference:'high-performance'});
+if(!gl){status.textContent='WebGL2 unavailable';throw new Error('WebGL2 unavailable')}
+status.textContent='initialising WebGL2…';
+gl.disable(gl.CULL_FACE);
+gl.enable(gl.DEPTH_TEST);
+
+const vertexShaderSource="#version 300 es\nprecision highp float;\n\nin vec3 position;\nin vec2 uv;\n\nuniform float u_time;\nuniform float u_speed;\nuniform vec2 u_resolution;\n\nuniform float u_twistFrequencyX;\nuniform float u_twistFrequencyY;\nuniform float u_twistFrequencyZ;\n\nuniform float u_twistPowerX;\nuniform float u_twistPowerY;\nuniform float u_twistPowerZ;\n\nuniform float u_displaceFrequencyX;\nuniform float u_displaceFrequencyZ;\nuniform float u_displaceAmount;\nuniform mat4 projectionMatrix;\nuniform mat4 modelViewMatrix;\n\nout float v_time;\nout float v_speed;\nout vec2 v_uv;\nout vec3 v_position;\nout vec4 v_clipPosition;\nout vec2 v_resolution;\n\n// TODO(weston): glsl-loader.js is looking for paths relative to the shader source.\n// We should update it to start from a configurable root location\n\n// Stefan Gustavson's version;\n// https://www.shadertoy.com/view/43tBDr\n// https://www.researchgate.net/publication/216813608_Simplex_noise_demystified\n\n// https://xxhash.com/\n// https://github.com/Cyan4973/xxHash/blob/dev/LICENSE\n\n#ifndef STRIPE_HASH\n#define STRIPE_HASH\nfloat xxhash(vec2 x) {\n  uvec2 t = floatBitsToUint(x);\n  uint h = 0xc2b2ae3du * t.x + 0x165667b9u;\n  h = (h << 17u | h >> 15u) * 0x27d4eb2fu;\n  h += 0xc2b2ae3du * t.y;\n  h = (h << 17u | h >> 15u) * 0x27d4eb2fu;\n  h ^= h >> 15u;\n  h *= 0x85ebca77u;\n  h ^= h >> 13u;\n  h *= 0xc2b2ae3du;\n  h ^= h >> 16u;\n  return uintBitsToFloat(h >> 9u | 0x3f800000u) - 1.0;\n}\n\nvec2 hash(vec2 x) {\n  float k = 6.283185307 * xxhash(x);\n  return vec2(cos(k), sin(k));\n}\n#endif\n\n\n#ifndef STRIPE_SIMPLEX_NOISE\n#define STRIPE_SIMPLEX_NOISE\nfloat simplexNoise(in vec2 p) {\n  const float K1 = 0.366025404; // (sqrt(3)-1)/2;\n  const float K2 = 0.211324865; // (3-sqrt(3))/6;\n\n  vec2 i = floor(p + (p.x + p.y) * K1);\n  vec2 a = p - i + (i.x + i.y) * K2;\n  float m = step(a.y, a.x);\n  vec2 o = vec2(m, 1.0 - m);\n  vec2 b = a - o + K2;\n  vec2 c = a - 1.0 + 2.0 * K2;\n  vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);\n  vec3 n = h * h * h * vec3(dot(a, hash(i + 0.0)), dot(b, hash(i + o)), dot(c, hash(i + 1.0))); // changed to h^3 [1]\n\n  return dot(n, vec3(32.99)); // analytic factor (= 2916*sqrt(2)/125)\n}\n#endif\n\n// Shaping functions by Inigo Quilez\n// https://iquilezles.org/articles/functions/\n// https://thebookofshaders.com/05/\n\n\n// Taken from glm's math.h\n\n#ifndef STRIPE_CONSTANTS\n#define STRIPE_CONSTANTS\n\n#define M_E         2.71828182845904523536028747135266250   /* e */\n#define M_LOG2E     1.44269504088896340735992468100189214   /* log 2e */\n#define M_LOG10E    0.434294481903251827651128918916605082  /* log 10e */\n#define M_LN2       0.693147180559945309417232121458176568  /* log e2 */\n#define M_LN10      2.30258509299404568401799145468436421   /* log e10 */\n#define M_PI        3.14159265358979323846264338327950288   /* pi */\n#define M_PI_2      1.57079632679489661923132169163975144   /* pi/2 */\n#define M_PI_4      0.785398163397448309615660845819875721  /* pi/4 */\n#define M_1_PI      0.318309886183790671537767526745028724  /* 1/pi */\n#define M_2_PI      0.636619772367581343075535053490057448  /* 2/pi */\n#define M_2_SQRTPI  1.12837916709551257389615890312154517   /* 2/sqrt(pi) */\n#define M_SQRT2     1.41421356237309504880168872420969808   /* sqrt(2) */\n#define M_SQRT1_2   0.707106781186547524400844362104849039  /* 1/sqrt(2) */\n\n#endif\n\n\n#ifndef STRIPE_SHAPING\n#define STRIPE_SHAPING\n\nfloat almostIdentity(float x, float n) {\n  return sqrt(x * x + n * n);\n}\n\nfloat integralSmoothstep(float x, float T) {\n  if(x > T)\n    return x - T / 2.0;\n  return x * x * x * (1.0 - x * 0.5 / T) / T / T;\n}\n\n// Impulses\n\nfloat expImpulse(float x, float k) {\n  float h = k * x;\n  return h * exp(1.0 - h);\n}\n\nfloat quadImpulse(float k, float x) {\n  return 2.0 * sqrt(k) * x / (1.0 + k * x * x);\n}\n\nfloat polyImpulse(float k, float n, float x) {\n  return (n / (n - 1.0)) *\n    pow((n - 1.0) * k, 1.0 / n) *\n    x / (1.0 + k * pow(x, n));\n}\n\nfloat expSustainedImpulse(float x, float f, float k) {\n  float s = max(x - f, 0.0);\n  return min(x * x / (f * f), 1.0 + (2.0 / f) * s * exp(-k * s));\n}\n\nfloat sincImpulse(float x, float k) {\n  float a = M_PI * (k * x - 1.0);\n  return sin(a) / a;\n}\n\n// Falloff\n\nfloat quadFallof(float x, float m) {\n  x /= m;\n  return (x - 2.0) * x + 1.0;\n}\n\n// Unitary\n\nfloat almostUnitIdentity(float x) {\n  return x * x * (2.0 - x);\n}\n\nfloat gain(float x, float k) {\n  float a = 0.5 * pow(2.0 * ((x < 0.5) ? x : 1.0 - x), k);\n  return (x < 0.5) ? a : 1.0 - a;\n}\n\nfloat parabola(float x, float k) {\n  return pow(4.0 * x * (1.0 - x), k);\n}\n\nfloat pcurve(float x, float a, float b) {\n  float k = pow(a + b, a + b) / (pow(a, a) * pow(b, b));\n  return k * pow(x, a) * pow(1.0 - x, b);\n}\n\nfloat tone(float x, float k) {\n  return (k + 1.0) / (1.0 + k * x);\n}\n\n// Pulse\n\nfloat cubicPulse(float c, float w, float x) {\n  x = abs(x - c);\n  if(x > w)\n    return 0.0;\n  x /= w;\n  return 1.0 - x * x * (3.0 - 2.0 * x);\n}\n\nfloat rationalBump(float x, float k) {\n  return 1.0 / (1.0 + k * x * x);\n}\n\nfloat expStep(float x, float n) {\n  return exp2(-exp2(n) * pow(x, n));\n}\n\n#endif\n\n#ifndef STRIPE_UTILS\n#define STRIPE_UTILS\n\nfloat mapLinear(float value, float min1, float max1, float min2, float max2) {\n  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);\n}\n\nmat4 rotationMatrix(vec3 axis, float angle) {\n  axis = normalize(axis);\n  float s = sin(angle);\n  float c = cos(angle);\n  float oc = 1.0 - c;\n  return mat4(oc * axis.x * axis.x + c, oc * axis.x * axis.y - axis.z * s, oc * axis.z * axis.x + axis.y * s, 0.0, oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c, oc * axis.y * axis.z - axis.x * s, 0.0, oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c, 0.0, 0.0, 0.0, 0.0, 1.0);\n}\n\n#endif\n\n\nvec3 displace(vec2 uv, vec3 position, float time, float frequencyX, float frequencyY, float amount) {\n  float noise = simplexNoise(vec2(position.x * frequencyX + time, position.z * frequencyY + time));\n  float dist = mapLinear(uv.x, 0.0, 1.0, -1.0, 1.0);\n  position.y += amount * noise;\n  return position;\n}\n\nvoid main(void) {\n  v_time = u_time;\n  v_uv = uv;\n  v_resolution = u_resolution;\n\n  float twistXNoise = simplexNoise(vec2(v_uv.y * 2.0, u_time * u_speed));\n  // twistXNoise = mapLinear(twistXNoise, -1.0, 1.0, 0.0, 1.0);\n  float twistXMotion = u_twistFrequencyX - twistXNoise * 0.1;\n\n  mat4 rotationA = rotationMatrix(vec3(0.5, 0.0, 0.5), u_twistFrequencyY * expStep(v_uv.x, u_twistPowerY));\n  mat4 rotationB = rotationMatrix(vec3(0.0, 0.5, 0.5), twistXMotion * expStep(v_uv.y, u_twistPowerX));\n  mat4 rotationC = rotationMatrix(vec3(0.5, 0.0, 0.5), u_twistFrequencyZ * expStep(v_uv.y, u_twistPowerZ));\n\n  vec3 displacedPosition = displace(uv, position.xyz, u_time * u_speed, u_displaceFrequencyX, u_displaceFrequencyZ, u_displaceAmount);\n\n  v_position = displacedPosition;\n  v_position = (vec4(v_position, 1.0) * rotationA).xyz;\n  v_position = (vec4(v_position, 1.0) * rotationB).xyz;\n  v_position = (vec4(v_position, 1.0) * rotationC).xyz;\n\n  v_clipPosition = projectionMatrix * modelViewMatrix * vec4(v_position, 1.0);\n  vec4 clipPosition = projectionMatrix * modelViewMatrix * vec4(v_position, 1.0);\n  gl_Position = v_clipPosition;\n}\n";
+const fragmentShaderSource="#version 300 es\n\nprecision highp float;\nout vec4 fragColor;\n\nin float v_time;\nin vec2 v_uv;\nin vec3 v_position;\nin vec4 v_clipPosition;\nin vec2 v_resolution;\n\nuniform vec2 u_mousePosition;\n\nuniform sampler2D u_paletteTexture;\nuniform sampler2D u_lutTexture;\nuniform sampler2D u_blueNoiseTexture;\n\nuniform float u_colorSaturation;\nuniform float u_colorContrast;\nuniform float u_colorHueShift;\n\nuniform float u_lineAmount;\nuniform float u_lineThickness;\nuniform float u_lineDerivativePower;\n\nuniform float u_glowAmount;\nuniform float u_glowPower;\nuniform float u_glowRamp;\n\nuniform vec3 u_clearColor;\n\n#ifdef USE_NOISE_BANDS\nconst int MAX_NOISE_BANDS = 2;\nuniform int u_numNoiseBands;\nuniform vec4 u_noiseBandBounds[2];\nuniform vec4 u_noiseBandParams[2];\nuniform float u_noiseBandParabolaPower[2];\n#endif\n\n// TODO(weston): glsl-loader.js is looking for paths relative to the shader source.\n// We should update it to start from a configurable root location\n\n// Stefan Gustavson's version;\n// https://www.shadertoy.com/view/43tBDr\n// https://www.researchgate.net/publication/216813608_Simplex_noise_demystified\n\n// https://xxhash.com/\n// https://github.com/Cyan4973/xxHash/blob/dev/LICENSE\n\n#ifndef STRIPE_HASH\n#define STRIPE_HASH\nfloat xxhash(vec2 x) {\n  uvec2 t = floatBitsToUint(x);\n  uint h = 0xc2b2ae3du * t.x + 0x165667b9u;\n  h = (h << 17u | h >> 15u) * 0x27d4eb2fu;\n  h += 0xc2b2ae3du * t.y;\n  h = (h << 17u | h >> 15u) * 0x27d4eb2fu;\n  h ^= h >> 15u;\n  h *= 0x85ebca77u;\n  h ^= h >> 13u;\n  h *= 0xc2b2ae3du;\n  h ^= h >> 16u;\n  return uintBitsToFloat(h >> 9u | 0x3f800000u) - 1.0;\n}\n\nvec2 hash(vec2 x) {\n  float k = 6.283185307 * xxhash(x);\n  return vec2(cos(k), sin(k));\n}\n#endif\n\n\n#ifndef STRIPE_SIMPLEX_NOISE\n#define STRIPE_SIMPLEX_NOISE\nfloat simplexNoise(in vec2 p) {\n  const float K1 = 0.366025404; // (sqrt(3)-1)/2;\n  const float K2 = 0.211324865; // (3-sqrt(3))/6;\n\n  vec2 i = floor(p + (p.x + p.y) * K1);\n  vec2 a = p - i + (i.x + i.y) * K2;\n  float m = step(a.y, a.x);\n  vec2 o = vec2(m, 1.0 - m);\n  vec2 b = a - o + K2;\n  vec2 c = a - 1.0 + 2.0 * K2;\n  vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);\n  vec3 n = h * h * h * vec3(dot(a, hash(i + 0.0)), dot(b, hash(i + o)), dot(c, hash(i + 1.0))); // changed to h^3 [1]\n\n  return dot(n, vec3(32.99)); // analytic factor (= 2916*sqrt(2)/125)\n}\n#endif\n\n// Shaping functions by Inigo Quilez\n// https://iquilezles.org/articles/functions/\n// https://thebookofshaders.com/05/\n\n\n// Taken from glm's math.h\n\n#ifndef STRIPE_CONSTANTS\n#define STRIPE_CONSTANTS\n\n#define M_E         2.71828182845904523536028747135266250   /* e */\n#define M_LOG2E     1.44269504088896340735992468100189214   /* log 2e */\n#define M_LOG10E    0.434294481903251827651128918916605082  /* log 10e */\n#define M_LN2       0.693147180559945309417232121458176568  /* log e2 */\n#define M_LN10      2.30258509299404568401799145468436421   /* log e10 */\n#define M_PI        3.14159265358979323846264338327950288   /* pi */\n#define M_PI_2      1.57079632679489661923132169163975144   /* pi/2 */\n#define M_PI_4      0.785398163397448309615660845819875721  /* pi/4 */\n#define M_1_PI      0.318309886183790671537767526745028724  /* 1/pi */\n#define M_2_PI      0.636619772367581343075535053490057448  /* 2/pi */\n#define M_2_SQRTPI  1.12837916709551257389615890312154517   /* 2/sqrt(pi) */\n#define M_SQRT2     1.41421356237309504880168872420969808   /* sqrt(2) */\n#define M_SQRT1_2   0.707106781186547524400844362104849039  /* 1/sqrt(2) */\n\n#endif\n\n\n#ifndef STRIPE_SHAPING\n#define STRIPE_SHAPING\n\nfloat almostIdentity(float x, float n) {\n  return sqrt(x * x + n * n);\n}\n\nfloat integralSmoothstep(float x, float T) {\n  if(x > T)\n    return x - T / 2.0;\n  return x * x * x * (1.0 - x * 0.5 / T) / T / T;\n}\n\n// Impulses\n\nfloat expImpulse(float x, float k) {\n  float h = k * x;\n  return h * exp(1.0 - h);\n}\n\nfloat quadImpulse(float k, float x) {\n  return 2.0 * sqrt(k) * x / (1.0 + k * x * x);\n}\n\nfloat polyImpulse(float k, float n, float x) {\n  return (n / (n - 1.0)) *\n    pow((n - 1.0) * k, 1.0 / n) *\n    x / (1.0 + k * pow(x, n));\n}\n\nfloat expSustainedImpulse(float x, float f, float k) {\n  float s = max(x - f, 0.0);\n  return min(x * x / (f * f), 1.0 + (2.0 / f) * s * exp(-k * s));\n}\n\nfloat sincImpulse(float x, float k) {\n  float a = M_PI * (k * x - 1.0);\n  return sin(a) / a;\n}\n\n// Falloff\n\nfloat quadFallof(float x, float m) {\n  x /= m;\n  return (x - 2.0) * x + 1.0;\n}\n\n// Unitary\n\nfloat almostUnitIdentity(float x) {\n  return x * x * (2.0 - x);\n}\n\nfloat gain(float x, float k) {\n  float a = 0.5 * pow(2.0 * ((x < 0.5) ? x : 1.0 - x), k);\n  return (x < 0.5) ? a : 1.0 - a;\n}\n\nfloat parabola(float x, float k) {\n  return pow(4.0 * x * (1.0 - x), k);\n}\n\nfloat pcurve(float x, float a, float b) {\n  float k = pow(a + b, a + b) / (pow(a, a) * pow(b, b));\n  return k * pow(x, a) * pow(1.0 - x, b);\n}\n\nfloat tone(float x, float k) {\n  return (k + 1.0) / (1.0 + k * x);\n}\n\n// Pulse\n\nfloat cubicPulse(float c, float w, float x) {\n  x = abs(x - c);\n  if(x > w)\n    return 0.0;\n  x /= w;\n  return 1.0 - x * x * (3.0 - 2.0 * x);\n}\n\nfloat rationalBump(float x, float k) {\n  return 1.0 / (1.0 + k * x * x);\n}\n\nfloat expStep(float x, float n) {\n  return exp2(-exp2(n) * pow(x, n));\n}\n\n#endif\n\n#ifndef STRIPE_COLOR\n#define STRIPE_COLOR\n\nvec3 contrast(in vec3 v, in float a) {\n  return (v - 0.5) * a + 0.5;\n}\n\nvec3 desaturate(vec3 color, float factor) {\n  // generic, rgb values are arbitrary\n  vec3 lum = vec3(0.299, 0.587, 0.114);\n  vec3 gray = vec3(dot(lum, color));\n  return mix(color, gray, factor);\n}\n\n// https://godotshaders.com/shader/hue-shift/\n// CC0 license, https://creativecommons.org/publicdomain/zero/1.0/\nvec3 hueShift(vec3 color, float shift) {\n  vec3 gray = vec3(0.57735);\n  vec3 projection = gray * dot(gray, color);\n  vec3 U = color - projection;\n  vec3 V = cross(gray, U);\n  vec3 shifted = U * cos(shift) + V * sin(shift) + projection;\n  return shifted;\n}\n\n// By Inigo Quilez, under MIT license\n// https://www.shadertoy.com/view/ttcyRS\nvec3 oklab_mix(vec3 lin1, vec3 lin2, float a) {\n  const mat3 kCONEtoLMS = mat3(0.4121656120, 0.2118591070, 0.0883097947, 0.5362752080, 0.6807189584, 0.2818474174, 0.0514575653, 0.1074065790, 0.6302613616);\n  const mat3 kLMStoCONE = mat3(4.0767245293, -1.2681437731, -0.0041119885, -3.3072168827, 2.6093323231, -0.7034763098, 0.2307590544, -0.3411344290, 1.7068625689);\n  vec3 lms1 = pow(kCONEtoLMS * lin1, vec3(1.0 / 3.0));\n  vec3 lms2 = pow(kCONEtoLMS * lin2, vec3(1.0 / 3.0));\n  vec3 lms = mix(lms1, lms2, a);\n  lms *= 1.0 + 0.2 * a * (1.0 - a);\n  return kLMStoCONE * (lms * lms * lms);\n}\n\n#endif\n\n#ifndef STRIPE_UTILS\n#define STRIPE_UTILS\n\nfloat mapLinear(float value, float min1, float max1, float min2, float max2) {\n  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);\n}\n\nmat4 rotationMatrix(vec3 axis, float angle) {\n  axis = normalize(axis);\n  float s = sin(angle);\n  float c = cos(angle);\n  float oc = 1.0 - c;\n  return mat4(oc * axis.x * axis.x + c, oc * axis.x * axis.y - axis.z * s, oc * axis.z * axis.x + axis.y * s, 0.0, oc * axis.x * axis.y + axis.z * s, oc * axis.y * axis.y + c, oc * axis.y * axis.z - axis.x * s, 0.0, oc * axis.z * axis.x - axis.y * s, oc * axis.y * axis.z + axis.x * s, oc * axis.z * axis.z + c, 0.0, 0.0, 0.0, 0.0, 1.0);\n}\n\n#endif\n\n\nvec3 surfaceColor(vec2 uv, vec3 pos, float pdy) {\n  vec3 color = texture(u_paletteTexture, vec2(uv.x, uv.y)).rgb;\n\n  float strength = 0.2;\n  float freq = 600.0;\n  float colorAtten = 0.9;\n  float paraPow = 3.0;\n\n  #ifdef USE_NOISE_BANDS\n  for (int i = 0; i < MAX_NOISE_BANDS; i++) {\n    if (i >= u_numNoiseBands) break;\n    vec4 bounds = u_noiseBandBounds[i];\n    vec4 nbp = u_noiseBandParams[i];\n    float feather = nbp.x;\n    float left = smoothstep(bounds.x - feather, bounds.x, uv.x);\n    float right = 1.0 - smoothstep(bounds.y, bounds.y + feather, uv.x);\n    float bottom = smoothstep(bounds.z - feather, bounds.z, uv.y);\n    float top = 1.0 - smoothstep(bounds.w, bounds.w + feather, uv.y);\n    float blend = left * right * bottom * top;\n    strength = mix(strength, nbp.y, blend);\n    freq = mix(freq, nbp.z, blend);\n    colorAtten = mix(colorAtten, nbp.w, blend);\n    paraPow = mix(paraPow, u_noiseBandParabolaPower[i], blend);\n  }\n  #endif\n\n  float p = 1.0 - parabola(uv.x, paraPow);\n  float n0 = simplexNoise(vec2(v_uv.x * 0.1, v_uv.y * 0.5));\n  float n1 = simplexNoise(vec2(v_uv.x * (freq + (freq * 0.5 * n0)), v_uv.y * 4.0 * n0));\n  n1 = mapLinear(n1, -1.0, 1.0, 0.0, 1.0);\n\n  vec3 textureColor = color;\n  textureColor += (n1 * strength * (1.0 - textureColor.b * colorAtten) * pdy * p);\n\n  color = textureColor;\n  return color;\n}\n\nvoid main(void) {\n  vec2 st = gl_FragCoord.xy / v_resolution.xy;\n\n  vec2 dy = dFdy(v_uv);\n  float pdy = dy.y * v_resolution.y * u_glowAmount;\n  pdy = mapLinear(pdy, -1.0, 1.0, 0.0, 1.0);\n  pdy = clamp(pdy, 0.0, 1.0);\n  pdy = pow(pdy, u_glowPower);\n  pdy = smoothstep(0.0, u_glowRamp, pdy);\n  pdy = clamp(pdy, 0.0, 1.0);\n\n  vec4 color = vec4(surfaceColor(v_uv, v_position, pdy), 1.0);\n\n  color.rgb = contrast(color.rgb, u_colorContrast);\n  color.rgb = desaturate(color.rgb, 1.0 - u_colorSaturation);\n  color.rgb = hueShift(color.rgb, u_colorHueShift);\n\n  color += (1.0 - pdy) * 0.25;\n  fragColor = clamp(color, 0.0, 1.0);\n}\n";
+
+function compile(type,src){const sh=gl.createShader(type);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){const info=gl.getShaderInfoLog(sh)||'unknown shader error';status.textContent=(type===gl.VERTEX_SHADER?'VERTEX':'FRAGMENT')+' SHADER ERROR\n'+info;throw new Error(info)}return sh}
+const program=gl.createProgram();gl.attachShader(program,compile(gl.VERTEX_SHADER,vertexShaderSource));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragmentShaderSource));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS)){const info=gl.getProgramInfoLog(program)||'unknown program link error';status.textContent='PROGRAM LINK ERROR\n'+info;throw new Error(info)}
+gl.useProgram(program);
+if(gl.getError()!==gl.NO_ERROR){status.textContent='GL error immediately after program setup';}
+
+function rotate(v,axis,angle){const s=Math.sin(angle/2),c=Math.cos(angle/2);const qx=axis[0]*s,qy=axis[1]*s,qz=axis[2]*s,qw=c;const ux=qw*v[0]+qy*v[2]-qz*v[1],uy=qw*v[1]+qz*v[0]-qx*v[2],uz=qw*v[2]+qx*v[1]-qy*v[0],uw=-qx*v[0]-qy*v[1]-qz*v[2];return [ux*qw-uw*qx-uy*qz+uz*qy,uy*qw-uw*qy-uz*qx+ux*qz,uz*qw-uw*qz-ux*qy+uy*qx]}
+function buildGeometry(width=400,height=400,subX=128,subY=256){const cols=subX+1,rows=subY+1,count=cols*rows;const pos=new Float32Array(count*3),uv=new Float32Array(count*2),idx=new Uint32Array(subX*subY*6);let pi=0,ui=0;for(let y=0;y<rows;y++){const py=y*(height/subY)-height/2;for(let x=0;x<cols;x++){const px=x*(width/subX)-width/2;pos[pi++]=px;pos[pi++]=-py;pos[pi++]=0;uv[ui++]=x/subX;uv[ui++]=1-y/subY}}let ii=0;for(let y=0;y<subY;y++)for(let x=0;x<subX;x++){const a=x+cols*y,b=x+cols*(y+1),c=x+1+cols*(y+1),d=x+1+cols*y;idx[ii++]=a;idx[ii++]=b;idx[ii++]=d;idx[ii++]=b;idx[ii++]=c;idx[ii++]=d}for(let i=0;i<count;i++){const p=i*3,u=i*2;let x=pos[p],y=pos[p+1],z=pos[p+2],v=uv[u+1];const fold=4-2*Math.pow(4*v*(1-v),9.5);if(x<-16)z+=fold;else if(x<16){const theta=(x+16)/32*Math.PI;z=Math.cos(theta)*fold;const phi=-Math.PI/2+(x+16)/32*Math.PI;x=Math.cos(phi)*fold-16}else{z-=fold}x+=width/4;let q=[x,y,z];q=rotate(q,[1,0,0],-Math.PI/2);q=rotate(q,[0,1,0],-Math.PI/2);pos[p]=q[0];pos[p+1]=q[1];pos[p+2]=q[2]}return {pos,uv,idx,count}}
+const g=buildGeometry();
+const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+let b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,g.pos,gl.STATIC_DRAW);let loc=gl.getAttribLocation(program,'position');if(loc<0){status.textContent='ATTRIBUTE ERROR: position';throw new Error('position attribute not found')}gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,3,gl.FLOAT,false,0,0);
+b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,g.uv,gl.STATIC_DRAW);loc=gl.getAttribLocation(program,'uv');if(loc<0){status.textContent='ATTRIBUTE ERROR: uv';throw new Error('uv attribute not found')}gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+b=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,g.idx,gl.STATIC_DRAW);gl.bindVertexArray(vao);
+
+const U={};['u_time','u_speed','u_resolution','u_paletteTexture','u_colorSaturation','u_colorContrast','u_colorHueShift','u_displaceFrequencyX','u_displaceFrequencyZ','u_displaceAmount','u_twistFrequencyY','u_twistFrequencyX','u_twistFrequencyZ','u_twistPowerY','u_twistPowerX','u_twistPowerZ','u_glowAmount','u_glowPower','u_glowRamp','u_mousePosition','u_lineAmount','u_lineThickness','u_lineDerivativePower','u_maxWidth','u_clearColor'].forEach(n=>U[n]=gl.getUniformLocation(program,n));
+
+// Embedded palette. No external images or CDNs.
+const pal=new Uint8Array([255,120,30,255, 247,60,100,255, 185,60,180,255, 75,70,220,255, 30,140,245,255]);
+const tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,5,1,0,gl.RGBA,gl.UNSIGNED_BYTE,pal);gl.uniform1i(U.u_paletteTexture,0);
+
+function perspectiveOrtho(l,r,t,b,n,f){return new Float32Array([2/(r-l),0,0,0, 0,2/(t-b),0,0, 0,0,-2/(f-n),0, -(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n),1])}
+function lookAt(eye,target,up){let z=[eye[0]-target[0],eye[1]-target[1],eye[2]-target[2]];let zl=Math.hypot(...z);z=z.map(v=>v/zl);let x=[up[1]*z[2]-up[2]*z[1],up[2]*z[0]-up[0]*z[2],up[0]*z[1]-up[1]*z[0]];let xl=Math.hypot(...x);x=x.map(v=>v/xl);let y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-(x[0]*eye[0]+x[1]*eye[1]+x[2]*eye[2]),-(y[0]*eye[0]+y[1]*eye[1]+y[2]*eye[2]),-(z[0]*eye[0]+z[1]*eye[1]+z[2]*eye[2]),1])}
+function mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];return o}
+function trs(tx,ty,tz,rx,ry,rz,sx,sy,sz){const cx=Math.cos(rx),sxv=Math.sin(rx),cy=Math.cos(ry),syv=Math.sin(ry),cz=Math.cos(rz),szv=Math.sin(rz);const Rx=new Float32Array([1,0,0,0,0,cx,sxv,0,0,-sxv,cx,0,0,0,0,1]);const Ry=new Float32Array([cy,0,-syv,0,0,1,0,0,syv,0,cy,0,0,0,0,1]);const Rz=new Float32Array([cz,szv,0,0,-szv,cz,0,0,0,0,1,0,0,0,0,1]);let R=mul(mul(Rz,Ry),Rx);R[0]*=sx;R[1]*=sx;R[2]*=sx;R[4]*=sy;R[5]*=sy;R[6]*=sy;R[8]*=sz;R[9]*=sz;R[10]*=sz;R[12]=tx;R[13]=ty;R[14]=tz;return R}
+
+// Optional focal postprocess. The core ribbon render remains the proven V5 path.
+const focalVS=`#version 300 es
+precision highp float;
+in vec2 a_position;
+in vec2 a_uv;
+out vec2 v_uv;
+void main(){v_uv=a_uv;gl_Position=vec4(a_position,0.0,1.0);}`;
+const focalFS=`#version 300 es
+precision highp float;
+in vec2 v_uv;
+uniform sampler2D u_scene;
+uniform sampler2D u_depth;
+uniform vec2 u_resolution;
+uniform float u_focusDepth;
+uniform float u_focusRange;
+uniform float u_maxBlur;
+uniform float u_depthScale;
+uniform bool u_enabled;
+out vec4 fragColor;
+
+vec4 sampleScene(vec2 uv){ return texture(u_scene,clamp(uv,vec2(0.001),vec2(0.999))); }
+
+void main(){
+  vec4 center=texture(u_scene,v_uv);
+  if(!u_enabled || u_maxBlur<=0.0){fragColor=center;return;}
+
+  // Depth texture stores normalized linear camera depth: 0 = near, 1 = far.
+  float depth=texture(u_depth,v_uv).r;
+  float focusRange=mix(0.0,1.0,u_focusRange);
+  float delta=max(abs(depth-u_focusDepth)-focusRange,0.0);
+  float coc=clamp(delta*u_depthScale,0.0,1.0);
+  float radiusPx=coc*u_maxBlur;
+  if(radiusPx<0.25){fragColor=center;return;}
+
+  vec2 texel=1.0/u_resolution;
+  vec4 sum=center;
+  float weight=1.0;
+  const int RINGS=4;
+  const int SAMPLES=12;
+  const float TAU=6.28318530718;
+  for(int ring=1; ring<=RINGS; ++ring){
+    float rf=float(ring)/float(RINGS);
+    float rr=radiusPx*rf;
+    for(int i=0; i<SAMPLES; ++i){
+      float a=TAU*(float(i)/float(SAMPLES)+float(ring%2)*0.5/float(SAMPLES));
+      vec2 o=vec2(cos(a),sin(a))*texel*rr;
+      vec4 s=sampleScene(v_uv+o);
+      float w=1.0-rf*0.14;
+      sum+=s*w;
+      weight+=w;
+    }
+  }
+  vec4 blurred=sum/weight;
+  float strength=smoothstep(0.0,1.0,coc);
+  fragColor=mix(center,blurred,strength);
+}`
+function makeProgram(vsSrc,fsSrc){
+  const vs=compile(gl.VERTEX_SHADER,vsSrc);
+  const fs=compile(gl.FRAGMENT_SHADER,fsSrc);
+  const p=gl.createProgram();
+  gl.attachShader(p,vs);
+  gl.attachShader(p,fs);
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){
+    const info=gl.getProgramInfoLog(p)||'unknown program link error';
+    throw new Error(info);
+  }
+  gl.deleteShader(vs);
+  gl.deleteShader(fs);
+  return p;
+}
+function tryMakeProgram(vsSrc,fsSrc){
+  try { return makeProgram(vsSrc,fsSrc); }
+  catch(err){ console.warn('Secondary shader disabled:',err); return null; }
+}
+
+// Isolated direct depth debug. It renders the same ribbon directly to the default framebuffer.
+const directDepthFS=`#version 300 es
+precision highp float;
+in vec4 v_clipPosition;
+out vec4 fragColor;
+void main(){
+  float ndcZ=v_clipPosition.z/max(abs(v_clipPosition.w),0.000001);
+  float linearDepth=clamp(ndcZ*0.5+0.5,0.0,1.0);
+  fragColor=vec4(linearDepth,linearDepth,linearDepth,1.0);
+}`;
+const directDepthProgram=tryMakeProgram(vertexShaderSource,directDepthFS);
+let directDepthVAO=null;
+const directDepthUniforms={};
+if(directDepthProgram){
+  directDepthVAO=gl.createVertexArray();gl.bindVertexArray(directDepthVAO);
+  let b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,g.pos,gl.STATIC_DRAW);
+  let al=gl.getAttribLocation(directDepthProgram,'position');
+  if(al>=0){gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,3,gl.FLOAT,false,0,0);}else directDepthProgram.__bad=true;
+  b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,g.uv,gl.STATIC_DRAW);
+  al=gl.getAttribLocation(directDepthProgram,'uv');
+  if(al>=0){gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);}else directDepthProgram.__bad=true;
+  b=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,g.idx,gl.STATIC_DRAW);
+  for(const n of ['u_time','u_speed','u_resolution','u_twistFrequencyX','u_twistFrequencyY','u_twistFrequencyZ','u_twistPowerX','u_twistPowerY','u_twistPowerZ','u_displaceFrequencyX','u_displaceFrequencyZ','u_displaceAmount','projectionMatrix','modelViewMatrix']) directDepthUniforms[n]=gl.getUniformLocation(directDepthProgram,n);
+  gl.bindVertexArray(null);
+}
+function renderDirectDepth(){
+  if(!directDepthProgram||directDepthProgram.__bad){status.textContent='DEPTH DEBUG unavailable';return false;}
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.clearColor(0.02,0.02,0.02,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(directDepthProgram);gl.bindVertexArray(directDepthVAO);
+  gl.uniform1f(directDepthUniforms.u_time,frozenTime);gl.uniform1f(directDepthUniforms.u_speed,cfg.speed);gl.uniform2f(directDepthUniforms.u_resolution,canvas.width,canvas.height);
+  gl.uniform1f(directDepthUniforms.u_twistFrequencyX,cfg.twistFrequencyX);gl.uniform1f(directDepthUniforms.u_twistFrequencyY,cfg.twistFrequencyY);gl.uniform1f(directDepthUniforms.u_twistFrequencyZ,cfg.twistFrequencyZ);
+  gl.uniform1f(directDepthUniforms.u_twistPowerX,cfg.twistPowerX);gl.uniform1f(directDepthUniforms.u_twistPowerY,cfg.twistPowerY);gl.uniform1f(directDepthUniforms.u_twistPowerZ,cfg.twistPowerZ);
+  gl.uniform1f(directDepthUniforms.u_displaceFrequencyX,cfg.displaceFrequencyX);gl.uniform1f(directDepthUniforms.u_displaceFrequencyZ,cfg.displaceFrequencyZ);gl.uniform1f(directDepthUniforms.u_displaceAmount,cfg.displaceAmount);
+  const proj=ribbonProjection();const view=lookAt([100,0,5000],[0,0,0],[0,1,0]);const model=trs(cfg.positionX,cfg.positionY,cfg.positionZ,baseRotation.x+tilt.x,baseRotation.y+tilt.y,baseRotation.z+tilt.z,cfg.scaleX,cfg.scaleY,cfg.scaleZ);
+  gl.uniformMatrix4fv(directDepthUniforms.projectionMatrix,false,proj);gl.uniformMatrix4fv(directDepthUniforms.modelViewMatrix,false,mul(view,model));gl.drawElements(gl.TRIANGLES,g.idx.length,gl.UNSIGNED_INT,0);return gl.getError()===gl.NO_ERROR;
+}
+
+const focalProgram=tryMakeProgram(focalVS,focalFS);
+let focalVAO=null, focalTexture=null, focalFBO=null, focalDepth=null, depthTexture=null, depthFBO=null, depthTargetDepth=null;
+const focalUniforms={};
+if(focalProgram){
+  focalVAO=gl.createVertexArray();gl.bindVertexArray(focalVAO);
+  const fbuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,fbuf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,0,0, 1,-1,1,0, 1,1,1,1, -1,-1,0,0, 1,1,1,1, -1,1,0,1]),gl.STATIC_DRAW);
+  let al=gl.getAttribLocation(focalProgram,'a_position');
+  if(al>=0){gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,16,0);} else focalProgram.__bad=true;
+  al=gl.getAttribLocation(focalProgram,'a_uv');
+  if(al>=0){gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,16,8);} else focalProgram.__bad=true;
+  focalUniforms.scene=gl.getUniformLocation(focalProgram,'u_scene');
+  focalUniforms.depth=gl.getUniformLocation(focalProgram,'u_depth');
+  focalUniforms.resolution=gl.getUniformLocation(focalProgram,'u_resolution');
+  focalUniforms.focusDepth=gl.getUniformLocation(focalProgram,'u_focusDepth');
+  focalUniforms.focusRange=gl.getUniformLocation(focalProgram,'u_focusRange');
+  focalUniforms.maxBlur=gl.getUniformLocation(focalProgram,'u_maxBlur');
+  focalUniforms.depthScale=gl.getUniformLocation(focalProgram,'u_depthScale');
+  focalUniforms.enabled=gl.getUniformLocation(focalProgram,'u_enabled');
+}
+function destroyFocalTarget(){
+  if(focalDepth)gl.deleteRenderbuffer(focalDepth);
+  if(depthTargetDepth)gl.deleteRenderbuffer(depthTargetDepth);
+  if(focalTexture)gl.deleteTexture(focalTexture);
+  if(depthTexture)gl.deleteTexture(depthTexture);
+  if(focalFBO)gl.deleteFramebuffer(focalFBO);
+  if(depthFBO)gl.deleteFramebuffer(depthFBO);
+  focalDepth=focalTexture=focalFBO=depthTexture=depthFBO=depthTargetDepth=null;
+}
+function resizeFocalTarget(){
+  destroyFocalTarget();
+  if(!focalProgram || focalProgram.__bad || !directDepthProgram || directDepthProgram.__bad) return;
+
+  // Scene colour target
+  focalFBO=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,focalFBO);
+  focalTexture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,focalTexture);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,canvas.width,canvas.height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,focalTexture,0);
+  focalDepth=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,focalDepth);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT24,canvas.width,canvas.height);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,focalDepth);
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+  const sceneOK=gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+
+  // Encoded depth target: red channel stores normalized NDC depth.
+  depthFBO=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,depthFBO);
+  depthTexture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,depthTexture);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,canvas.width,canvas.height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,depthTexture,0);
+  depthTargetDepth=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,depthTargetDepth);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT24,canvas.width,canvas.height);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,depthTargetDepth);
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+  const depthOK=gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  if(!sceneOK||!depthOK){destroyFocalTarget();console.warn('Focal/depth framebuffer incomplete.');}
+}
+
+
+const cfg={speed:4e-5,timeOffset:17500,colorSaturation:1,colorContrast:1,colorHueShift:-0.00159265358979299,displaceFrequencyX:0.005831,displaceFrequencyZ:0.016001,displaceAmount:-7.821,positionX:380,positionY:-301.7,positionZ:-11.1,rotationX:-0.449592653589793,rotationY:-0.117592653589793,rotationZ:1.87440734641021,scaleX:9,scaleY:8,scaleZ:5,twistFrequencyX:-0.36,twistFrequencyY:0.43,twistFrequencyZ:-2,twistPowerX:3.63,twistPowerY:0.7,twistPowerZ:3.95,glowAmount:1.98,glowPower:0.806,glowRamp:0.834,lineAmount:1,lineThickness:1,lineDerivativePower:1,maxWidth:1232};
+const fastMultiplier=25;
+
+const baseRotation={x:cfg.rotationX,y:cfg.rotationY,z:cfg.rotationZ};
+const tilt={x:0,y:0,z:0};
+let speedMultiplier=2.75;
+let paused=false;
+let pointerDown=false,lastPX=0,lastPY=0;
+let focalEnabled=false, focusFromTop=0.33, focusSize=0.11, blurAmountPercent=10;
+
+const $=id=>document.getElementById(id);
+const fmt=v=>Number(v).toFixed(3);
+// Keep a fixed world-space height so browser zoom and viewport resizing
+// change pixel density, not the ribbon's proportion within the hero.
+function ribbonProjection(){
+  const worldHeight=786;
+  // Desktop keeps the same normalized composition at every viewport size.
+  // Mobile retains its height-based camera for the stacked layout.
+  const desktop=window.parent===window || window.parent.innerWidth>760;
+  const worldWidth=desktop ? 1440 : worldHeight*innerWidth/Math.max(1,innerHeight);
+  return perspectiveOrtho(-worldWidth/2,worldWidth/2,worldHeight/2,-worldHeight/2,1,10000);
+}
+function syncRotation(){
+  gl.useProgram(program);
+  const model=trs(cfg.positionX,cfg.positionY,cfg.positionZ,baseRotation.x+tilt.x,baseRotation.y+tilt.y,baseRotation.z+tilt.z,cfg.scaleX,cfg.scaleY,cfg.scaleZ);
+  const proj=ribbonProjection();
+  const view=lookAt([100,0,5000],[0,0,0],[0,1,0]);
+  gl.uniformMatrix4fv(gl.getUniformLocation(program,'projectionMatrix'),false,proj);
+  gl.uniformMatrix4fv(gl.getUniformLocation(program,'modelViewMatrix'),false,mul(view,model));
+}
+function setRange(id,key,display){
+  const el=$(id), out=$(display);
+  el.value=cfg[key]; out.textContent=fmt(cfg[key]);
+  el.addEventListener('input',()=>{
+    cfg[key]=parseFloat(el.value);
+    out.textContent=fmt(cfg[key]);
+    if(key==='scaleX'||key==='scaleY'||key==='scaleZ') syncRotation();
+  });
+}
+setRange('twx','twistFrequencyX','twxVal');
+setRange('twy','twistFrequencyY','twyVal');
+setRange('twz','twistFrequencyZ','twzVal');
+setRange('disp','displaceAmount','dispVal');
+setRange('dfx','displaceFrequencyX','dfxVal');
+setRange('dfz','displaceFrequencyZ','dfzVal');
+setRange('sx','scaleX','sxVal');
+setRange('sy','scaleY','syVal');
+setRange('sz','scaleZ','szVal');
+function bindFocal(){const fy=$('focusY'),fyv=$('focusYVal'),fs=$('focusSize'),fsv=$('focusSizeVal'),ba=$('blurAmount'),bav=$('blurAmountVal');fy.value=50;fyv.textContent='50%';fs.value=30;fsv.textContent='30%';ba.value=50;bav.textContent='50%';fy.addEventListener('input',()=>{focusFromTop=parseFloat(fy.value)/100;fyv.textContent=fy.value+'%';});fs.addEventListener('input',()=>{focusSize=parseFloat(fs.value)/100;fsv.textContent=fs.value+'%';});ba.addEventListener('input',()=>{blurAmountPercent=parseFloat(ba.value);bav.textContent=blurAmountPercent.toFixed(0)+'%';});$('focalEnabled').addEventListener('change',()=>{focalEnabled=$('focalEnabled').checked;});}
+bindFocal();
+
+for(const [id,key,axis] of [['tx','x','x'],['ty','y','y'],['tz','z','z']]){
+  const initialTilt={x:0.87,y:-0.005,z:0}[axis]; tilt[axis]=initialTilt; $(id).value=initialTilt; $(id+'Val').textContent=fmt(initialTilt);
+  $(id).addEventListener('input',()=>{tilt[axis]=parseFloat($(id).value);$(id+'Val').textContent=fmt(tilt[axis]);syncRotation()});
+}
+$('speed').addEventListener('input',()=>{speedMultiplier=parseFloat($('speed').value);$('speedVal').textContent=fmt(speedMultiplier)});$('speedVal').textContent=fmt(speedMultiplier);
+
+function hexRGB(hex){return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16),255]}
+function updatePalette(){
+  const values=[0,1,2,3,4].flatMap(i=>hexRGB($('c'+i).value));
+  gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,5,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(values));
+  for(let i=0;i<5;i++) document.documentElement.style.setProperty('--p'+i,$('c'+i).value);
+}
+updatePalette();
+for(let i=0;i<5;i++)$('c'+i).addEventListener('input',updatePalette);
+
+function resetAll(){
+  Object.assign(cfg,{speed:4e-5,displaceFrequencyX:0.005831,displaceFrequencyZ:0.016001,displaceAmount:-7.821,twistFrequencyX:-0.36,twistFrequencyY:0.43,twistFrequencyZ:-2,scaleX:9,scaleY:8,scaleZ:5});
+  tilt.x=0.87;tilt.y=-0.005;tilt.z=0;
+  speedMultiplier=2.75;$('speed').value=2.75;$('speedVal').textContent='2.750';
+  focalEnabled=false;focusFromTop=.50;focusSize=.30;blurAmountPercent=50;$('focalEnabled').checked=false;$('focusY').value=33;$('focusYVal').textContent='33%';$('focusSize').value=11;$('focusSizeVal').textContent='11%';$('blurAmount').value=10;$('blurAmountVal').textContent='10%';
+  $('twx').value=cfg.twistFrequencyX;$('twy').value=cfg.twistFrequencyY;$('twz').value=cfg.twistFrequencyZ;
+  $('disp').value=cfg.displaceAmount;$('dfx').value=cfg.displaceFrequencyX;$('dfz').value=cfg.displaceFrequencyZ;
+  $('sx').value=cfg.scaleX;$('sy').value=cfg.scaleY;$('sz').value=cfg.scaleZ;
+  for(const [id,key] of [['twx','twistFrequencyX'],['twy','twistFrequencyY'],['twz','twistFrequencyZ'],['disp','displaceAmount'],['dfx','displaceFrequencyX'],['dfz','displaceFrequencyZ'],['sx','scaleX'],['sy','scaleY'],['sz','scaleZ']])$(id+'Val').textContent=fmt(cfg[key]);
+  $('tx').value=0.87;$('txVal').textContent=fmt(0.87);$('ty').value=-0.005;$('tyVal').textContent=fmt(-0.005);$('tz').value=0;$('tzVal').textContent='0.000';
+  syncRotation();
+}
+const ui=$('ui'), uiDot=$('uiDot');
+function hideAllUI(){ui.classList.add('hidden');status.style.display='none';uiDot.classList.add('show');}
+function showAllUI(){ui.classList.remove('hidden');status.style.display='block';uiDot.classList.remove('show');}
+$('hideUi').addEventListener('click',hideAllUI);
+uiDot.addEventListener('click',showAllUI);
+$('reset').addEventListener('click',resetAll);
+$('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=paused?'Resume':'Pause';$('pause').classList.toggle('secondary',!paused)});
+
+canvas.addEventListener('pointerdown',e=>{pointerDown=true;lastPX=e.clientX;lastPY=e.clientY;canvas.classList.add('dragging');canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!pointerDown)return;const dx=e.clientX-lastPX,dy=e.clientY-lastPY;lastPX=e.clientX;lastPY=e.clientY;tilt.y+=dx*0.007;tilt.x+=dy*0.007;tilt.x=Math.max(-1.5,Math.min(1.5,tilt.x));tilt.y=Math.max(-1.5,Math.min(1.5,tilt.y));$('tx').value=tilt.x;$('ty').value=tilt.y;$('txVal').textContent=fmt(tilt.x);$('tyVal').textContent=fmt(tilt.y);syncRotation()});
+canvas.addEventListener('pointerup',e=>{pointerDown=false;canvas.classList.remove('dragging');canvas.releasePointerCapture(e.pointerId)});
+canvas.addEventListener('pointercancel',()=>{pointerDown=false;canvas.classList.remove('dragging')});
+canvas.addEventListener('wheel',e=>{e.preventDefault();tilt.z+=e.deltaY*0.001;tilt.z=Math.max(-1.5,Math.min(1.5,tilt.z));$('tz').value=tilt.z;$('tzVal').textContent=fmt(tilt.z);syncRotation()},{passive:false});
+
+const demoWrap=$('demoWrap');
+let demoDragging=false,demoDX=0,demoDY=0;
+demoWrap.addEventListener('pointerdown',e=>{
+  if(e.target.closest('input,button,a')) return;
+  e.preventDefault();
+  const r=demoWrap.getBoundingClientRect();
+  demoDragging=true;
+  demoWrap.classList.add('dragging');
+  demoDX=e.clientX-r.left;
+  demoDY=e.clientY-r.top;
+  document.body.classList.add('dragging-demo');
+});
+document.addEventListener('pointermove',e=>{
+  if(!demoDragging) return;
+  const x=Math.max(0,Math.min(innerWidth-demoWrap.offsetWidth,e.clientX-demoDX));
+  const y=Math.max(0,Math.min(innerHeight-demoWrap.offsetHeight,e.clientY-demoDY));
+  demoWrap.style.left=x+'px';
+  demoWrap.style.top=y+'px';
+  demoWrap.style.right='auto';
+});
+document.addEventListener('pointerup',()=>{
+  if(!demoDragging) return;
+  demoDragging=false;
+  demoWrap.classList.remove('dragging');
+  document.body.classList.remove('dragging-demo');
+});
+document.addEventListener('pointercancel',()=>{
+  demoDragging=false;
+  demoWrap.classList.remove('dragging');
+  document.body.classList.remove('dragging-demo');
+});
+function resize(){gl.useProgram(program);const d=Math.min(devicePixelRatio,2);canvas.width=Math.max(1,Math.floor(innerWidth*d));canvas.height=Math.max(1,Math.floor(innerHeight*d));gl.viewport(0,0,canvas.width,canvas.height);syncRotation();gl.uniform2f(U.u_resolution,canvas.width,canvas.height);gl.uniform1f(U.u_maxWidth,canvas.width)}
+gl.useProgram(program);resize();resizeFocalTarget();addEventListener('resize',()=>{gl.useProgram(program);resize();resizeFocalTarget();});
+if(gl.getError()!==gl.NO_ERROR){status.textContent='GL error during resize/uniform setup: '+gl.getError();}
+
+for(const [n,v] of Object.entries(cfg)){if(!U['u_'+n])continue;if(typeof v==='number')gl.uniform1f(U['u_'+n],v)}
+gl.uniform3f(U.u_clearColor,1,1,1);gl.uniform2f(U.u_mousePosition,0,0);gl.uniform1i(U.u_paletteTexture,0);
+status.textContent='standalone WebGL2 • Stripe shader logic • running';
+const start=performance.now();
+let firstFrame=true;
+let frozenTime=cfg.timeOffset;let lastNow=start;function renderRibbon(){gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.enable(gl.DEPTH_TEST);gl.useProgram(program);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);gl.uniform1i(U.u_paletteTexture,0);gl.bindVertexArray(vao);for(const [n,v] of Object.entries(cfg)){const u=U['u_'+n];if(!u)continue;if(typeof v==='number')gl.uniform1f(u,v)}gl.uniform1f(U.u_time,frozenTime);gl.drawElements(gl.TRIANGLES,g.idx.length,gl.UNSIGNED_INT,0);}
+function frame(now){const dt=now-lastNow;lastNow=now;if(!paused)frozenTime+=dt*speedMultiplier;
+  if(document.getElementById('depthDebug')?.checked){renderDirectDepth();requestAnimationFrame(frame);return;}
+  const useFocal=!!focalProgram && !!focalFBO && !!depthFBO && !!depthTexture && focalEnabled;
+  if(useFocal){
+    // 1) Render the normal ribbon into a colour target.
+    gl.bindFramebuffer(gl.FRAMEBUFFER,focalFBO);gl.drawBuffers([gl.COLOR_ATTACHMENT0]);gl.viewport(0,0,canvas.width,canvas.height);renderRibbon();
+    // 2) Render the same ribbon into an explicit depth-encoded colour target.
+    gl.bindFramebuffer(gl.FRAMEBUFFER,depthFBO);gl.drawBuffers([gl.COLOR_ATTACHMENT0]);gl.viewport(0,0,canvas.width,canvas.height);
+    gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(directDepthProgram);gl.bindVertexArray(directDepthVAO);
+    gl.uniform1f(directDepthUniforms.u_time,frozenTime);gl.uniform1f(directDepthUniforms.u_speed,cfg.speed);gl.uniform2f(directDepthUniforms.u_resolution,canvas.width,canvas.height);
+    for(const n of ['twistFrequencyX','twistFrequencyY','twistFrequencyZ','twistPowerX','twistPowerY','twistPowerZ','displaceFrequencyX','displaceFrequencyZ','displaceAmount']) gl.uniform1f(directDepthUniforms['u_'+n],cfg[n]);
+    const proj=ribbonProjection();const view=lookAt([100,0,5000],[0,0,0],[0,1,0]);const model=trs(cfg.positionX,cfg.positionY,cfg.positionZ,baseRotation.x+tilt.x,baseRotation.y+tilt.y,baseRotation.z+tilt.z,cfg.scaleX,cfg.scaleY,cfg.scaleZ);
+    gl.uniformMatrix4fv(directDepthUniforms.projectionMatrix,false,proj);gl.uniformMatrix4fv(directDepthUniforms.modelViewMatrix,false,mul(view,model));gl.drawElements(gl.TRIANGLES,g.idx.length,gl.UNSIGNED_INT,0);
+    // 3) Depth based focal pass. Focus slider maps to normalised camera depth.
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.useProgram(focalProgram);gl.bindVertexArray(focalVAO);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,focalTexture);gl.uniform1i(focalUniforms.scene,0);
+    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,depthTexture);gl.uniform1i(focalUniforms.depth,1);
+    gl.uniform2f(focalUniforms.resolution,canvas.width,canvas.height);
+    // Map UI focus control to the useful middle range of camera depth.
+    const focusDepth = 0.25 + focusFromTop * 0.5;
+    gl.uniform1f(focalUniforms.focusDepth,focusDepth);
+    gl.uniform1f(focalUniforms.focusRange,focusSize);
+    gl.uniform1f(focalUniforms.maxBlur,(blurAmountPercent/100.0) * 42.0);
+    gl.uniform1f(focalUniforms.depthScale,60.0);gl.uniform1i(focalUniforms.enabled,1);gl.drawArrays(gl.TRIANGLES,0,6);
+  } else {
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);renderRibbon();
+  }
+  if(firstFrame){const err=gl.getError();if(err!==gl.NO_ERROR)status.textContent='FIRST FRAME GL ERROR: '+err;else status.textContent='WebGL2 running • depth DOF • drag to tilt • wheel rotates Z';firstFrame=false}requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+// Minimal local controls; preserve upstream rendering and attribution.
+const originalScaleY=8;
+const heightControl=document.getElementById('ribbonHeight');
+function updateHeight(){cfg.scaleY=originalScaleY*Number(heightControl.value)/100;document.getElementById('ribbonHeightValue').value=heightControl.value+'%';syncRotation();}
+heightControl.addEventListener('input',updateHeight);updateHeight();
+const localPause=document.getElementById('ribbonPause');
+localPause.addEventListener('click',()=>{paused=!paused;localPause.textContent=paused?'播放动画':'暂停动画';});
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){paused=true;localPause.textContent='播放动画';}
+window.addEventListener('message',e=>{if(e.origin!==location.origin)return;if(e.data.type==='height'){const n=Number(e.data.value);if(Number.isFinite(n)){heightControl.value=Math.max(20,Math.min(150,n));updateHeight();}}if(e.data.type==='pause'){paused=Boolean(e.data.value);}});
+</script></body></html>

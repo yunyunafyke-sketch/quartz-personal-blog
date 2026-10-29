@@ -1,0 +1,5 @@
+Source: https://github.com/AGE-T/Stripe-webgl-effect
+File: stripe_self_contained_animated_v36_defaults_from_shot.html
+Author: AGE-T
+Local changes: hide research UI and sample card; add height and pause controls. Original WebGL2 shader, geometry, palette, rendering retained.
+No repository-root license file found at retrieval; no license inferred.
