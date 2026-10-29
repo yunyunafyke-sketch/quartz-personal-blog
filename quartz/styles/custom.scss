@@ -2507,9 +2507,11 @@ body[data-slug="index"] .home-editorial {
     gap: 30px;
   }
   .editorial-header nav a {
-    font-size: 14px;
+    font-family: var(--headerFont);
+    font-size: 16px;
     color: #142b45;
-    font-weight: 600;
+    font-weight: 700;
+    line-height: 1.3;
   }
   .editorial-main {
     margin-top: 0;

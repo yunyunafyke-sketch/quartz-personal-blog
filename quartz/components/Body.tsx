@@ -68,9 +68,9 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
           </span>
         </a>
         <nav aria-label="首页导航">
-          <a href="#home-articles">文章</a>
+          <a href="#featured-title">文章</a>
           <a href="#home-topics">分类</a>
-          <a href="#home-intro">关于</a>
+          <a href="#footer-rss-title">关于</a>
         </nav>
       </header>
 
@@ -241,17 +241,17 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
           </aside>
         </div>
       </main>
-      <footer class="editorial-footer" aria-label="博客订阅与交流">
+      <footer class="editorial-footer" aria-label="博客联系与交流">
         <div class="editorial-footer-resources">
           <div class="editorial-footer-resources-grid">
             <section class="editorial-footer-rss" aria-labelledby="footer-rss-title">
-              <h2 id="footer-rss-title">订阅 Afyke Blog</h2>
+              <h2 id="footer-rss-title">联系 Afyke</h2>
               <p>
                 保持好奇，持续记录。
                 <br />
-                通过 RSS 订阅，在你喜欢的阅读器里接收新文章。
+                如果文章对你有启发，或有想交流的话题，欢迎来信。
               </p>
-              <a class="editorial-footer-rss-button" href={href("index.xml")}>
+              <a class="editorial-footer-rss-button" href="mailto:yunyunafyke@gmail.com">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -259,12 +259,12 @@ function HomeCover({ fileData, allFiles }: QuartzComponentProps) {
                   stroke-width="2"
                   aria-hidden="true"
                 >
-                  <circle cx="5" cy="19" r="1" fill="currentColor" />
-                  <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16" />
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <path d="m3 7 9 6 9-6" />
                 </svg>
-                订阅博客 <span aria-hidden="true">›</span>
+                邮件联系 <span aria-hidden="true">›</span>
               </a>
-              <small>无需邮箱，随时阅读每一次新的记录。</small>
+              <small>yunyunafyke@gmail.com</small>
             </section>
             <section class="editorial-footer-resource" aria-labelledby="footer-projects-title">
               <svg class="editorial-footer-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
